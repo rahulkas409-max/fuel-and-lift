@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, Leaf, Drumstick, RefreshCw, Sparkles, Zap } from "lucide-react";
+import { Clock, Dices, Leaf, Drumstick, RefreshCw, Search, Sparkles, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { MEALS, SLOTS, mealById, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
@@ -12,6 +12,7 @@ import { currentRoutine, useStore } from "@/lib/store";
 import { useToast } from "@/lib/toast";
 import { usePaywall } from "../paywall/PaywallProvider";
 import { MacroBar, MacroPills } from "../ui/MacroPills";
+import { FoodExplorer } from "./FoodExplorer";
 import { MealSpinner } from "./MealSpinner";
 import { RecipeCard } from "./RecipeCard";
 
@@ -40,7 +41,13 @@ export function MealsView() {
     return m?.diet === s.diet ? m : undefined;
   });
   const scale = s.scales[today] ?? 1;
-  const t = scaleMacros(totals(meals), scale);
+  const planned = scaleMacros(totals(meals), scale);
+  const logged = s.foodLog[today] ?? [];
+  const t = logged.reduce(
+    (acc, f) => ({ kcal: acc.kcal + f.kcal, protein: Math.round(acc.protein + f.protein), carbs: Math.round(acc.carbs + f.carbs), fat: Math.round(acc.fat + f.fat) }),
+    planned,
+  );
+  const [explorerOpen, setExplorerOpen] = useState(false);
 
   const [spinSlot, setSpinSlot] = useState<Slot | null>(null);
   const [recipe, setRecipe] = useState<Meal | null>(null);
@@ -147,6 +154,37 @@ export function MealsView() {
         </details>
       </section>
 
+      {/* Food database search */}
+      <motion.button
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setExplorerOpen(true)}
+        className="w-full h-14 rounded-2xl bg-slate-800/80 border border-line flex items-center gap-3 px-4 text-left text-slate-400"
+      >
+        <Search size={20} className="text-emerald" />
+        <span className="flex-1">Search 7,000+ Indian &amp; world foods</span>
+        <span className="text-[11px] rounded-full bg-emerald/15 text-emerald px-2 py-0.5">Log</span>
+      </motion.button>
+
+      {logged.length > 0 && (
+        <section className="glass rounded-3xl p-4">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Also eaten today</p>
+          <ul className="divide-y divide-line">
+            {logged.map((f) => (
+              <li key={f.uid} className="flex items-center gap-3 py-2">
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm text-slate-100 truncate">{f.name}</span>
+                  <span className="block text-[11px] text-slate-500 font-mono">{f.grams} g · {Math.round(f.protein)} g P</span>
+                </span>
+                <span className="font-mono text-sm text-amber tabular">{f.kcal}</span>
+                <button onClick={() => s.removeLoggedFood(today, f.uid)} className="size-10 grid place-items-center text-slate-600 hover:text-rose-400" aria-label={`Remove ${f.name}`}>
+                  <X size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Actions */}
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <motion.button whileTap={{ scale: 0.97 }} onClick={autoSync} className="h-14 rounded-2xl bg-emerald text-slate-950 font-semibold flex items-center justify-center gap-2 glow-emerald">
@@ -199,7 +237,7 @@ export function MealsView() {
           );
         })}
       </section>
-      <p className="text-center text-xs text-slate-500">{MEALS.length} recipes · macros are per-serving estimates</p>
+      <p className="text-center text-xs text-slate-500">{MEALS.length} planner recipes · macros are per-serving estimates</p>
 
       <MealSpinner
         open={spinSlot != null}
@@ -213,6 +251,7 @@ export function MealsView() {
         }}
       />
       <RecipeCard meal={recipe} onClose={() => setRecipe(null)} />
+      <FoodExplorer open={explorerOpen} onClose={() => setExplorerOpen(false)} />
     </div>
   );
 }

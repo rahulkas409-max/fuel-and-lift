@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:foods": "node scripts/build-foods.mjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -20,6 +21,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@ifct2017/compositions": "^2.0.9",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.20.4",
@@ -28,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
+    "tempo-food-db": "^1.0.0",
     "typescript": "^5"
   }
 }

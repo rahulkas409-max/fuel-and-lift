@@ -1,0 +1,252 @@
+"use client";
+
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, Check, Database, Loader2, Plus, Search, X } from "lucide-react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { SOURCES, loadFoods, scaled, searchFoods, type Food } from "@/lib/foods";
+import { useToday } from "@/lib/hooks";
+import { play } from "@/lib/sound";
+import { useStore } from "@/lib/store";
+import { useToast } from "@/lib/toast";
+import { MacroPills } from "../ui/MacroPills";
+
+type SourceFilter = "all" | "indian" | "global";
+const FILTERS: { id: SourceFilter; label: string }[] = [
+  { id: "all", label: "All foods" },
+  { id: "indian", label: "🇮🇳 Indian" },
+  { id: "global", label: "🌍 Global" },
+];
+const SUGGESTIONS = ["dosa", "biryani", "paneer", "dal", "chicken breast", "roti", "oats", "banana", "whey", "ragi"];
+
+export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [foods, setFoods] = useState<Food[] | null>(null);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<SourceFilter>("all");
+  const [selected, setSelected] = useState<Food | null>(null);
+  const deferred = useDeferredValue(query);
+  // Always reopen on the search list, not on the last food viewed.
+  const close = () => {
+    setSelected(null);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!open || foods) return;
+    loadFoods()
+      .then(setFoods)
+      .catch(() => setError("Couldn't load the food database. Check your connection and try again."));
+  }, [open, foods]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const results = useMemo(() => (foods ? searchFoods(foods, deferred, filter) : []), [foods, deferred, filter]);
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-50 bg-[#0b1120] flex flex-col"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 40 }}
+          transition={{ type: "spring", damping: 28, stiffness: 300 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Food explorer"
+        >
+          <div className="mx-auto w-full max-w-2xl flex-1 flex flex-col min-h-0 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+            <AnimatePresence mode="wait" initial={false}>
+              {selected ? (
+                <FoodDetail key="detail" food={selected} onBack={() => setSelected(null)} onDone={close} />
+              ) : (
+                <motion.div key="list" className="flex-1 flex flex-col min-h-0" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 relative">
+                      <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        autoFocus
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search dosa, paneer, chicken, oats…"
+                        aria-label="Search foods"
+                        className="w-full h-12 rounded-2xl bg-slate-800 pl-11 pr-10 outline-none focus:ring-1 focus:ring-emerald"
+                      />
+                      {query && (
+                        <button onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 size-10 grid place-items-center text-slate-500" aria-label="Clear search">
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                    <button onClick={close} className="h-12 px-3 text-sm text-slate-400">Close</button>
+                  </div>
+
+                  <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
+                    {FILTERS.map((f) => (
+                      <button key={f.id} onClick={() => setFilter(f.id)} className={`shrink-0 h-9 px-3.5 rounded-full text-xs ${filter === f.id ? "bg-emerald text-slate-950 font-semibold" : "bg-slate-800 text-slate-400"}`}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {!query && (
+                    <div className="flex flex-wrap gap-1.5 pb-3">
+                      {SUGGESTIONS.map((s) => (
+                        <button key={s} onClick={() => setQuery(s)} className="h-8 px-3 rounded-full border border-line text-xs text-slate-400">
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-y-auto no-scrollbar -mx-4 px-4 pb-8">
+                    {error ? (
+                      <p className="text-rose-300 text-sm py-10 text-center">{error}</p>
+                    ) : !foods ? (
+                      <div className="py-16 grid place-items-center text-slate-500 gap-2">
+                        <Loader2 className="animate-spin" />
+                        <span className="text-xs">Loading 7,000+ foods…</span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">
+                          {query ? `${results.length}${results.length === 60 ? "+" : ""} results` : "Popular Indian dishes"} · per 100 g
+                        </p>
+                        <ul className="space-y-2">
+                          {results.map((f) => (
+                            <li key={f.id}>
+                              <button onClick={() => setSelected(f)} className="w-full text-left rounded-2xl bg-slate-800/50 border border-line px-4 py-3 flex items-center gap-3 active:scale-[0.99] transition">
+                                <span className="min-w-0 flex-1">
+                                  <span className="block text-slate-100 leading-snug">{f.n}</span>
+                                  <span className="block text-[11px] text-slate-500 mt-0.5 truncate">
+                                    {SOURCES[f.s].short} · {f.c}
+                                    {f.a ? ` · ${f.a}` : ""}
+                                  </span>
+                                </span>
+                                <span className="text-right shrink-0 font-mono tabular">
+                                  <span className="block text-sm text-amber">{f.k}</span>
+                                  <span className="block text-[11px] text-emerald">{f.p}g P</span>
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                        {query && results.length === 0 && (
+                          <p className="text-center text-slate-500 text-sm py-10">No match for “{query}”. Try a simpler word, e.g. “dal” instead of “dal tadka recipe”.</p>
+                        )}
+                        <p className="mt-8 text-[11px] leading-relaxed text-slate-600 flex gap-2">
+                          <Database size={14} className="shrink-0 mt-0.5" />
+                          Sources: Indian Food Composition Tables 2017 (ICMR–NIN); USDA FoodData Central SR Legacy; food nutrition data from TempoLife (tempolife.app), CC-BY-4.0. Cooked Indian dish values are Fuel &amp; Lift estimates.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function FoodDetail({ food, onBack, onDone }: { food: Food; onBack: () => void; onDone: () => void }) {
+  const today = useToday();
+  const logFood = useStore((s) => s.logFood);
+  const toast = useToast((s) => s.show);
+  const presets = [...(food.sg ? [{ label: food.sv ?? "1 serving", g: food.sg }] : []), { label: "100 g", g: 100 }, { label: "50 g", g: 50 }, { label: "200 g", g: 200 }];
+  const [grams, setGrams] = useState(food.sg ?? 100);
+  const g = Math.max(0, Math.min(2000, grams || 0));
+  const m = { kcal: Math.round((food.k * g) / 100), protein: scaled(food.p, g) ?? 0, carbs: scaled(food.cb, g) ?? 0, fat: scaled(food.f, g) ?? 0 };
+
+  const extras: [string, number | undefined, string][] = [
+    ["Fibre", scaled(food.fb, g), "g"],
+    ["Sugars", scaled(food.su, g), "g"],
+    ["Saturated fat", scaled(food.sf, g), "g"],
+    ["Sodium", food.na != null ? Math.round((food.na * g) / 100) : undefined, "mg"],
+    ["Potassium", food.kk != null ? Math.round((food.kk * g) / 100) : undefined, "mg"],
+    ["Calcium", food.ca != null ? Math.round((food.ca * g) / 100) : undefined, "mg"],
+    ["Iron", scaled(food.fe, g), "mg"],
+    ["Vitamin C", scaled(food.vc, g), "mg"],
+  ];
+
+  return (
+    <motion.div className="flex-1 overflow-y-auto no-scrollbar pb-10" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+      <button onClick={onBack} className="h-11 -ml-2 px-2 flex items-center gap-1 text-sm text-slate-400">
+        <ArrowLeft size={16} /> Results
+      </button>
+      <p className="text-[11px] uppercase tracking-[0.2em] text-amber mt-2">{food.c}</p>
+      <h2 className="font-display text-4xl leading-tight mt-1">{food.n}</h2>
+      {food.a && <p className="text-xs text-slate-500 mt-1">Also called: {food.a}</p>}
+
+      <div className="mt-5">
+        <p className="text-xs text-slate-400 mb-2">Amount</p>
+        <div className="flex flex-wrap gap-2">
+          {presets.map((p) => (
+            <button key={p.label} onClick={() => setGrams(p.g)} className={`h-10 px-3.5 rounded-xl text-sm ${grams === p.g ? "bg-emerald text-slate-950 font-semibold" : "bg-slate-800 text-slate-300"}`}>
+              {p.label}
+              {p.label !== `${p.g} g` && <span className="opacity-70"> · {p.g} g</span>}
+            </button>
+          ))}
+          <label className="h-10 rounded-xl bg-slate-800 flex items-center pr-3">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={2000}
+              value={grams || ""}
+              onChange={(e) => setGrams(Number(e.target.value))}
+              aria-label="Custom amount in grams"
+              className="w-16 h-full bg-transparent text-center font-mono outline-none"
+            />
+            <span className="text-xs text-slate-500">g</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="glass rounded-3xl p-5 mt-5">
+        <p className="font-display text-6xl leading-none tabular">
+          {m.kcal}
+          <span className="text-xl text-slate-500"> kcal</span>
+        </p>
+        <div className="mt-3"><MacroPills m={m} size="lg" /></div>
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          {extras.filter(([, v]) => v != null).map(([label, v, unit]) => (
+            <div key={label} className="flex justify-between border-b border-line py-1.5">
+              <dt className="text-slate-400">{label}</dt>
+              <dd className="font-mono tabular text-slate-200">{v} {unit}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <p className="text-[11px] text-slate-500 mt-3">
+        Source: {SOURCES[food.s].note}. Per 100 g: {food.k} kcal · {food.p} g protein.
+      </p>
+
+      <button
+        disabled={!g}
+        onClick={() => {
+          logFood(today, { foodId: food.id, name: food.n, grams: g, ...m });
+          play("check");
+          toast(`Logged ${g} g ${food.n}`);
+          onDone();
+        }}
+        className="mt-6 w-full h-14 rounded-2xl bg-emerald text-slate-950 font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-40"
+      >
+        <Plus size={20} /> Add to today&apos;s fuel
+      </button>
+      <p className="text-center text-[11px] text-slate-600 mt-2 flex items-center justify-center gap-1">
+        <Check size={12} /> Counts toward your calorie and protein bars
+      </p>
+    </motion.div>
+  );
+}

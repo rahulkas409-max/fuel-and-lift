@@ -24,6 +24,17 @@ export interface GroceryItem {
   checked: boolean;
 }
 
+export interface LoggedFood {
+  uid: string;
+  foodId: number;
+  name: string;
+  grams: number;
+  kcal: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 /** `${date}|${dayId}` → `${index}:${exerciseId}` → sets */
 type Logs = Record<string, Record<string, SetLog[]>>;
 
@@ -42,6 +53,7 @@ interface State {
   scales: Record<string, number>; // date → portion multiplier from Auto-Sync
   autoSync: boolean;
   grocery: GroceryItem[];
+  foodLog: Record<string, LoggedFood[]>; // date → foods eaten outside the meal plan
   best: { guessr: number; plate: number; form: number };
   sound: boolean;
   customPassUntil: number;
@@ -65,6 +77,8 @@ interface State {
   removeGrocery: (id: string) => void;
   clearCheckedGrocery: () => void;
   recordBest: (game: keyof State["best"], score: number) => void;
+  logFood: (date: string, item: Omit<LoggedFood, "uid">) => void;
+  removeLoggedFood: (date: string, uid: string) => void;
   toggleSound: () => void;
   grantPass: () => void;
 }
@@ -89,6 +103,7 @@ export const useStore = create<State>()(
       scales: {},
       autoSync: true,
       grocery: [],
+      foodLog: {},
       best: { guessr: 0, plate: 0, form: 0 },
       sound: true,
       customPassUntil: 0,
@@ -148,6 +163,8 @@ export const useStore = create<State>()(
       recordBest: (game, score) => {
         if (score > get().best[game]) set((s) => ({ best: { ...s.best, [game]: score } }));
       },
+      logFood: (date, item) => set((s) => ({ foodLog: { ...s.foodLog, [date]: [...(s.foodLog[date] ?? []), { ...item, uid: uid() }] } })),
+      removeLoggedFood: (date, id) => set((s) => ({ foodLog: { ...s.foodLog, [date]: (s.foodLog[date] ?? []).filter((f) => f.uid !== id) } })),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),
@@ -161,7 +178,8 @@ export const useStore = create<State>()(
         const logs = Object.fromEntries(Object.entries(s.logs).filter(([k]) => k.slice(0, 10) >= cutoff));
         const plans = Object.fromEntries(Object.entries(s.plans).filter(([k]) => k >= cutoff));
         const scales = Object.fromEntries(Object.entries(s.scales).filter(([k]) => k >= cutoff));
-        return { ...s, logs, plans, scales };
+        const foodLog = Object.fromEntries(Object.entries(s.foodLog).filter(([k]) => k >= cutoff));
+        return { ...s, logs, plans, scales, foodLog };
       },
     },
   ),

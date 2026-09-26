@@ -24,6 +24,11 @@ All data lives in the browser's localStorage.
 - Daily targets come from your body weight, your goal and the day's intensity. Heavy days get +300 kcal and more carbs; rest days get −200 kcal and a recovery focus.
 - Auto-Sync tries every meal combination and portion size (1–2×) to hit those targets.
 
+**Food database**
+- Search 7,279 foods by English or Hindi/regional name, e.g. *baingan*, *dahi* or *palak*.
+- Each food shows calories, protein, carbs and fat, plus fibre, sugars, saturated fat, sodium, potassium, calcium, iron and vitamin C where the source provides them.
+- Pick a serving or enter grams, then log the food to today's totals.
+
 **Grocery**
 - "Add to Grocery List" pulls a recipe's ingredients into a checklist sorted into Produce, Protein & Dairy and Pantry.
 - Tap an item to cross it off.
@@ -32,6 +37,17 @@ All data lives in the browser's localStorage.
 - Macro Guessr: 18 food matchups.
 - Plate Balancer: 4 challenges.
 - Form Check: swipe through 12 lifting cues.
+
+## Food data sources
+
+| Source | Foods | Notes |
+| --- | --- | --- |
+| [IFCT 2017](https://www.nin.res.in/) (ICMR–National Institute of Nutrition), via `@ifct2017/compositions` (MIT) | 542 | Lab-analysed raw Indian ingredients, with regional names and micronutrients |
+| USDA FoodData Central SR Legacy + TempoLife, via `tempo-food-db` (CC-BY-4.0) | 6,494 | Global foods. *Food nutrition data from TempoLife (tempolife.app), CC-BY-4.0.* |
+| Curated Indian dishes (`scripts/indian-dishes.mjs`) | 243 | Cooked dishes from every region. **These values are estimates** from standard recipes. |
+
+The database is generated into `public/data/foods.json` (about 1.1 MB, about 215 KB gzipped) and loads only
+when the search opens. To rebuild it after editing sources, run `npm run build:foods`.
 
 ## Run it
 
