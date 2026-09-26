@@ -3,7 +3,7 @@
 import { animate, motion, useMotionValue, useMotionValueEvent } from "framer-motion";
 import { Clock, RotateCw } from "lucide-react";
 import { useRef, useState } from "react";
-import { SLOTS, mealsFor, type Diet, type Meal, type Slot } from "@/data/meals";
+import { SLOTS, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { burst } from "@/lib/confetti";
 import { play } from "@/lib/sound";
 import { Emoji, emojiSrc } from "../ui/Emoji";
@@ -24,20 +24,21 @@ function slicePath(i: number, n: number) {
   return `M${R},${R} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z`;
 }
 
-export function MealSpinner({ open, slot, diet, onClose, onLand, onViewRecipe }: {
-  open: boolean; slot: Slot; diet: Diet; onClose: () => void; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void;
+export function MealSpinner({ open, slot, onClose, onLand, onViewRecipe }: {
+  open: boolean; slot: Slot; onClose: () => void; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void;
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={`${SLOTS.find((s) => s.id === slot)?.label} roulette`}>
-      {open && <Wheel key={`${slot}-${diet}`} slot={slot} diet={diet} onLand={onLand} onViewRecipe={onViewRecipe} />}
+      {open && <Wheel key={slot} slot={slot} onLand={onLand} onViewRecipe={onViewRecipe} />}
     </Sheet>
   );
 }
 
-function Wheel({ slot, diet, onLand, onViewRecipe }: { slot: Slot; diet: Diet; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void }) {
-  const meals = mealsFor(diet, slot);
+function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void }) {
+  const meals = mealsFor(slot);
   const n = meals.length;
   const seg = 360 / n;
+  const icon = n > 7 ? 32 : 40;
   const rotate = useMotionValue(0);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<Meal | null>(null);
@@ -83,7 +84,7 @@ function Wheel({ slot, diet, onLand, onViewRecipe }: { slot: Slot; diet: Diet; o
               <g key={m.id}>
                 <path d={slicePath(i, n)} fill={COLORS[i % COLORS.length]} stroke="var(--card)" strokeWidth="2" />
                 {emojiSrc(m.emoji) ? (
-                  <image href={emojiSrc(m.emoji)!} x={R - 20} y={R - 20} width="40" height="40" transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.62})`} />
+                  <image href={emojiSrc(m.emoji)!} x={R - icon / 2} y={R - icon / 2} width={icon} height={icon} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.66})`} />
                 ) : (
                   <text x={R} y={R} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.64})`} textAnchor="middle" dominantBaseline="middle" fontSize="34">
                     {m.emoji}

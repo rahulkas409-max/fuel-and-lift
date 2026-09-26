@@ -1,10 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { PlayCircle } from "lucide-react";
+import { useState } from "react";
+import { EXERCISE_MEDIA } from "@/data/exercise-media";
 import { exerciseById, type WorkoutExercise } from "@/data/workouts";
 import { play } from "@/lib/sound";
 import { useStore, type SetLog } from "@/lib/store";
 import { Checkbox } from "../ui/Checkbox";
+import { ExerciseAnimation, ExerciseHowTo } from "./ExerciseDemo";
 import { useRestTimer } from "./RestTimer";
 
 export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExercise; index: number; logKey: string; sets: SetLog[] }) {
@@ -13,7 +17,9 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
   const lastWeight = useStore((s) => s.lastWeight[item.exerciseId]);
   const restSeconds = useStore((s) => s.restSeconds);
   const startRest = useRestTimer((s) => s.start);
+  const [howTo, setHowTo] = useState(false);
   if (!ex) return null;
+  const hasMedia = !!EXERCISE_MEDIA[item.exerciseId];
 
   const exKey = `${index}:${item.exerciseId}`;
   const rows = Array.from({ length: item.sets }, (_, i) => sets[i] ?? { weight: "", reps: "", done: false });
@@ -30,8 +36,16 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
       transition={{ delay: Math.min(index * 0.04, 0.3) }}
       className={`glass rounded-3xl p-4 sm:p-5 transition-colors ${allDone ? "border-fit-green-bright/50" : ""}`}
     >
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <header className="flex items-start gap-3">
+        {hasMedia && (
+          <button onClick={() => setHowTo(true)} className="relative shrink-0 rounded-2xl overflow-hidden active:scale-95 transition" aria-label={`How to do ${ex.name}`}>
+            <ExerciseAnimation id={item.exerciseId} className="w-24 h-16 sm:w-28 sm:h-[74px]" />
+            <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-[10px] font-medium pl-1 pr-1.5 py-0.5 flex items-center gap-0.5">
+              <PlayCircle size={11} /> How to
+            </span>
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-ink text-[17px] leading-snug">{ex.name}</h3>
           <p className="text-xs text-ink-2 mt-0.5 truncate">{ex.muscles.join(" · ")}</p>
         </div>
@@ -98,6 +112,7 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
           </motion.div>
         ))}
       </div>
+      <ExerciseHowTo id={howTo ? item.exerciseId : null} onClose={() => setHowTo(false)} />
     </motion.article>
   );
 }

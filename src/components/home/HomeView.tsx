@@ -22,8 +22,7 @@ export function HomeView() {
   const { day, totalSets, doneSets, completed } = todaySession(s, today);
   const { eaten, targets } = todayNutrition(s, today);
   const streak = activeStreak(s.completed, new Date(`${today}T12:00:00`));
-  // Only meals that match the current Veg / Non-Veg choice
-  const plan = Object.fromEntries(Object.entries(s.plans[today] ?? {}).filter(([, id]) => mealById(id!)?.diet === s.diet));
+  const plan = s.plans[today] ?? {};
   const groceryLeft = s.grocery.filter((g) => !g.checked).length;
 
   // Last 7 days, Monday-first like Google Fit's weekly goal row

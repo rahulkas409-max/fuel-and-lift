@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, Leaf, Drumstick, RefreshCw, RotateCcw, Search, Sparkles, X, Zap } from "lucide-react";
+import { Clock, Dices, RefreshCw, RotateCcw, Search, Sparkles, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { MEALS, SLOTS, mealById, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
@@ -36,11 +36,7 @@ export function MealsView() {
   const targets = dayTargets(s.profile, intensity);
 
   const plan = s.plans[today] ?? {};
-  // Only show meals matching the current diet filter.
-  const meals = SLOTS.map((slot) => {
-    const m = plan[slot.id] ? mealById(plan[slot.id]!) : undefined;
-    return m?.diet === s.diet ? m : undefined;
-  });
+  const meals = SLOTS.map((slot) => (plan[slot.id] ? mealById(plan[slot.id]!) : undefined));
   const scale = s.scales[today] ?? 1;
   const planned = scaleMacros(totals(meals), scale);
   const logged = s.foodLog[today] ?? [];
@@ -56,7 +52,7 @@ export function MealsView() {
 
   const autoSync = () =>
     requirePass(() => {
-      const next = syncPlan(s.diet, intensity, targets, variety);
+      const next = syncPlan(intensity, targets, variety);
       setVariety((v) => v + 1);
       s.setPlan(today, next.plan, next.scale);
       play("win");
@@ -66,7 +62,7 @@ export function MealsView() {
   const spinAll = () => {
     const next: Partial<Record<Slot, string>> = {};
     for (const slot of SLOTS) {
-      const options = mealsFor(s.diet, slot.id);
+      const options = mealsFor(slot.id);
       next[slot.id] = options[Math.floor(Math.random() * options.length)].id;
     }
     s.setPlan(today, next, 1);
@@ -75,19 +71,6 @@ export function MealsView() {
 
   return (
     <div className="space-y-6">
-      {/* Diet filter */}
-      <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card-2">
-        {(["veg", "nonveg"] as const).map((d) => (
-          <button key={d} onClick={() => s.setDiet(d)} className={`relative h-12 rounded-xl text-sm font-medium ${s.diet === d ? "text-white" : "text-ink-2"}`}>
-            {s.diet === d && <motion.span layoutId="diet" className={`absolute inset-0 rounded-xl ${d === "veg" ? "bg-fit-blue" : "bg-fit-yellow"}`} transition={{ type: "spring", damping: 25, stiffness: 350 }} />}
-            <span className="relative flex items-center justify-center gap-2">
-              {d === "veg" ? <Leaf size={16} /> : <Drumstick size={16} />}
-              {d === "veg" ? "High-Protein Veg" : "Non-Veg"}
-            </span>
-          </button>
-        ))}
-      </div>
-
       {/* Targets */}
       <section className="glass rounded-3xl p-5">
         <div className="flex items-start justify-between gap-3">
@@ -258,7 +241,6 @@ export function MealsView() {
       <MealSpinner
         open={spinSlot != null}
         slot={spinSlot ?? "breakfast"}
-        diet={s.diet}
         onClose={() => setSpinSlot(null)}
         onLand={(m) => s.setMeal(today, m.slot, m.id)}
         onViewRecipe={(m) => {

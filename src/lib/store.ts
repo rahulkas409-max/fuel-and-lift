@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Diet, GrocerySection, Meal, Slot } from "@/data/meals";
+import type { GrocerySection, Meal, Slot } from "@/data/meals";
 import { ROUTINES, type Routine } from "@/data/workouts";
 import { PASS_DAYS } from "./config";
 import { dayKey } from "./date";
@@ -47,7 +47,6 @@ interface State {
   completed: Record<string, string>; // date → day name
   lastWeight: Record<string, string>; // exerciseId → kg
   restSeconds: 60 | 90 | 120;
-  diet: Diet;
   profile: Profile;
   plans: Record<string, Plan>; // date → plan
   scales: Record<string, number>; // date → portion multiplier from Auto-Sync
@@ -66,7 +65,6 @@ interface State {
   markCompleted: (date: string, dayName: string) => void;
   unmarkCompleted: (date: string) => void;
   setRest: (s: 60 | 90 | 120) => void;
-  setDiet: (d: Diet) => void;
   setProfile: (p: Partial<Profile>) => void;
   setMeal: (date: string, slot: Slot, mealId: string) => void;
   setPlan: (date: string, plan: Plan, scale?: number) => void;
@@ -98,7 +96,6 @@ const initialData = (): Data => ({
   completed: {},
   lastWeight: {},
   restSeconds: 90,
-  diet: "veg",
   profile: { weightKg: 70, goal: "maintain" },
   plans: {},
   scales: {},
@@ -141,7 +138,6 @@ export const useStore = create<State>()(
         }),
       setRest: (restSeconds) => set({ restSeconds }),
 
-      setDiet: (diet) => set({ diet }),
       setProfile: (p) => set((s) => ({ profile: { ...s.profile, ...p } })),
       setMeal: (date, slot, mealId) => set((s) => ({ plans: { ...s.plans, [date]: { ...s.plans[date], [slot]: mealId } } })),
       setPlan: (date, plan, scale = 1) => set((s) => ({ plans: { ...s.plans, [date]: plan }, scales: { ...s.scales, [date]: scale } })),

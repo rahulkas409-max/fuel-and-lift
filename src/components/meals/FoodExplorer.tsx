@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Database, Loader2, Plus, Search, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { FOCUS, SOURCES, loadFoods, scaled, searchFoods, type DietFilter, type Focus, type Food, type SourceFilter } from "@/lib/foods";
+import { FOCUS, SOURCES, loadFoods, scaled, searchFoods, type Focus, type Food, type SourceFilter } from "@/lib/foods";
 import { useToday } from "@/lib/hooks";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
@@ -15,11 +15,6 @@ const SOURCE_FILTERS: { id: SourceFilter; label: string; emoji?: string }[] = [
   { id: "all", label: "All sources" },
   { id: "indian", label: "Indian", emoji: "🍛" },
   { id: "global", label: "Global", emoji: "🌍" },
-];
-const DIET_FILTERS: { id: DietFilter; label: string; dot?: string }[] = [
-  { id: "all", label: "Veg + non-veg" },
-  { id: "v", label: "Veg", dot: "bg-fit-green-bright" },
-  { id: "n", label: "Non-veg", dot: "bg-fit-red" },
 ];
 const FOCUS_CHIPS: { id: Focus; emoji: string }[] = [
   { id: "protein", emoji: "💪" },
@@ -34,10 +29,7 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
   const [foods, setFoods] = useState<Food[] | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const appDiet = useStore((st) => st.diet);
   const [source, setSource] = useState<SourceFilter>("all");
-  // Start on the diet chosen in the planner, so Non-Veg mode doesn't list paneer.
-  const [diet, setDiet] = useState<DietFilter>(appDiet === "veg" ? "v" : "n");
   const [focus, setFocus] = useState<Focus>("none");
   const [selected, setSelected] = useState<Food | null>(null);
   const deferred = useDeferredValue(query);
@@ -46,12 +38,6 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
     setSelected(null);
     onClose();
   };
-
-  // Re-sync the diet filter with the planner each time search opens.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- follow the planner's diet on open
-    if (open) setDiet(appDiet === "veg" ? "v" : "n");
-  }, [open, appDiet]);
 
   useEffect(() => {
     if (!open || foods) return;
@@ -69,7 +55,7 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
     };
   }, [open]);
 
-  const results = useMemo(() => (foods ? searchFoods(foods, deferred, { source, diet, focus }) : []), [foods, deferred, source, diet, focus]);
+  const results = useMemo(() => (foods ? searchFoods(foods, deferred, { source, focus }) : []), [foods, deferred, source, focus]);
   const focusMeta = focus === "none" ? null : FOCUS[focus];
 
   return (
@@ -113,13 +99,6 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
 
                   <div className="space-y-2 py-3">
                     <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                      {DIET_FILTERS.map((f) => (
-                        <Chip key={f.id} on={diet === f.id} onClick={() => setDiet(f.id)}>
-                          {f.dot && <span className={`size-2.5 rounded-full ${f.dot} mr-1.5`} />}
-                          {f.label}
-                        </Chip>
-                      ))}
-                      <span className="w-px bg-line shrink-0 my-1" />
                       {SOURCE_FILTERS.map((f) => (
                         <Chip key={f.id} on={source === f.id} onClick={() => setSource(f.id)}>
                           {f.emoji && <Emoji e={f.emoji} size={16} className="mr-1.5" />}
@@ -186,7 +165,7 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                         </ul>
                         {query && results.length === 0 && (
                           <p className="text-center text-ink-3 text-sm py-10">
-                            No match for “{query}”{diet !== "all" || focus !== "none" ? " with these filters" : ""}. Try a simpler word, or switch to “Veg + non-veg”.
+                            No match for “{query}”{focus !== "none" ? " in this section" : ""}. Try a simpler word.
                           </p>
                         )}
                         <p className="mt-8 text-[11px] leading-relaxed text-ink-3 flex gap-2">

@@ -1,4 +1,4 @@
-import { MEALS, SLOTS, mealById, type Diet, type Meal, type Slot } from "@/data/meals";
+import { MEALS, SLOTS, mealById, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
 
 export type Goal = "cut" | "maintain" | "bulk";
@@ -51,8 +51,8 @@ export const scaleMacros = (t: Targets, k: number): Targets => ({
  * totals land near the calorie and protein targets. Heavy days prefer glycogen-refill
  * meals and rest days prefer recovery meals. The search is exhaustive (≈2.5k combos).
  */
-export function syncPlan(diet: Diet, intensity: DayIntensity, targets: Targets, variety = 0): { plan: Plan; scale: number } {
-  const bySlot = SLOTS.map((s) => MEALS.filter((m) => m.diet === diet && m.slot === s.id));
+export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0): { plan: Plan; scale: number } {
+  const bySlot = SLOTS.map((s) => MEALS.filter((m) => m.slot === s.id));
   const scored: { combo: Meal[]; scale: number; score: number }[] = [];
 
   const walk = (i: number, combo: Meal[]) => {

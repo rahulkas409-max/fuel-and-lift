@@ -20,10 +20,7 @@ export function todayNutrition(s: State, today: string): { eaten: Targets; targe
   const { day } = todaySession(s, today);
   const targets = dayTargets(s.profile, day?.intensity ?? "moderate");
   const plan = s.plans[today] ?? {};
-  const meals = SLOTS.map((slot) => {
-    const m = plan[slot.id] ? mealById(plan[slot.id]!) : undefined;
-    return m?.diet === s.diet ? m : undefined;
-  });
+  const meals = SLOTS.map((slot) => (plan[slot.id] ? mealById(plan[slot.id]!) : undefined));
   const planned = scaleMacros(totals(meals), s.scales[today] ?? 1);
   const eaten = (s.foodLog[today] ?? []).reduce(
     (a, f) => ({ kcal: a.kcal + f.kcal, protein: a.protein + f.protein, carbs: a.carbs + f.carbs, fat: a.fat + f.fat }),

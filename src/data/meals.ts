@@ -173,4 +173,4 @@ export const MEALS: Meal[] = [
 ];
 
 export const mealById = (id: string) => MEALS.find((m) => m.id === id);
-export const mealsFor = (diet: Diet, slot: Slot) => MEALS.filter((m) => m.diet === diet && m.slot === slot);
+export const mealsFor = (slot: Slot) => MEALS.filter((m) => m.slot === slot);

@@ -17,6 +17,7 @@ import { burst } from "@/lib/confetti";
 import { currentRoutine, useStore } from "@/lib/store";
 import { usePaywall } from "../paywall/PaywallProvider";
 import { Sheet } from "../ui/Sheet";
+import { ExerciseAnimation } from "./ExerciseDemo";
 import { Emoji } from "../ui/Emoji";
 
 const CUSTOM_ID = "custom";
@@ -277,8 +278,9 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
             <ul className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-8">
               {list.map((e) => (
                 <li key={e.id}>
-                  <button onClick={() => onPick(e.id)} className="w-full text-left rounded-2xl bg-card-2 border border-line p-4 flex items-center justify-between gap-3 active:scale-[0.99] transition">
-                    <span>
+                  <button onClick={() => onPick(e.id)} className="w-full text-left rounded-2xl bg-card border border-line p-2.5 pr-4 flex items-center gap-3 active:scale-[0.99] transition">
+                    <ExerciseAnimation id={e.id} className="w-20 h-14 rounded-xl shrink-0" />
+                    <span className="flex-1 min-w-0">
                       <span className="block text-ink">{e.name}</span>
                       <span className="block text-xs text-ink-3 mt-0.5">{e.muscles.join(" · ")} · {e.equipment}</span>
                     </span>

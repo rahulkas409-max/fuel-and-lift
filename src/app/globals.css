@@ -111,6 +111,16 @@ body {
   }
 }
 
+/* Two-frame exercise demo: the second photo fades in and out over the first, like a GIF. */
+@keyframes exercise-flip {
+  0%, 40% { opacity: 0; }
+  50%, 90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.exercise-flip {
+  animation: exercise-flip 2.4s ease-in-out infinite;
+}
+
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -129,5 +139,10 @@ input[type="number"] {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  /* Show a still photo instead of a flickering loop */
+  .exercise-flip {
+    animation: none !important;
+    opacity: 0;
   }
 }
