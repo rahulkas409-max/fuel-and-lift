@@ -193,7 +193,13 @@ export const useStore = create<State>()(
     }),
     {
       name: "fuel-and-lift",
-      version: 1,
+      // v2: one-time fresh start after the early test data (keeps the sound setting).
+      version: 2,
+      migrate: (persisted, version) => {
+        const old = (persisted ?? {}) as Partial<Data>;
+        if (version < 2) return { ...initialData(), sound: old.sound ?? true } as unknown as State;
+        return persisted as State;
+      },
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => {
         // Keep ~120 days of logs so localStorage stays small.
