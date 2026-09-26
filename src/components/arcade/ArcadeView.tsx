@@ -2,11 +2,13 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { FormCheck } from "./FormCheck";
 import { MacroGuessr } from "./MacroGuessr";
 import { PlateBalancer } from "./PlateBalancer";
+import { Emoji } from "../ui/Emoji";
 
 const GAMES = [
   { id: "guessr", title: "Macro Guessr", emoji: "⚖️", blurb: "Two foods, one question. Trust your gut on protein and calories.", best: (b: { guessr: number }) => `Best streak ${b.guessr}` },
@@ -24,7 +26,7 @@ export function ArcadeView() {
     <AnimatePresence mode="wait">
       {game ? (
         <motion.div key={game} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 30 }}>
-          <button onClick={() => setGame(null)} className="h-11 -ml-2 px-2 mb-2 flex items-center gap-1 text-sm text-slate-400">
+          <button onClick={() => setGame(null)} className="h-11 -ml-2 px-2 mb-2 flex items-center gap-1 text-sm text-ink-2">
             <ArrowLeft size={16} /> Arcade
           </button>
           {game === "guessr" && <MacroGuessr />}
@@ -33,11 +35,13 @@ export function ArcadeView() {
         </motion.div>
       ) : (
         <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -30 }} className="space-y-3">
-          <div className="mb-5">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Arcade</p>
-            <h2 className="font-display text-5xl leading-none mt-1">
-              Train your <span className="italic text-emerald">nutrition IQ</span>
-            </h2>
+          <div className="mb-5 rounded-[28px] bg-fit-yellow-soft p-5 flex items-center gap-3 overflow-hidden">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-fit-yellow">Arcade</p>
+              <h2 className="text-2xl font-medium leading-tight mt-1 text-ink">Train your nutrition IQ</h2>
+              <p className="text-sm text-ink-2 mt-1">Three quick games. Beat your best.</p>
+            </div>
+            <Image src="/illustrations/winners.svg" alt="" width={150} height={110} className="w-[42%] max-w-40 h-auto shrink-0" />
           </div>
           {GAMES.map((g, i) => (
             <motion.button
@@ -49,11 +53,11 @@ export function ArcadeView() {
               onClick={() => setGame(g.id)}
               className="w-full text-left glass rounded-3xl p-5 flex items-center gap-4"
             >
-              <span className="size-16 shrink-0 rounded-2xl bg-slate-800 grid place-items-center text-4xl">{g.emoji}</span>
+              <span className="size-16 shrink-0 rounded-2xl bg-card-2 grid place-items-center text-4xl"><Emoji e={g.emoji} size={40} /></span>
               <span className="min-w-0">
-                <span className="block font-display text-2xl leading-tight">{g.title}</span>
-                <span className="block text-sm text-slate-400 mt-0.5">{g.blurb}</span>
-                <span className="block text-xs text-amber mt-1.5 font-mono">{g.best(best)}</span>
+                <span className="block text-xl font-medium leading-tight text-ink">{g.title}</span>
+                <span className="block text-sm text-ink-2 mt-0.5">{g.blurb}</span>
+                <span className="block text-xs text-fit-yellow mt-1.5 font-mono">{g.best(best)}</span>
               </span>
             </motion.button>
           ))}

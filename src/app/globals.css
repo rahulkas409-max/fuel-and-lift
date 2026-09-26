@@ -1,51 +1,102 @@
 @import "tailwindcss";
 
+/* Google Fit / Material 3 inspired tokens. Light by default; dark follows the device. */
 :root {
-  --bg: #0f172a;
-  --bg-deep: #0b1120;
-  --card: rgb(30 41 59 / 0.55);
-  --line: rgb(148 163 184 / 0.14);
-  --emerald: #10b981;
-  --amber: #f59e0b;
+  --page: #f8fafd;
+  --card: #ffffff;
+  --card-2: #f0f4f9;
+  --card-3: #e9eef6;
+  --line: #e1e5ea;
+  --line-strong: #c4c7c5;
+  --ink: #1f1f1f;
+  --ink-2: #444746;
+  --ink-3: #6f7471;
+  --fit-blue: #1a73e8;
+  --fit-blue-soft: #e8f0fe;
+  --fit-green: #188038;
+  --fit-green-bright: #34a853;
+  --fit-green-soft: #e6f4ea;
+  --fit-yellow: #b06000;
+  --fit-yellow-bright: #fbbc04;
+  --fit-yellow-soft: #fef7e0;
+  --fit-red: #d93025;
+  --fit-red-soft: #fce8e6;
+  --shadow: 0 1px 2px rgb(60 64 67 / 0.08), 0 1px 3px 1px rgb(60 64 67 / 0.06);
+  --shadow-lg: 0 4px 8px 3px rgb(60 64 67 / 0.1), 0 1px 3px rgb(60 64 67 / 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #111316;
+    --card: #1b1d21;
+    --card-2: #25282d;
+    --card-3: #2e3238;
+    --line: #2f3338;
+    --line-strong: #4a4f55;
+    --ink: #e3e3e3;
+    --ink-2: #c4c7c5;
+    --ink-3: #9aa0a6;
+    --fit-blue: #8ab4f8;
+    --fit-blue-soft: #1e2a3d;
+    --fit-green: #81c995;
+    --fit-green-bright: #5bb974;
+    --fit-green-soft: #1c2d22;
+    --fit-yellow: #fdd663;
+    --fit-yellow-bright: #fbbc04;
+    --fit-yellow-soft: #33291a;
+    --fit-red: #f28b82;
+    --fit-red-soft: #3b1f1d;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.5);
+  }
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-bg-deep: var(--bg-deep);
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-card-3: var(--card-3);
   --color-line: var(--line);
-  --color-emerald: var(--emerald);
-  --color-amber: var(--amber);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-display);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-fit-blue: var(--fit-blue);
+  --color-fit-blue-soft: var(--fit-blue-soft);
+  --color-fit-green: var(--fit-green);
+  --color-fit-green-bright: var(--fit-green-bright);
+  --color-fit-green-soft: var(--fit-green-soft);
+  --color-fit-yellow: var(--fit-yellow);
+  --color-fit-yellow-bright: var(--fit-yellow-bright);
+  --color-fit-yellow-soft: var(--fit-yellow-soft);
+  --color-fit-red: var(--fit-red);
+  --color-fit-red-soft: var(--fit-red-soft);
+  --font-sans: var(--font-google-sans), system-ui, sans-serif;
+  --font-display: var(--font-google-sans), system-ui, sans-serif;
+  --font-mono: var(--font-google-sans), system-ui, sans-serif;
 }
 
 html {
-  color-scheme: dark;
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--bg-deep);
-  color: #e2e8f0;
-  background-image:
-    radial-gradient(40rem 28rem at 0% 0%, rgb(16 185 129 / 0.12), transparent 60%),
-    radial-gradient(36rem 24rem at 100% 10%, rgb(245 158 11 / 0.08), transparent 60%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-  background-attachment: fixed;
+  background: var(--page);
+  color: var(--ink);
   overscroll-behavior-y: none;
+  font-feature-settings: "tnum" 0;
 }
 
 @layer components {
+  /* Material card */
   .glass {
     background: var(--card);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid var(--line);
+    box-shadow: var(--shadow);
   }
 
-  .glow-emerald {
-    box-shadow: 0 0 0 1px rgb(16 185 129 / 0.35), 0 8px 32px -8px rgb(16 185 129 / 0.45);
+  .shadow-lift {
+    box-shadow: var(--shadow-lg);
   }
 
   .tabular {
@@ -70,7 +121,7 @@ input[type="number"] {
 }
 
 :focus-visible {
-  outline: 2px solid var(--emerald);
+  outline: 2px solid var(--fit-blue);
   outline-offset: 2px;
 }
 

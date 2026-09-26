@@ -17,6 +17,7 @@ import { burst } from "@/lib/confetti";
 import { currentRoutine, useStore } from "@/lib/store";
 import { usePaywall } from "../paywall/PaywallProvider";
 import { Sheet } from "../ui/Sheet";
+import { Emoji } from "../ui/Emoji";
 
 const CUSTOM_ID = "custom";
 const uid = () => Math.random().toString(36).slice(2, 8);
@@ -68,15 +69,15 @@ function Builder({ onDone }: { onDone: () => void }) {
   return (
     <div className="pb-2">
       <label className="block">
-        <span className="text-xs text-slate-400">Routine name</span>
+        <span className="text-xs text-ink-2">Routine name</span>
         <input
           value={draft.name}
           onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           maxLength={40}
-          className="mt-1 w-full h-12 rounded-xl bg-slate-800 border border-line px-4 font-display text-2xl outline-none focus:border-emerald/60"
+          className="mt-1 w-full h-12 rounded-xl bg-card-2 border border-line px-4 font-display text-2xl outline-none focus:border-fit-blue/60"
         />
       </label>
-      <p className="text-xs text-slate-500 mt-2">Drag ⋮⋮ to reorder days. Intensity drives your auto-synced calories.</p>
+      <p className="text-xs text-ink-3 mt-2">Drag ⋮⋮ to reorder days. Intensity drives your auto-synced calories.</p>
 
       <Reorder.Group axis="y" values={draft.days} onReorder={setDays} className="mt-4 space-y-3">
         {draft.days.map((day, i) => (
@@ -97,24 +98,24 @@ function Builder({ onDone }: { onDone: () => void }) {
         <button
           onClick={() => setDays([...draft.days, { id: `c-${uid()}`, name: `Day ${draft.days.length + 1}`, focus: "Custom day", intensity: "moderate", exercises: [] }])}
           disabled={draft.days.length >= 7}
-          className="h-12 rounded-xl border border-dashed border-slate-600 text-slate-300 text-sm flex items-center justify-center gap-2 disabled:opacity-40"
+          className="h-12 rounded-xl border border-dashed border-line-strong text-ink-2 text-sm flex items-center justify-center gap-2 disabled:opacity-40"
         >
           <Plus size={16} /> Training day
         </button>
         <button
           onClick={() => setDays([...draft.days, { id: `c-${uid()}`, name: "Rest Day", focus: "Recovery", intensity: "rest", exercises: [] }])}
           disabled={draft.days.length >= 7}
-          className="h-12 rounded-xl border border-dashed border-slate-600 text-slate-300 text-sm flex items-center justify-center gap-2 disabled:opacity-40"
+          className="h-12 rounded-xl border border-dashed border-line-strong text-ink-2 text-sm flex items-center justify-center gap-2 disabled:opacity-40"
         >
-          🛌 Rest day
+          <Emoji e="🛌" size={18} /> Rest day
         </button>
       </div>
 
-      <div className="sticky bottom-0 -mx-5 sm:-mx-7 px-5 sm:px-7 pt-4 pb-1 mt-4 bg-gradient-to-t from-slate-900 via-slate-900 to-transparent">
+      <div className="sticky bottom-0 -mx-5 sm:-mx-7 px-5 sm:px-7 pt-4 pb-1 mt-4 bg-gradient-to-t from-card via-card to-transparent">
         <button
           onClick={save}
           disabled={draft.days.length === 0}
-          className="w-full h-14 rounded-2xl bg-emerald text-slate-950 font-semibold active:scale-[0.98] transition disabled:opacity-40"
+          className="w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold active:scale-[0.98] transition disabled:opacity-40"
         >
           Save Custom Workout
         </button>
@@ -147,11 +148,11 @@ function DayEditor({
     onPatch({ exercises: day.exercises.map((e, j) => (j === i ? { ...e, ...p } : e)) });
 
   return (
-    <Reorder.Item value={day} dragListener={false} dragControls={controls} className="rounded-2xl bg-slate-800/60 border border-line" whileDrag={{ scale: 1.02, boxShadow: "0 20px 40px -12px rgb(0 0 0 / 0.6)" }}>
+    <Reorder.Item value={day} dragListener={false} dragControls={controls} className="rounded-2xl bg-card-2 border border-line" whileDrag={{ scale: 1.02, boxShadow: "0 20px 40px -12px rgb(0 0 0 / 0.6)" }}>
       <div className="flex items-center gap-1 p-2">
         <button
           onPointerDown={(e) => controls.start(e)}
-          className="size-11 grid place-items-center text-slate-500 touch-none cursor-grab active:cursor-grabbing"
+          className="size-11 grid place-items-center text-ink-3 touch-none cursor-grab active:cursor-grabbing"
           aria-label={`Drag to reorder ${day.name}`}
         >
           <GripVertical size={20} />
@@ -161,16 +162,16 @@ function DayEditor({
           onChange={(e) => onPatch({ name: e.target.value })}
           maxLength={30}
           aria-label="Day name"
-          className="flex-1 min-w-0 h-11 bg-transparent font-semibold text-slate-100 outline-none"
+          className="flex-1 min-w-0 h-11 bg-transparent font-semibold text-ink outline-none"
         />
         <div className="flex">
-          <button onClick={() => onMove(-1)} disabled={index === 0} className="size-10 grid place-items-center text-slate-400 disabled:opacity-25" aria-label="Move day up">
+          <button onClick={() => onMove(-1)} disabled={index === 0} className="size-10 grid place-items-center text-ink-2 disabled:opacity-25" aria-label="Move day up">
             <ChevronUp size={18} />
           </button>
-          <button onClick={() => onMove(1)} disabled={index === count - 1} className="size-10 grid place-items-center text-slate-400 disabled:opacity-25" aria-label="Move day down">
+          <button onClick={() => onMove(1)} disabled={index === count - 1} className="size-10 grid place-items-center text-ink-2 disabled:opacity-25" aria-label="Move day down">
             <ChevronDown size={18} />
           </button>
-          <button onClick={() => setExpanded(!expanded)} className="h-10 px-3 rounded-lg text-xs text-emerald" aria-expanded={expanded}>
+          <button onClick={() => setExpanded(!expanded)} className="h-10 px-3 rounded-lg text-xs text-fit-blue" aria-expanded={expanded}>
             {expanded ? "Done" : `${day.exercises.length} ex`}
           </button>
         </div>
@@ -185,12 +186,12 @@ function DayEditor({
                   <button
                     key={k}
                     onClick={() => onPatch({ intensity: k })}
-                    className={`h-9 px-3 rounded-full text-xs transition ${day.intensity === k ? "bg-amber text-slate-950 font-semibold" : "bg-slate-900 text-slate-400"}`}
+                    className={`h-9 px-3 rounded-full text-xs transition ${day.intensity === k ? "bg-fit-yellow text-white font-semibold" : "bg-card text-ink-2"}`}
                   >
-                    {INTENSITY_META[k].emoji} {INTENSITY_META[k].label}
+                    <Emoji e={INTENSITY_META[k].emoji} size={16} className="mr-1 -mt-0.5 align-middle" />{INTENSITY_META[k].label}
                   </button>
                 ))}
-                <button onClick={() => onPatch({ intensity: inferIntensity(day.exercises) })} className="h-9 px-3 rounded-full text-xs text-emerald flex items-center gap-1">
+                <button onClick={() => onPatch({ intensity: inferIntensity(day.exercises) })} className="h-9 px-3 rounded-full text-xs text-fit-blue flex items-center gap-1">
                   <Wand2 size={12} /> Auto
                 </button>
               </div>
@@ -198,19 +199,19 @@ function DayEditor({
               {day.exercises.map((e, i) => {
                 const ex = exerciseById(e.exerciseId);
                 return (
-                  <div key={`${e.exerciseId}-${i}`} className="rounded-xl bg-slate-900/70 p-3">
+                  <div key={`${e.exerciseId}-${i}`} className="rounded-xl bg-card p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm text-slate-100 leading-snug">{ex?.name}</p>
-                        <p className="text-[11px] text-slate-500">{ex?.muscles.slice(0, 2).join(" · ")}</p>
+                        <p className="text-sm text-ink leading-snug">{ex?.name}</p>
+                        <p className="text-[11px] text-ink-3">{ex?.muscles.slice(0, 2).join(" · ")}</p>
                       </div>
-                      <button onClick={() => onPatch({ exercises: day.exercises.filter((_, j) => j !== i) })} className="size-9 -mr-1 -mt-1 shrink-0 grid place-items-center text-slate-500 hover:text-rose-400" aria-label={`Remove ${ex?.name}`}>
+                      <button onClick={() => onPatch({ exercises: day.exercises.filter((_, j) => j !== i) })} className="size-9 -mr-1 -mt-1 shrink-0 grid place-items-center text-ink-3 hover:text-fit-red" aria-label={`Remove ${ex?.name}`}>
                         <X size={16} />
                       </button>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[11px] text-slate-500 w-9">Sets</span>
-                      <div className="flex items-center rounded-lg bg-slate-800">
+                      <span className="text-[11px] text-ink-3 w-9">Sets</span>
+                      <div className="flex items-center rounded-lg bg-card-2">
                         <button onClick={() => patchExercise(i, { sets: Math.max(1, e.sets - 1) })} className="size-10 grid place-items-center" aria-label="Fewer sets">
                           <Minus size={14} />
                         </button>
@@ -219,12 +220,12 @@ function DayEditor({
                           <Plus size={14} />
                         </button>
                       </div>
-                      <span className="text-[11px] text-slate-500 ml-2">Reps</span>
+                      <span className="text-[11px] text-ink-3 ml-2">Reps</span>
                       <input
                         value={e.reps}
                         onChange={(ev) => patchExercise(i, { reps: ev.target.value.slice(0, 8) })}
                         aria-label={`${ex?.name} reps`}
-                        className="flex-1 min-w-0 max-w-24 h-10 rounded-lg bg-slate-800 text-center font-mono text-sm outline-none focus:ring-1 focus:ring-emerald"
+                        className="flex-1 min-w-0 max-w-24 h-10 rounded-lg bg-card-2 text-center font-mono text-sm outline-none focus:ring-1 focus:ring-fit-blue"
                       />
                     </div>
                   </div>
@@ -232,10 +233,10 @@ function DayEditor({
               })}
 
               <div className="flex gap-2">
-                <button onClick={onAddExercise} className="flex-1 h-11 rounded-xl bg-emerald/15 text-emerald text-sm font-medium flex items-center justify-center gap-2">
+                <button onClick={onAddExercise} className="flex-1 h-11 rounded-xl bg-fit-blue-soft text-fit-blue text-sm font-medium flex items-center justify-center gap-2">
                   <Plus size={16} /> Add exercise
                 </button>
-                <button onClick={onRemove} className="h-11 px-4 rounded-xl bg-slate-900 text-slate-400 hover:text-rose-400" aria-label={`Delete ${day.name}`}>
+                <button onClick={onRemove} className="h-11 px-4 rounded-xl bg-card text-ink-2 hover:text-fit-red" aria-label={`Delete ${day.name}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -255,20 +256,20 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur flex flex-col" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}>
+        <motion.div className="fixed inset-0 z-[60] bg-page backdrop-blur flex flex-col" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}>
           <div className="max-w-2xl w-full mx-auto flex flex-col h-full px-4 pt-[max(1rem,env(safe-area-inset-top))]">
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search exercises" className="w-full h-12 rounded-xl bg-slate-800 pl-10 pr-3 outline-none focus:ring-1 focus:ring-emerald" />
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search exercises" className="w-full h-12 rounded-xl bg-card-2 pl-10 pr-3 outline-none focus:ring-1 focus:ring-fit-blue" />
               </div>
-              <button onClick={onClose} className="size-12 grid place-items-center rounded-xl text-slate-400" aria-label="Close exercise picker">
+              <button onClick={onClose} className="size-12 grid place-items-center rounded-xl text-ink-2" aria-label="Close exercise picker">
                 <X />
               </button>
             </div>
             <div className="flex gap-2 overflow-x-auto no-scrollbar py-3">
               {[null, ...MUSCLES].map((m) => (
-                <button key={m ?? "all"} onClick={() => setMuscle(m)} className={`shrink-0 h-9 px-3 rounded-full text-xs ${muscle === m ? "bg-emerald text-slate-950 font-semibold" : "bg-slate-800 text-slate-400"}`}>
+                <button key={m ?? "all"} onClick={() => setMuscle(m)} className={`shrink-0 h-9 px-3 rounded-full text-xs ${muscle === m ? "bg-fit-blue text-white font-semibold" : "bg-card-2 text-ink-2"}`}>
                   {m ?? "All"}
                 </button>
               ))}
@@ -276,16 +277,16 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
             <ul className="flex-1 overflow-y-auto no-scrollbar space-y-2 pb-8">
               {list.map((e) => (
                 <li key={e.id}>
-                  <button onClick={() => onPick(e.id)} className="w-full text-left rounded-2xl bg-slate-800/60 border border-line p-4 flex items-center justify-between gap-3 active:scale-[0.99] transition">
+                  <button onClick={() => onPick(e.id)} className="w-full text-left rounded-2xl bg-card-2 border border-line p-4 flex items-center justify-between gap-3 active:scale-[0.99] transition">
                     <span>
-                      <span className="block text-slate-100">{e.name}</span>
-                      <span className="block text-xs text-slate-500 mt-0.5">{e.muscles.join(" · ")} · {e.equipment}</span>
+                      <span className="block text-ink">{e.name}</span>
+                      <span className="block text-xs text-ink-3 mt-0.5">{e.muscles.join(" · ")} · {e.equipment}</span>
                     </span>
-                    <span className="font-mono text-xs text-amber shrink-0">{e.sets}×{e.reps}</span>
+                    <span className="font-mono text-xs text-fit-yellow shrink-0">{e.sets}×{e.reps}</span>
                   </button>
                 </li>
               ))}
-              {list.length === 0 && <li className="text-center text-slate-500 py-10">No exercises match.</li>}
+              {list.length === 0 && <li className="text-center text-ink-3 py-10">No exercises match.</li>}
             </ul>
           </div>
         </motion.div>

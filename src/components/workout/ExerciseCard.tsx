@@ -28,24 +28,24 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.3) }}
-      className={`glass rounded-3xl p-4 sm:p-5 transition-colors ${allDone ? "border-emerald/40" : ""}`}
+      className={`glass rounded-3xl p-4 sm:p-5 transition-colors ${allDone ? "border-fit-green-bright/50" : ""}`}
     >
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-semibold text-slate-50 text-[17px] leading-snug">{ex.name}</h3>
-          <p className="text-xs text-slate-400 mt-0.5 truncate">{ex.muscles.join(" · ")}</p>
+          <h3 className="font-semibold text-ink text-[17px] leading-snug">{ex.name}</h3>
+          <p className="text-xs text-ink-2 mt-0.5 truncate">{ex.muscles.join(" · ")}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-mono tabular text-sm text-amber">
+          <p className="font-mono tabular text-sm text-fit-yellow">
             {item.sets} × {item.reps}
           </p>
-          <p className={`text-[11px] mt-0.5 ${allDone ? "text-emerald" : "text-slate-500"}`}>
+          <p className={`text-[11px] mt-0.5 ${allDone ? "text-fit-green" : "text-ink-3"}`}>
             {doneCount}/{item.sets} sets
           </p>
         </div>
       </header>
 
-      <div className="mt-3 grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 items-center text-[11px] uppercase tracking-wider text-slate-500 px-0.5">
+      <div className="mt-3 grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 items-center text-[11px] font-medium text-ink-3 px-0.5">
         <span>Set</span>
         <span>kg</span>
         <span>Reps</span>
@@ -58,7 +58,7 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
             animate={{ opacity: r.done ? 0.65 : 1 }}
             className="grid grid-cols-[2rem_1fr_1fr_2.75rem] gap-2 items-center"
           >
-            <span className={`font-mono tabular text-sm text-center ${r.done ? "text-emerald" : "text-slate-400"}`}>{i + 1}</span>
+            <span className={`font-mono tabular text-sm text-center ${r.done ? "text-fit-green" : "text-ink-2"}`}>{i + 1}</span>
             <input
               inputMode="decimal"
               type="number"
@@ -68,7 +68,7 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
               placeholder={lastWeight ?? "0"}
               onChange={(e) => update(i, { weight: e.target.value })}
               aria-label={`${ex.name} set ${i + 1} weight in kg`}
-              className="h-11 w-full rounded-xl bg-slate-800/80 border border-line px-3 font-mono tabular text-base text-slate-100 placeholder:text-slate-600 focus:border-emerald/60 outline-none"
+              className="h-11 w-full rounded-xl bg-card-2 border border-line px-3 font-mono tabular text-base text-ink placeholder:text-ink-3 focus:border-fit-blue/60 outline-none"
             />
             <input
               inputMode="numeric"
@@ -78,7 +78,7 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
               placeholder={item.reps.split("-")[0].replace(/\D.*$/, "") || "0"}
               onChange={(e) => update(i, { reps: e.target.value })}
               aria-label={`${ex.name} set ${i + 1} reps`}
-              className="h-11 w-full rounded-xl bg-slate-800/80 border border-line px-3 font-mono tabular text-base text-slate-100 placeholder:text-slate-600 focus:border-emerald/60 outline-none"
+              className="h-11 w-full rounded-xl bg-card-2 border border-line px-3 font-mono tabular text-base text-ink placeholder:text-ink-3 focus:border-fit-blue/60 outline-none"
             />
             <Checkbox
               checked={r.done}

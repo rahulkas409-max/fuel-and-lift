@@ -39,15 +39,15 @@ export function Heatmap({ today }: { today: string }) {
     <section className="glass rounded-3xl p-5">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Consistency</p>
-          <p className="font-display text-4xl mt-1 flex items-center gap-2">
-            <Flame className="text-amber" size={28} />
-            {streak} <span className="text-lg text-slate-400 font-sans">session streak</span>
+          <p className="text-xs font-medium text-ink-2">Consistency</p>
+          <p className="font-display text-3xl mt-1 flex items-center gap-2">
+            <Flame className="text-fit-yellow" size={28} />
+            {streak} <span className="text-lg text-ink-2 font-sans">session streak</span>
           </p>
         </div>
-        <div className="text-right text-xs text-slate-400 space-y-0.5">
-          <p><span className="font-mono text-slate-200">{thisWeek}</span> this week</p>
-          <p><span className="font-mono text-slate-200">{total}</span> all-time</p>
+        <div className="text-right text-xs text-ink-2 space-y-0.5">
+          <p><span className="font-mono text-ink">{thisWeek}</span> this week</p>
+          <p><span className="font-mono text-ink">{total}</span> all-time</p>
         </div>
       </div>
       <div className="mt-4 flex gap-[3px] overflow-x-auto no-scrollbar" role="img" aria-label={`${total} completed sessions in the last ${WEEKS} weeks`}>
@@ -58,14 +58,14 @@ export function Heatmap({ today }: { today: string }) {
                 key={c.key}
                 title={c.done ? `${c.key}: ${c.label}` : c.key}
                 className={`size-[14px] sm:size-4 rounded-[4px] ${
-                  c.future ? "bg-transparent" : c.done ? "bg-emerald shadow-[0_0_8px_rgb(16_185_129/0.6)]" : "bg-slate-800"
-                } ${c.key === today ? "ring-1 ring-amber" : ""}`}
+                  c.future ? "bg-transparent" : c.done ? "bg-fit-green-bright" : "bg-card-2"
+                } ${c.key === today ? "ring-2 ring-fit-blue" : ""}`}
               />
             ))}
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-slate-500 mt-3">Up to 2 rest days in a row won&apos;t break your streak.</p>
+      <p className="text-[11px] text-ink-3 mt-3">Up to 2 rest days in a row won&apos;t break your streak.</p>
     </section>
   );
 }

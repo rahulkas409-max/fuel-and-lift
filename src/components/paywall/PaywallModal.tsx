@@ -18,17 +18,17 @@ export function PaywallModal({ open, onClose, onUnlocked }: { open: boolean; onC
   const grantPass = useStore((s) => s.grantPass);
   return (
     <Sheet open={open} onClose={onClose} title="Custom Pass">
-      <div className="size-12 rounded-2xl bg-emerald/15 text-emerald grid place-items-center">
+      <div className="size-12 rounded-2xl bg-fit-blue-soft text-fit-blue grid place-items-center">
         <Dumbbell />
       </div>
-      <h2 className="font-display text-3xl leading-tight mt-4">
-        Unlock the Custom Routine Builder and Auto-Synced Meal Engine for just <span className="text-amber">₹9</span>.
+      <h2 className="font-display text-2xl leading-tight mt-4">
+        Unlock the Custom Routine Builder and Auto-Synced Meal Engine for just <span className="text-fit-yellow">₹9</span>.
       </h2>
-      <p className="text-slate-400 text-sm mt-2">One payment, 7 days of access. No auto-renewal.</p>
+      <p className="text-ink-2 text-sm mt-2">One payment, 7 days of access. No auto-renewal.</p>
       <ul className="mt-5 space-y-3">
         {PERKS.map((p) => (
-          <li key={p} className="flex gap-3 text-sm text-slate-200">
-            <span className="mt-0.5 size-5 shrink-0 rounded-full bg-emerald/20 text-emerald grid place-items-center">
+          <li key={p} className="flex gap-3 text-sm text-ink">
+            <span className="mt-0.5 size-5 shrink-0 rounded-full bg-fit-blue-soft text-fit-blue grid place-items-center">
               <Check size={12} strokeWidth={3} />
             </span>
             {p}
@@ -36,7 +36,7 @@ export function PaywallModal({ open, onClose, onUnlocked }: { open: boolean; onC
         ))}
       </ul>
       {SANDBOX && (
-        <p className="mt-5 rounded-xl border border-amber/40 bg-amber/10 p-3 text-xs text-amber">
+        <p className="mt-5 rounded-xl border border-fit-yellow/40 bg-fit-yellow-soft p-3 text-xs text-fit-yellow">
           Sandbox Mode: no Razorpay key found, so this payment is simulated and free.
         </p>
       )}

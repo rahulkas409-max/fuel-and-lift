@@ -38,6 +38,14 @@ All data lives in the browser's localStorage.
 - Plate Balancer: 4 challenges.
 - Form Check: swipe through 12 lifting cues.
 
+## Design
+
+- Inspired by Google Fit and Material 3: a light theme with **Google Sans**, Google blue and green, the two progress rings, and a pill-style navigation bar.
+- Dark mode follows the device setting automatically.
+- Illustrations come from [unDraw](https://undraw.co) via `undraw-svg` (MIT) and are recoloured to the brand blue.
+- Food and game icons are [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT), so they look the same on every device.
+- The logo lives in `public/logo.svg`. Run `node scripts/build-icons.mjs` to regenerate the favicon and the iOS/Android home-screen icons.
+
 ## Food data sources
 
 | Source | Foods | Notes |

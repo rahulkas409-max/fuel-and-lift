@@ -11,6 +11,7 @@ import { currentRoutine, useStore } from "@/lib/store";
 import { CustomRoutineModal } from "./CustomRoutineModal";
 import { ExerciseCard } from "./ExerciseCard";
 import { Heatmap } from "./Heatmap";
+import { Emoji } from "../ui/Emoji";
 
 export function WorkoutView() {
   const today = useToday();
@@ -56,20 +57,20 @@ export function WorkoutView() {
                 key={r.id}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => state.setRoutine(r.id)}
-                className={`snap-start shrink-0 w-[15.5rem] text-left rounded-3xl p-4 border transition-colors ${on ? "bg-emerald/10 border-emerald/50" : "glass"}`}
+                className={`snap-start shrink-0 w-[15.5rem] text-left rounded-3xl p-4 border transition-colors ${on ? "bg-fit-blue-soft border-fit-blue/50" : "glass"}`}
               >
-                <p className={`text-[11px] uppercase tracking-[0.18em] ${on ? "text-emerald" : "text-slate-500"}`}>
+                <p className={`text-[11px] font-medium ${on ? "text-fit-blue" : "text-ink-3"}`}>
                   {r.days.length} days {r.id === state.customRoutine?.id && "· custom"}
                 </p>
-                <p className="font-display text-2xl leading-tight mt-1 text-slate-50">{r.name}</p>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{r.blurb}</p>
+                <p className="font-display text-2xl leading-tight mt-1 text-ink">{r.name}</p>
+                <p className="text-xs text-ink-2 mt-1 line-clamp-2">{r.blurb}</p>
               </motion.button>
             );
           })}
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => setBuilderOpen(true)}
-            className="snap-start shrink-0 w-44 rounded-3xl p-4 border border-dashed border-amber/50 text-amber flex flex-col justify-between text-left"
+            className="snap-start shrink-0 w-44 rounded-3xl p-4 border border-dashed border-fit-yellow/50 text-fit-yellow flex flex-col justify-between text-left"
           >
             {state.customRoutine ? <Pencil size={22} /> : <Plus size={22} />}
             <span className="font-semibold text-sm">{state.customRoutine ? "Edit custom routine" : "Build custom routine"}</span>
@@ -85,11 +86,11 @@ export function WorkoutView() {
             <button
               key={d.id}
               onClick={() => state.setDay(routine.id, d.id)}
-              className={`relative shrink-0 h-11 px-4 rounded-full text-sm font-medium transition-colors ${on ? "text-slate-950" : "text-slate-300 bg-slate-800/70"}`}
+              className={`relative shrink-0 h-11 px-4 rounded-full text-sm font-medium transition-colors ${on ? "text-white" : "text-ink-2 bg-card-2"}`}
             >
-              {on && <motion.span layoutId="day-chip" className="absolute inset-0 rounded-full bg-emerald" transition={{ type: "spring", damping: 25, stiffness: 350 }} />}
+              {on && <motion.span layoutId="day-chip" className="absolute inset-0 rounded-full bg-fit-blue" transition={{ type: "spring", damping: 25, stiffness: 350 }} />}
               <span className="relative">
-                {INTENSITY_META[d.intensity].emoji} {d.name}
+                <Emoji e={INTENSITY_META[d.intensity].emoji} size={16} className="mr-1.5 -mt-0.5 align-middle" />{d.name}
               </span>
             </button>
           );
@@ -102,18 +103,18 @@ export function WorkoutView() {
             {/* Session header */}
             <div className="flex items-end justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs uppercase tracking-[0.2em] text-amber">{INTENSITY_META[day.intensity].label} day</p>
-                <h2 className="font-display text-4xl sm:text-5xl leading-none mt-1 text-white">{day.name}</h2>
-                <p className="text-sm text-slate-400 mt-1.5">{day.focus}</p>
+                <p className="text-xs font-medium text-fit-yellow">{INTENSITY_META[day.intensity].label} day</p>
+                <h2 className="font-display text-3xl sm:text-4xl leading-none mt-1 text-ink">{day.name}</h2>
+                <p className="text-sm text-ink-2 mt-1.5">{day.focus}</p>
               </div>
               <ProgressRing pct={pct} label={`${doneSets}/${totalSets}`} />
             </div>
 
             {day.exercises.length === 0 ? (
               <div className="glass rounded-3xl p-8 text-center">
-                <p className="text-5xl">🛌</p>
-                <p className="font-display text-3xl mt-3">Rest & recover</p>
-                <p className="text-slate-400 text-sm mt-1">Walk, stretch, sleep. Your meals are set to recovery mode.</p>
+                <Emoji e="🛌" size={64} className="mx-auto" />
+                <p className="font-display text-2xl mt-3">Rest & recover</p>
+                <p className="text-ink-2 text-sm mt-1">Walk, stretch, sleep. Your meals are set to recovery mode.</p>
               </div>
             ) : (
               day.exercises.map((item, i) => (
@@ -122,11 +123,11 @@ export function WorkoutView() {
             )}
 
             {completedToday ? (
-              <div className="flex items-center justify-between rounded-2xl bg-emerald/10 border border-emerald/40 px-4 h-14">
-                <span className="flex items-center gap-2 text-emerald font-medium">
+              <div className="flex items-center justify-between rounded-2xl bg-fit-green-soft border border-fit-green-bright/40 px-4 h-14">
+                <span className="flex items-center gap-2 text-fit-green font-medium">
                   <Check size={18} /> Session logged: {completedToday}
                 </span>
-                <button onClick={() => state.unmarkCompleted(today)} className="text-xs text-slate-400 flex items-center gap-1 h-10 px-2">
+                <button onClick={() => state.unmarkCompleted(today)} className="text-xs text-ink-2 flex items-center gap-1 h-10 px-2">
                   <Undo2 size={14} /> Undo
                 </button>
               </div>
@@ -137,7 +138,7 @@ export function WorkoutView() {
                   play("win");
                   celebrate();
                 }}
-                className="w-full h-14 rounded-2xl bg-slate-800 border border-line font-medium text-slate-200 active:scale-[0.98] transition"
+                className="w-full h-14 rounded-2xl bg-card-2 border border-line font-medium text-ink active:scale-[0.98] transition"
               >
                 {day.exercises.length ? "Finish session" : "Log rest day"}
               </button>
@@ -158,13 +159,13 @@ function ProgressRing({ pct, label }: { pct: number; label: string }) {
   return (
     <div className="relative size-[68px] shrink-0">
       <svg viewBox="0 0 64 64" className="size-full -rotate-90">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="rgb(51 65 85 / 0.7)" strokeWidth="6" />
+        <circle cx="32" cy="32" r={r} fill="none" stroke="var(--card-3)" strokeWidth="6" />
         <motion.circle
-          cx="32" cy="32" r={r} fill="none" stroke={pct === 1 ? "#10b981" : "#f59e0b"} strokeWidth="6" strokeLinecap="round"
+          cx="32" cy="32" r={r} fill="none" stroke={pct === 1 ? "var(--fit-green-bright)" : "var(--fit-blue)"} strokeWidth="6" strokeLinecap="round"
           strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ type: "spring", damping: 20 }}
         />
       </svg>
-      <span className="absolute inset-0 grid place-items-center font-mono tabular text-xs text-slate-200">{label}</span>
+      <span className="absolute inset-0 grid place-items-center font-mono tabular text-xs text-ink">{label}</span>
     </div>
   );
 }

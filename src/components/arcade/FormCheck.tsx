@@ -7,6 +7,7 @@ import { FORM_CARDS, type FormCard } from "@/data/games";
 import { celebrate } from "@/lib/confetti";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
+import { Emoji } from "../ui/Emoji";
 
 const ROUND = 3;
 const draw = () => [...FORM_CARDS].sort(() => Math.random() - 0.5).slice(0, ROUND);
@@ -51,26 +52,26 @@ export function FormCheck() {
   return (
     <div>
       <div className="flex justify-between text-sm">
-        <span className="text-slate-400">Card {Math.min(i + 1, ROUND)} / {ROUND}</span>
-        <span className="text-slate-500">Score <span className="font-mono text-emerald">{score}</span> · Best <span className="font-mono text-slate-300">{best}/{ROUND}</span></span>
+        <span className="text-ink-2">Card {Math.min(i + 1, ROUND)} / {ROUND}</span>
+        <span className="text-ink-3">Score <span className="font-mono text-fit-blue">{score}</span> · Best <span className="font-mono text-ink-2">{best}/{ROUND}</span></span>
       </div>
-      <h2 className="font-display text-3xl text-center mt-3">
-        Good form or <span className="italic text-rose-300">ego lifting</span>?
+      <h2 className="font-display text-2xl text-center mt-3">
+        Good form or <span className="text-fit-red">ego lifting</span>?
       </h2>
-      <p className="text-center text-sm text-slate-400">Swipe right for good form, left for bad.</p>
+      <p className="text-center text-sm text-ink-2">Swipe right for good form, left for bad.</p>
 
       <div className="relative h-80 mt-6">
         <AnimatePresence>
           {!done && !reveal && cards[i] && <SwipeCard key={cards[i].id} card={cards[i]} onAnswer={answer} />}
         </AnimatePresence>
         {reveal && (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className={`absolute inset-0 rounded-3xl p-6 flex flex-col justify-center text-center border ${reveal.correct ? "bg-emerald/10 border-emerald/50" : "bg-rose-500/10 border-rose-400/50"}`}>
-            <p className={`font-display text-4xl ${reveal.correct ? "text-emerald" : "text-rose-300"}`}>{reveal.correct ? "Correct!" : "Oops!"}</p>
-            <p className="text-sm text-slate-300 mt-2">
-              That&apos;s <b className={reveal.card.good ? "text-emerald" : "text-rose-300"}>{reveal.card.good ? "good form" : "bad form"}</b>.
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className={`absolute inset-0 rounded-3xl p-6 flex flex-col justify-center text-center border ${reveal.correct ? "bg-fit-blue-soft border-fit-blue/50" : "bg-fit-red-soft border-fit-red/50"}`}>
+            <p className={`font-display text-3xl ${reveal.correct ? "text-fit-blue" : "text-fit-red"}`}>{reveal.correct ? "Correct!" : "Oops!"}</p>
+            <p className="text-sm text-ink-2 mt-2">
+              That&apos;s <b className={reveal.card.good ? "text-fit-blue" : "text-fit-red"}>{reveal.card.good ? "good form" : "bad form"}</b>.
             </p>
-            <p className="text-sm text-slate-400 mt-3">{reveal.card.why}</p>
-            <button onClick={next} className="mt-5 mx-auto h-12 px-6 rounded-xl bg-slate-800 font-medium">
+            <p className="text-sm text-ink-2 mt-3">{reveal.card.why}</p>
+            <button onClick={next} className="mt-5 mx-auto h-12 px-6 rounded-xl bg-card-2 font-medium">
               {i + 1 >= cards.length ? "See score" : "Next card"}
             </button>
           </motion.div>
@@ -78,10 +79,10 @@ export function FormCheck() {
         {done && (
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="absolute inset-0 glass rounded-3xl grid place-items-center text-center p-6">
             <div>
-              <p className="text-6xl">{score === ROUND ? "🏆" : score >= 2 ? "💪" : "🧐"}</p>
-              <p className="font-display text-5xl mt-2">{score}/{ROUND}</p>
-              <p className="text-slate-400 text-sm mt-1">{score === ROUND ? "Form police approved." : "Brush up and try a new deck."}</p>
-              <button onClick={restart} className="mt-5 h-12 px-6 rounded-xl bg-emerald text-slate-950 font-semibold inline-flex items-center gap-2">
+              <Emoji e={score === ROUND ? "🏆" : score >= 2 ? "💪" : "🎯"} size={72} className="mx-auto" />
+              <p className="font-display text-4xl mt-2">{score}/{ROUND}</p>
+              <p className="text-ink-2 text-sm mt-1">{score === ROUND ? "Form police approved." : "Brush up and try a new deck."}</p>
+              <button onClick={restart} className="mt-5 h-12 px-6 rounded-xl bg-fit-blue text-white font-semibold inline-flex items-center gap-2">
                 <RotateCcw size={16} /> New deck
               </button>
             </div>
@@ -91,10 +92,10 @@ export function FormCheck() {
 
       {!done && !reveal && (
         <div className="flex justify-center gap-6 mt-6">
-          <button onClick={() => answer(false)} className="size-16 rounded-full border-2 border-rose-400 text-rose-300 grid place-items-center" aria-label="Bad form">
+          <button onClick={() => answer(false)} className="size-16 rounded-full border-2 border-fit-red text-fit-red grid place-items-center" aria-label="Bad form">
             <X size={28} />
           </button>
-          <button onClick={() => answer(true)} className="size-16 rounded-full border-2 border-emerald text-emerald grid place-items-center" aria-label="Good form">
+          <button onClick={() => answer(true)} className="size-16 rounded-full border-2 border-fit-blue text-fit-blue grid place-items-center" aria-label="Good form">
             <Check size={28} />
           </button>
         </div>
@@ -115,7 +116,7 @@ function SwipeCard({ card, onAnswer }: { card: FormCard; onAnswer: (good: boolea
 
   return (
     <motion.div
-      className="absolute inset-0 glass rounded-3xl p-6 flex flex-col justify-center items-center text-center cursor-grab active:cursor-grabbing touch-none bg-slate-800/70"
+      className="absolute inset-0 glass rounded-3xl p-6 flex flex-col justify-center items-center text-center cursor-grab active:cursor-grabbing touch-none bg-card-2"
       style={{ x, rotate }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
@@ -128,13 +129,13 @@ function SwipeCard({ card, onAnswer }: { card: FormCard; onAnswer: (good: boolea
       animate={{ scale: 1, opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <span className="text-7xl">{card.emoji}</span>
-      <p className="text-xs uppercase tracking-[0.25em] text-amber mt-4">{card.lift}</p>
+      <Emoji e={card.emoji} size={80} />
+      <p className="text-xs font-medium text-fit-yellow mt-4">{card.lift}</p>
       <p className="font-display text-2xl leading-snug mt-2">“{card.cue}”</p>
-      <motion.span style={{ opacity: goodOpacity }} className="absolute top-5 left-5 -rotate-12 rounded-lg border-2 border-emerald text-emerald px-2 py-0.5 font-bold">
+      <motion.span style={{ opacity: goodOpacity }} className="absolute top-5 left-5 -rotate-12 rounded-lg border-2 border-fit-blue text-fit-blue px-2 py-0.5 font-bold">
         GOOD
       </motion.span>
-      <motion.span style={{ opacity: badOpacity }} className="absolute top-5 right-5 rotate-12 rounded-lg border-2 border-rose-400 text-rose-300 px-2 py-0.5 font-bold">
+      <motion.span style={{ opacity: badOpacity }} className="absolute top-5 right-5 rotate-12 rounded-lg border-2 border-fit-red text-fit-red px-2 py-0.5 font-bold">
         BAD
       </motion.span>
     </motion.div>

@@ -7,6 +7,7 @@ import { GUESSR_PAIRS, type FoodPortion, type GuessrPair } from "@/data/games";
 import { burst } from "@/lib/confetti";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
+import { Emoji } from "../ui/Emoji";
 
 const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
 const winner = (p: GuessrPair) => (p.question === "protein" ? (p.a.protein >= p.b.protein ? "a" : "b") : p.a.kcal <= p.b.kcal ? "a" : "b");
@@ -40,20 +41,20 @@ export function MacroGuessr() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-400">Round {i + 1}</p>
+        <p className="text-sm text-ink-2">Round {i + 1}</p>
         <div className="flex items-center gap-4 text-sm">
-          <motion.span key={streak} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="flex items-center gap-1 text-amber font-mono">
+          <motion.span key={streak} initial={{ scale: 1.5 }} animate={{ scale: 1 }} className="flex items-center gap-1 text-fit-yellow font-mono">
             <Flame size={16} /> {streak}
           </motion.span>
-          <span className="text-slate-500">Best <span className="font-mono text-slate-300">{best}</span></span>
+          <span className="text-ink-3">Best <span className="font-mono text-ink-2">{best}</span></span>
         </div>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div key={pair.id + i} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}>
-          <h2 className="font-display text-3xl sm:text-4xl text-center mt-4 leading-tight">
+          <h2 className="font-display text-2xl sm:text-3xl text-center mt-4 leading-tight">
             Which has{" "}
-            {pair.question === "protein" ? <span className="text-emerald italic">more protein</span> : <span className="text-amber italic">fewer calories</span>}?
+            {pair.question === "protein" ? <span className="text-fit-blue ">more protein</span> : <span className="text-fit-yellow ">fewer calories</span>}?
           </h2>
           <div className="grid grid-cols-2 gap-3 mt-6" style={{ perspective: 1000 }}>
             {(["a", "b"] as const).map((side) => (
@@ -63,14 +64,14 @@ export function MacroGuessr() {
           <div className="min-h-32 mt-5">
             {pick && (
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-                <p className={`font-display text-2xl ${pick === right ? "text-emerald" : "text-rose-300"}`}>{pick === right ? "Nailed it." : "Not quite."}</p>
-                <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">{pair.fact}</p>
+                <p className={`font-display text-2xl ${pick === right ? "text-fit-blue" : "text-fit-red"}`}>{pick === right ? "Nailed it." : "Not quite."}</p>
+                <p className="text-sm text-ink-2 mt-1 max-w-sm mx-auto">{pair.fact}</p>
                 <button
                   onClick={() => {
                     setPick(null);
                     setI(i + 1);
                   }}
-                  className="mt-4 h-12 px-6 rounded-xl bg-slate-800 inline-flex items-center gap-2 font-medium"
+                  className="mt-4 h-12 px-6 rounded-xl bg-card-2 inline-flex items-center gap-2 font-medium"
                 >
                   Next <ArrowRight size={16} />
                 </button>
@@ -96,21 +97,21 @@ function FoodCard({ food, revealed, state, highlight, onClick }: { food: FoodPor
       <motion.div className="absolute inset-0 [transform-style:preserve-3d]" animate={{ rotateY: revealed ? 180 : 0 }} transition={{ type: "spring", damping: 18, stiffness: 120 }}>
         {/* front */}
         <div className="absolute inset-0 [backface-visibility:hidden] glass rounded-3xl p-4 flex flex-col items-center justify-center text-center">
-          <span className="text-6xl">{food.emoji}</span>
-          <p className="font-semibold text-slate-100 mt-3 leading-snug">{food.name}</p>
-          <p className="text-xs text-slate-400 mt-1">{food.portion}</p>
+          <Emoji e={food.emoji} size={72} />
+          <p className="font-semibold text-ink mt-3 leading-snug">{food.name}</p>
+          <p className="text-xs text-ink-2 mt-1">{food.portion}</p>
         </div>
         {/* back */}
         <div
           className={`absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl p-4 flex flex-col items-center justify-center text-center border ${
-            state === "right" ? "bg-emerald/15 border-emerald" : state === "wrong" ? "bg-rose-500/10 border-rose-400/60" : "bg-slate-800/80 border-line"
+            state === "right" ? "bg-fit-blue-soft border-fit-blue" : state === "wrong" ? "bg-fit-red-soft border-fit-red/60" : "bg-card-2 border-line"
           }`}
         >
-          <span className="text-3xl">{food.emoji}</span>
-          <p className={`font-mono tabular text-4xl mt-2 ${highlight === "protein" ? "text-emerald" : "text-slate-300"}`}>{food.protein}g</p>
-          <p className="text-[11px] uppercase tracking-widest text-slate-500">protein</p>
-          <p className={`font-mono tabular text-2xl mt-2 ${highlight === "calories" ? "text-amber" : "text-slate-300"}`}>{food.kcal}</p>
-          <p className="text-[11px] uppercase tracking-widest text-slate-500">kcal</p>
+          <Emoji e={food.emoji} size={36} />
+          <p className={`font-mono tabular text-4xl mt-2 ${highlight === "protein" ? "text-fit-blue" : "text-ink-2"}`}>{food.protein}g</p>
+          <p className="text-[11px] font-medium text-ink-3">protein</p>
+          <p className={`font-mono tabular text-2xl mt-2 ${highlight === "calories" ? "text-fit-yellow" : "text-ink-2"}`}>{food.kcal}</p>
+          <p className="text-[11px] font-medium text-ink-3">kcal</p>
         </div>
       </motion.div>
     </motion.button>

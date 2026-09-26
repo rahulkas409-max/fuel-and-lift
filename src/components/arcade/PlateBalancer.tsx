@@ -7,6 +7,7 @@ import { PLATE_CHALLENGES, PLATE_FOODS, type PlateFood } from "@/data/games";
 import { celebrate } from "@/lib/confetti";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
+import { Emoji } from "../ui/Emoji";
 
 const MAX_ITEMS = 8;
 
@@ -63,22 +64,22 @@ export function PlateBalancer() {
     <div>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-amber">Challenge {(ci % PLATE_CHALLENGES.length) + 1}/{PLATE_CHALLENGES.length}</p>
-          <h2 className="font-display text-3xl leading-tight">{ch.title}</h2>
-          <p className="text-sm text-slate-400">
-            Hit <span className="text-emerald font-mono">{ch.proteinTarget} g</span> protein, stay under <span className="text-amber font-mono">{ch.kcalLimit} kcal</span>.
+          <p className="text-xs font-medium text-fit-yellow">Challenge {(ci % PLATE_CHALLENGES.length) + 1}/{PLATE_CHALLENGES.length}</p>
+          <h2 className="font-display text-2xl leading-tight">{ch.title}</h2>
+          <p className="text-sm text-ink-2">
+            Hit <span className="text-fit-blue font-mono">{ch.proteinTarget} g</span> protein, stay under <span className="text-fit-yellow font-mono">{ch.kcalLimit} kcal</span>.
           </p>
         </div>
-        <span className="text-xs text-slate-500 shrink-0 mt-1">Cleared <span className="font-mono text-slate-300">{best}</span></span>
+        <span className="text-xs text-ink-3 shrink-0 mt-1">Cleared <span className="font-mono text-ink-2">{best}</span></span>
       </div>
 
       {/* Plate */}
       <motion.div
         animate={over ? { x: [0, -6, 6, -4, 4, 0] } : {}}
-        className={`relative mx-auto mt-5 size-64 rounded-full border-[10px] transition-colors ${over ? "border-rose-400/60 bg-rose-500/10" : won ? "border-emerald/70 bg-emerald/10" : "border-slate-700 bg-slate-800/60"}`}
+        className={`relative mx-auto mt-5 size-64 rounded-full border-[10px] transition-colors ${over ? "border-fit-red/60 bg-fit-red-soft" : won ? "border-fit-blue/70 bg-fit-blue-soft" : "border-line-strong bg-card-2"}`}
         style={{ boxShadow: "inset 0 0 40px rgb(0 0 0 / 0.5)" }}
       >
-        <div className="absolute inset-6 rounded-full border border-slate-700/60" />
+        <div className="absolute inset-6 rounded-full border border-line-strong/60" />
         <AnimatePresence>
           {plate.map((p, i) => {
             const a = (i / Math.max(plate.length, 1)) * Math.PI * 2 - Math.PI / 2;
@@ -94,31 +95,31 @@ export function PlateBalancer() {
                 className="absolute -translate-x-1/2 -translate-y-1/2 text-4xl"
                 aria-label={`Remove ${p.food.name}`}
               >
-                {p.food.emoji}
+                <Emoji e={p.food.emoji} size={44} />
               </motion.button>
             );
           })}
         </AnimatePresence>
-        {plate.length === 0 && <p className="absolute inset-0 grid place-items-center text-sm text-slate-500 px-10 text-center">Tap foods below to plate them</p>}
+        {plate.length === 0 && <p className="absolute inset-0 grid place-items-center text-sm text-ink-3 px-10 text-center">Tap foods below to plate them</p>}
       </motion.div>
 
       {/* Meters */}
       <div className="mt-5 space-y-3">
-        <Meter label="Protein" value={protein} max={ch.proteinTarget} unit="g" color="#10b981" goal="fill" />
-        <Meter label="Calories" value={kcal} max={ch.kcalLimit} unit="kcal" color="#f59e0b" goal="cap" />
+        <Meter label="Protein" value={protein} max={ch.proteinTarget} unit="g" color="var(--fit-green-bright)" goal="fill" />
+        <Meter label="Calories" value={kcal} max={ch.kcalLimit} unit="kcal" color="var(--fit-blue)" goal="cap" />
       </div>
 
       <div className="min-h-20 mt-4">
         {won ? (
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
-            <p className="font-display text-3xl text-emerald">Plate balanced!</p>
-            <p className="text-sm text-slate-400">{ch.kcalLimit - kcal} kcal to spare.</p>
-            <button onClick={() => reset(true)} className="mt-3 h-12 px-6 rounded-xl bg-emerald text-slate-950 font-semibold inline-flex items-center gap-2">
+            <p className="font-display text-2xl text-fit-blue">Plate balanced!</p>
+            <p className="text-sm text-ink-2">{ch.kcalLimit - kcal} kcal to spare.</p>
+            <button onClick={() => reset(true)} className="mt-3 h-12 px-6 rounded-xl bg-fit-blue text-white font-semibold inline-flex items-center gap-2">
               Next challenge <ArrowRight size={16} />
             </button>
           </motion.div>
         ) : (
-          <p className={`text-center text-sm ${over ? "text-rose-300" : "text-slate-500"}`}>
+          <p className={`text-center text-sm ${over ? "text-fit-red" : "text-ink-3"}`}>
             {over ? "Calorie overflow! Tap a food on the plate to remove it." : ch.hint}
           </p>
         )}
@@ -132,15 +133,15 @@ export function PlateBalancer() {
             whileTap={{ scale: 0.88 }}
             onClick={() => add(f)}
             disabled={won || plate.length >= MAX_ITEMS}
-            className="rounded-2xl bg-slate-800/70 border border-line p-2 flex flex-col items-center disabled:opacity-40"
+            className="rounded-2xl bg-card-2 border border-line p-2 flex flex-col items-center disabled:opacity-40"
           >
-            <span className="text-3xl">{f.emoji}</span>
-            <span className="text-[11px] text-slate-300 mt-1 leading-tight text-center">{f.name}</span>
-            <span className="text-[10px] font-mono text-slate-500">{f.protein}P · {f.kcal}</span>
+            <Emoji e={f.emoji} size={36} />
+            <span className="text-[11px] text-ink-2 mt-1 leading-tight text-center">{f.name}</span>
+            <span className="text-[10px] font-mono text-ink-3">{f.protein}P · {f.kcal}</span>
           </motion.button>
         ))}
       </div>
-      <button onClick={() => reset()} className="mt-4 mx-auto h-11 px-4 rounded-xl text-sm text-slate-400 flex items-center gap-2">
+      <button onClick={() => reset()} className="mt-4 mx-auto h-11 px-4 rounded-xl text-sm text-ink-2 flex items-center gap-2">
         <RotateCcw size={14} /> Clear plate
       </button>
     </div>
@@ -154,13 +155,13 @@ function Meter({ label, value, max, unit, color, goal }: { label: string; value:
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-slate-400">{label} {goal === "fill" ? "(fill it)" : "(don't overflow)"}</span>
-        <span className={`font-mono tabular ${bad ? "text-rose-300" : good ? "text-emerald" : "text-slate-300"}`}>
+        <span className="text-ink-2">{label} {goal === "fill" ? "(fill it)" : "(don't overflow)"}</span>
+        <span className={`font-mono tabular ${bad ? "text-fit-red" : good ? "text-fit-blue" : "text-ink-2"}`}>
           {value} / {max} {unit}
         </span>
       </div>
-      <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
-        <motion.div className="h-full rounded-full" animate={{ width: `${pct}%`, backgroundColor: bad ? "#fb7185" : color }} transition={{ type: "spring", damping: 20 }} />
+      <div className="h-3 rounded-full bg-card-2 overflow-hidden">
+        <motion.div className="h-full rounded-full" style={{ backgroundColor: bad ? "var(--fit-red)" : color }} animate={{ width: `${pct}%` }} transition={{ type: "spring", damping: 20 }} />
       </div>
     </div>
   );

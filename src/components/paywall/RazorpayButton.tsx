@@ -46,7 +46,7 @@ export function RazorpayButton({ onPaid }: { onPaid: () => void }) {
         currency: order.currency,
         name: "Fuel & Lift",
         description: "Custom Pass · 7 days",
-        theme: { color: "#10b981" },
+        theme: { color: "#1a73e8" },
         handler: async (resp: Record<string, string>) => {
           const v = await fetch("/api/razorpay/verify-payment", {
             method: "POST",
@@ -75,12 +75,12 @@ export function RazorpayButton({ onPaid }: { onPaid: () => void }) {
       <button
         onClick={pay}
         disabled={busy}
-        className="w-full h-14 rounded-2xl bg-emerald text-slate-950 font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-70"
+        className="w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-70"
       >
         {busy ? <Loader2 className="animate-spin" size={20} /> : SANDBOX ? <FlaskConical size={20} /> : <Sparkles size={20} />}
         {busy ? "Processing…" : SANDBOX ? "Simulate ₹9 Payment (Sandbox Mode)" : "Pay ₹9 with Razorpay"}
       </button>
-      {error && <p className="text-sm text-rose-400 mt-3" role="alert">{error}</p>}
+      {error && <p className="text-sm text-fit-red mt-3" role="alert">{error}</p>}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { PASS_DAYS } from "./config";
 import { dayKey } from "./date";
 import type { Plan, Profile } from "./nutrition";
 
-export type Tab = "train" | "meals" | "grocery" | "arcade";
+export type Tab = "home" | "train" | "meals" | "grocery" | "arcade";
 
 export interface SetLog {
   weight: string;
@@ -89,7 +89,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      tab: "train",
+      tab: "home",
       routineId: ROUTINES[1].id,
       customRoutine: null,
       dayIdByRoutine: {},
