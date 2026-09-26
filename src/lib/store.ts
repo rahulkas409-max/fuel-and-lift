@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { GrocerySection, Meal, Slot } from "@/data/meals";
+import type { DietPref, GrocerySection, Meal, Slot } from "@/data/meals";
 import { ROUTINES, type Routine } from "@/data/workouts";
 import { PASS_DAYS } from "./config";
 import { dayKey } from "./date";
@@ -47,6 +47,9 @@ interface State {
   completed: Record<string, string>; // date → day name
   lastWeight: Record<string, string>; // exerciseId → kg
   restSeconds: 60 | 90 | 120;
+  /** Set once the welcome questions are answered. */
+  onboarded: boolean;
+  diet: DietPref;
   profile: Profile;
   plans: Record<string, Plan>; // date → plan
   scales: Record<string, number>; // date → portion multiplier from Auto-Sync
@@ -81,6 +84,8 @@ interface State {
   resetTodayWorkout: (date: string) => void;
   clearGrocery: () => void;
   resetAll: () => void;
+  finishOnboarding: (o: { routineId: string; diet: DietPref; profile: Profile }) => void;
+  restartOnboarding: () => void;
   toggleSound: () => void;
   grantPass: () => void;
 }
@@ -96,6 +101,8 @@ const initialData = (): Data => ({
   completed: {},
   lastWeight: {},
   restSeconds: 90,
+  onboarded: false,
+  diet: "both",
   profile: { weightKg: 70, goal: "maintain" },
   plans: {},
   scales: {},
@@ -184,6 +191,9 @@ export const useStore = create<State>()(
       clearGrocery: () => set({ grocery: [] }),
       // Keeps the sound preference and any purchased pass; wipes everything else.
       resetAll: () => set((s) => ({ ...initialData(), sound: s.sound, customPassUntil: s.customPassUntil })),
+      finishOnboarding: ({ routineId, diet, profile }) =>
+        set((s) => ({ onboarded: true, routineId, diet, profile: { ...s.profile, ...profile }, tab: "home" })),
+      restartOnboarding: () => set({ onboarded: false }),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),

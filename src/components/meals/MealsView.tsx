@@ -52,7 +52,7 @@ export function MealsView() {
 
   const autoSync = () =>
     requirePass(() => {
-      const next = syncPlan(intensity, targets, variety);
+      const next = syncPlan(intensity, targets, variety, s.diet);
       setVariety((v) => v + 1);
       s.setPlan(today, next.plan, next.scale);
       play("win");
@@ -62,7 +62,7 @@ export function MealsView() {
   const spinAll = () => {
     const next: Partial<Record<Slot, string>> = {};
     for (const slot of SLOTS) {
-      const options = mealsFor(slot.id);
+      const options = mealsFor(slot.id, s.diet);
       next[slot.id] = options[Math.floor(Math.random() * options.length)].id;
     }
     s.setPlan(today, next, 1);

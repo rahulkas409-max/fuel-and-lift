@@ -9,6 +9,7 @@ import { useToast } from "@/lib/toast";
 import { ArcadeView } from "./arcade/ArcadeView";
 import { LogoMark, Wordmark } from "./brand/Logo";
 import { HomeView } from "./home/HomeView";
+import { Onboarding } from "./onboarding/Onboarding";
 import { GroceryList } from "./meals/GroceryList";
 import { MealsView } from "./meals/MealsView";
 import { PaywallProvider } from "./paywall/PaywallProvider";
@@ -35,6 +36,10 @@ export function AppShell() {
   const toast = useToast((s) => s.message);
   const openTimer = useRestTimer((s) => s.setOpen);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const onboarded = useStore((s) => s.onboarded);
+
+  // First visit (or "Change my answers"): show the welcome questions instead of the app.
+  if (hydrated && !onboarded) return <Onboarding />;
 
   const dateLabel = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 

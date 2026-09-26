@@ -1,11 +1,14 @@
-import { MEALS, SLOTS, mealById, type Meal, type Slot } from "@/data/meals";
+import { SLOTS, mealById, mealsFor, type DietPref, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
 
 export type Goal = "cut" | "maintain" | "bulk";
 
+export type Sex = "male" | "female";
+
 export interface Profile {
   weightKg: number;
   goal: Goal;
+  sex?: Sex;
 }
 
 export interface Targets {
@@ -20,9 +23,11 @@ const GOAL_DELTA: Record<Goal, number> = { cut: -400, maintain: 0, bulk: 300 };
 /** Daily targets for a profile, adjusted for the training day's intensity. */
 export function dayTargets(profile: Profile, intensity: DayIntensity): Targets {
   const w = Math.min(200, Math.max(35, profile.weightKg || 70));
-  const base = w * 33 + GOAL_DELTA[profile.goal];
+  // Women typically need fewer kcal per kg (lower lean-mass share).
+  const female = profile.sex === "female";
+  const base = w * (female ? 30 : 33) + GOAL_DELTA[profile.goal];
   const kcal = Math.round(base + INTENSITY_META[intensity].kcalDelta);
-  const protein = Math.round(w * (profile.goal === "cut" ? 2.2 : 2));
+  const protein = Math.round(w * ((female ? 1.8 : 2) + (profile.goal === "cut" ? 0.2 : 0)));
   const fat = Math.round((base * 0.25) / 9); // fats stay steady; carbs flex with training
   const carbs = Math.max(50, Math.round((kcal - protein * 4 - fat * 9) / 4));
   return { kcal, protein, carbs, fat };
@@ -51,8 +56,8 @@ export const scaleMacros = (t: Targets, k: number): Targets => ({
  * totals land near the calorie and protein targets. Heavy days prefer glycogen-refill
  * meals and rest days prefer recovery meals. The search is exhaustive (≈2.5k combos).
  */
-export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0): { plan: Plan; scale: number } {
-  const bySlot = SLOTS.map((s) => MEALS.filter((m) => m.slot === s.id));
+export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0, pref: DietPref = "both"): { plan: Plan; scale: number } {
+  const bySlot = SLOTS.map((s) => mealsFor(s.id, pref));
   const scored: { combo: Meal[]; scale: number; score: number }[] = [];
 
   const walk = (i: number, combo: Meal[]) => {

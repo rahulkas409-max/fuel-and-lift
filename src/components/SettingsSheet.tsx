@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Dumbbell, RotateCcw, ShoppingBasket, Trash2, UtensilsCrossed } from "lucide-react";
+import { ChevronRight, Dumbbell, RotateCcw, ShoppingBasket, SlidersHorizontal, Trash2, UtensilsCrossed } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToday } from "@/lib/hooks";
 import { play } from "@/lib/sound";
@@ -90,6 +90,27 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
           <p className="text-xs text-ink-3">Your data is saved on this device only. Nothing is uploaded.</p>
         </div>
       </div>
+
+      <p className="text-xs font-medium text-ink-2 mb-2">Your plan</p>
+      <button
+        onClick={() => {
+          onClose();
+          s.restartOnboarding();
+        }}
+        className="w-full mb-5 rounded-3xl border border-line bg-card px-4 py-3.5 flex items-center gap-3 text-left"
+      >
+        <span className="size-10 shrink-0 rounded-full bg-fit-blue-soft text-fit-blue grid place-items-center">
+          <SlidersHorizontal size={20} />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-sm font-medium text-ink">Change my answers</span>
+          <span className="block text-xs text-ink-3 mt-0.5">
+            {s.profile.sex === "female" ? "Female" : s.profile.sex === "male" ? "Male" : "—"} · {s.profile.weightKg} kg ·{" "}
+            {s.diet === "veg" ? "Veg" : s.diet === "nonveg" ? "Non-veg" : "Veg + non-veg"} meals
+          </span>
+        </span>
+        <ChevronRight size={18} className="text-ink-3" />
+      </button>
 
       <p className="text-xs font-medium text-ink-2 mb-2">Reset</p>
       <ul className="rounded-3xl border border-line overflow-hidden divide-y divide-line">

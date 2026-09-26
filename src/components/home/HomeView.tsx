@@ -8,7 +8,7 @@ import { INTENSITY_META } from "@/data/workouts";
 import { activeStreak, addDays, dayKey } from "@/lib/date";
 import { useToday } from "@/lib/hooks";
 import { todayNutrition, todaySession } from "@/lib/progress";
-import { useStore } from "@/lib/store";
+import { currentRoutine, useStore } from "@/lib/store";
 import { Emoji } from "../ui/Emoji";
 
 const greeting = () => {
@@ -40,7 +40,15 @@ export function HomeView() {
     <div className="space-y-4">
       <div className="pt-1">
         <p className="text-2xl font-medium text-ink">{greeting()}</p>
-        <p className="text-sm text-ink-2 mt-0.5">Here&apos;s your day at a glance</p>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-line px-3 py-1 text-xs text-ink-2">
+            <Emoji e={s.routineId === "full-body" ? "🌿" : "🔥"} size={14} /> {currentRoutine(s).name}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-line px-3 py-1 text-xs text-ink-2">
+            <Emoji e={s.diet === "veg" ? "🥦" : s.diet === "nonveg" ? "🍗" : "🍽️"} size={14} />
+            {s.diet === "veg" ? "Veg meals" : s.diet === "nonveg" ? "Non-veg meals" : "Veg + non-veg meals"}
+          </span>
+        </div>
       </div>
 
       {/* Hero */}

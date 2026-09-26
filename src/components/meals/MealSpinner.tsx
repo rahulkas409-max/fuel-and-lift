@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { SLOTS, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { burst } from "@/lib/confetti";
 import { play } from "@/lib/sound";
+import { useStore } from "@/lib/store";
 import { Emoji, emojiSrc } from "../ui/Emoji";
 import { MacroPills } from "../ui/MacroPills";
 import { Sheet } from "../ui/Sheet";
@@ -35,7 +36,8 @@ export function MealSpinner({ open, slot, onClose, onLand, onViewRecipe }: {
 }
 
 function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void }) {
-  const meals = mealsFor(slot);
+  const pref = useStore((s) => s.diet);
+  const meals = mealsFor(slot, pref);
   const n = meals.length;
   const seg = 360 / n;
   const icon = n > 7 ? 32 : 40;

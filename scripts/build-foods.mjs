@@ -16,12 +16,14 @@ const foods = [];
 
 // Veg / non-veg tagging (Indian convention: eggs count as non-veg).
 const NONVEG_WORDS = /\b(chicken|murgh|beef|pork|lamb|mutton|gosht|goat|veal|turkey|duck|goose|quail|venison|bison|rabbit|meat|meats|meatball|meatballs|keema|kebab|kebabs|kabab|seekh|fish|machli|macher|meen|salmon|tuna|cod|sardine|sardines|anchovy|anchovies|herring|mackerel|trout|tilapia|catfish|haddock|pollock|halibut|snapper|carp|rohu|hilsa|ilish|pomfret|surmai|bangda|shrimp|shrimps|prawn|prawns|jhinga|crab|lobster|clam|clams|oyster|oysters|mussel|mussels|squid|octopus|scallop|scallops|roe|caviar|bacon|ham|sausage|sausages|salami|pepperoni|chorizo|prosciutto|jerky|liver|gelatin|gelatins|lard|tallow|egg|eggs|anda|omelette|omelet|haleem|nihari|rogan josh|vindaloo|mangsho|frankfurter|hot dog|hotdog|bologna|pastrami|corned|sweetbread|tripe|giblets)\b/i;
-const VEG_OVERRIDE = /\b(eggplant|egg ?plant|eggless|egg-free|veg |vegetable|vegetarian|vegan|hara bhara|plant-based|meatless|soy|soya|tofu|paneer|mushroom|jackfruit)\b/i;
+// Only things that are genuinely meat-free despite a meat word in the name.
+const VEG_OVERRIDE = /\b(meatless|eggless|egg-free|egg ?plant|eggplant|vegetarian|vegan|plant-based|hara bhara|mock (chicken|meat))\b/i;
 const NONVEG_GROUPS = new Set(["Animal Meat", "Poultry", "Marine Fish", "Fresh Water Fish and Shellfish", "Marine Shellfish", "Marine Mollusks", "Egg and Egg Products", "Meat & Poultry", "Fish & Seafood", "Eggs", "Non-Veg Curries"]);
 function dietOf(name, category) {
-  if (VEG_OVERRIDE.test(name)) return "v";
+  if (VEG_OVERRIDE.test(name) || /^chicken mushroom/i.test(name)) return "v"; // the fungus, not the bird
   if (NONVEG_GROUPS.has(category)) return "n";
-  return NONVEG_WORDS.test(name) ? "n" : "v";
+  // "chicken" also inside brand names like McCHICKEN
+  return NONVEG_WORDS.test(name) || /chicken/i.test(name) ? "n" : "v";
 }
 
 // ── 1. Indian dishes ──

@@ -2,6 +2,8 @@
 // Calories are derived from macros (4/4/9 kcal per g) so they always add up.
 
 export type Diet = "veg" | "nonveg";
+/** Meal preference from onboarding. "both" = every recipe. */
+export type DietPref = Diet | "both";
 export type Slot = "breakfast" | "lunch" | "snack" | "dinner";
 export type GrocerySection = "Produce" | "Protein & Dairy" | "Pantry";
 /** carb-load: glycogen refill for heavy days · recovery: high-protein, lower-carb for rest days */
@@ -173,4 +175,4 @@ export const MEALS: Meal[] = [
 ];
 
 export const mealById = (id: string) => MEALS.find((m) => m.id === id);
-export const mealsFor = (slot: Slot) => MEALS.filter((m) => m.slot === slot);
+export const mealsFor = (slot: Slot, pref: DietPref = "both") => MEALS.filter((m) => m.slot === slot && (pref === "both" || m.diet === pref));

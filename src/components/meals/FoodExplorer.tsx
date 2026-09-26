@@ -30,6 +30,8 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [source, setSource] = useState<SourceFilter>("all");
+  // Vegetarians only see veg foods; non-veg and "both" see everything.
+  const vegOnly = useStore((st) => st.diet === "veg");
   const [focus, setFocus] = useState<Focus>("none");
   const [selected, setSelected] = useState<Food | null>(null);
   const deferred = useDeferredValue(query);
@@ -55,7 +57,7 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
     };
   }, [open]);
 
-  const results = useMemo(() => (foods ? searchFoods(foods, deferred, { source, focus }) : []), [foods, deferred, source, focus]);
+  const results = useMemo(() => (foods ? searchFoods(foods, deferred, { source, focus, diet: vegOnly ? "v" : "all" }) : []), [foods, deferred, source, focus, vegOnly]);
   const focusMeta = focus === "none" ? null : FOCUS[focus];
 
   return (
@@ -136,6 +138,9 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                       </div>
                     ) : (
                       <>
+                        {vegOnly && (
+                          <p className="text-xs text-fit-green bg-fit-green-soft rounded-xl px-3 py-2 mb-3">Showing vegetarian foods only. You can change this in Settings → Change my answers.</p>
+                        )}
                         <p className="text-[11px] font-medium text-ink-3 mb-2">
                           {query ? `${results.length}${results.length === 60 ? "+" : ""} results` : focusMeta ? `Richest in ${focusMeta.unit.replace(/^g /, "")} first` : "Popular Indian dishes"} · per 100 g
                         </p>
