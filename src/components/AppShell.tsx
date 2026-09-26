@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Dumbbell, Gamepad2, House, ShoppingBasket, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
+import { Dumbbell, Gamepad2, House, Settings, ShoppingBasket, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
+import { useState } from "react";
 import { useHydrated, useSoundSync } from "@/lib/hooks";
 import { useStore, type Tab } from "@/lib/store";
 import { useToast } from "@/lib/toast";
@@ -11,6 +12,7 @@ import { HomeView } from "./home/HomeView";
 import { GroceryList } from "./meals/GroceryList";
 import { MealsView } from "./meals/MealsView";
 import { PaywallProvider } from "./paywall/PaywallProvider";
+import { SettingsSheet } from "./SettingsSheet";
 import { RestTimer, useRestTimer } from "./workout/RestTimer";
 import { WorkoutView } from "./workout/WorkoutView";
 
@@ -32,6 +34,7 @@ export function AppShell() {
   const groceryLeft = useStore((s) => s.grocery.filter((g) => !g.checked).length);
   const toast = useToast((s) => s.message);
   const openTimer = useRestTimer((s) => s.setOpen);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const dateLabel = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
 
@@ -54,6 +57,9 @@ export function AppShell() {
             )}
             <button onClick={toggleSound} className="size-11 rounded-full grid place-items-center text-ink-2 hover:bg-card-2" aria-label={sound ? "Mute sounds" : "Unmute sounds"} aria-pressed={sound}>
               {sound ? <Volume2 size={22} /> : <VolumeX size={22} />}
+            </button>
+            <button onClick={() => setSettingsOpen(true)} className="size-11 rounded-full grid place-items-center text-ink-2 hover:bg-card-2" aria-label="Settings and reset">
+              <Settings size={22} />
             </button>
           </div>
         </header>
@@ -78,6 +84,7 @@ export function AppShell() {
       </div>
 
       {hydrated && tab === "train" && <RestTimer />}
+      {hydrated && <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
       <AnimatePresence>
         {toast && (

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Database, Loader2, Plus, Search, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { SOURCES, loadFoods, scaled, searchFoods, type Food } from "@/lib/foods";
+import { FOCUS, SOURCES, loadFoods, scaled, searchFoods, type DietFilter, type Focus, type Food, type SourceFilter } from "@/lib/foods";
 import { useToday } from "@/lib/hooks";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
@@ -11,11 +11,22 @@ import { useToast } from "@/lib/toast";
 import { MacroPills } from "../ui/MacroPills";
 import { Emoji } from "../ui/Emoji";
 
-type SourceFilter = "all" | "indian" | "global";
-const FILTERS: { id: SourceFilter; label: string; emoji?: string }[] = [
-  { id: "all", label: "All foods" },
+const SOURCE_FILTERS: { id: SourceFilter; label: string; emoji?: string }[] = [
+  { id: "all", label: "All sources" },
   { id: "indian", label: "Indian", emoji: "🍛" },
   { id: "global", label: "Global", emoji: "🌍" },
+];
+const DIET_FILTERS: { id: DietFilter; label: string; dot?: string }[] = [
+  { id: "all", label: "Veg + non-veg" },
+  { id: "v", label: "Veg", dot: "bg-fit-green-bright" },
+  { id: "n", label: "Non-veg", dot: "bg-fit-red" },
+];
+const FOCUS_CHIPS: { id: Focus; emoji: string }[] = [
+  { id: "protein", emoji: "💪" },
+  { id: "fiber", emoji: "🥦" },
+  { id: "carbs", emoji: "🌾" },
+  { id: "fat", emoji: "🥑" },
+  { id: "sugar", emoji: "🍬" },
 ];
 const SUGGESTIONS = ["dosa", "biryani", "paneer", "dal", "chicken breast", "roti", "oats", "banana", "whey", "ragi"];
 
@@ -23,7 +34,11 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
   const [foods, setFoods] = useState<Food[] | null>(null);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<SourceFilter>("all");
+  const appDiet = useStore((st) => st.diet);
+  const [source, setSource] = useState<SourceFilter>("all");
+  // Start on the diet chosen in the planner, so Non-Veg mode doesn't list paneer.
+  const [diet, setDiet] = useState<DietFilter>(appDiet === "veg" ? "v" : "n");
+  const [focus, setFocus] = useState<Focus>("none");
   const [selected, setSelected] = useState<Food | null>(null);
   const deferred = useDeferredValue(query);
   // Always reopen on the search list, not on the last food viewed.
@@ -31,6 +46,12 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
     setSelected(null);
     onClose();
   };
+
+  // Re-sync the diet filter with the planner each time search opens.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- follow the planner's diet on open
+    if (open) setDiet(appDiet === "veg" ? "v" : "n");
+  }, [open, appDiet]);
 
   useEffect(() => {
     if (!open || foods) return;
@@ -48,7 +69,8 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
     };
   }, [open]);
 
-  const results = useMemo(() => (foods ? searchFoods(foods, deferred, filter) : []), [foods, deferred, filter]);
+  const results = useMemo(() => (foods ? searchFoods(foods, deferred, { source, diet, focus }) : []), [foods, deferred, source, diet, focus]);
+  const focusMeta = focus === "none" ? null : FOCUS[focus];
 
   return (
     <AnimatePresence>
@@ -89,16 +111,33 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                     <button onClick={close} className="h-12 px-3 text-sm text-ink-2">Close</button>
                   </div>
 
-                  <div className="flex gap-2 py-3 overflow-x-auto no-scrollbar">
-                    {FILTERS.map((f) => (
-                      <button key={f.id} onClick={() => setFilter(f.id)} className={`shrink-0 h-9 px-3.5 rounded-full text-xs ${filter === f.id ? "bg-fit-blue text-white font-semibold" : "bg-card-2 text-ink-2"}`}>
-                        {f.emoji && <Emoji e={f.emoji} size={16} className="mr-1.5 -mt-0.5 align-middle" />}
-                        {f.label}
-                      </button>
-                    ))}
+                  <div className="space-y-2 py-3">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                      {DIET_FILTERS.map((f) => (
+                        <Chip key={f.id} on={diet === f.id} onClick={() => setDiet(f.id)}>
+                          {f.dot && <span className={`size-2.5 rounded-full ${f.dot} mr-1.5`} />}
+                          {f.label}
+                        </Chip>
+                      ))}
+                      <span className="w-px bg-line shrink-0 my-1" />
+                      {SOURCE_FILTERS.map((f) => (
+                        <Chip key={f.id} on={source === f.id} onClick={() => setSource(f.id)}>
+                          {f.emoji && <Emoji e={f.emoji} size={16} className="mr-1.5" />}
+                          {f.label}
+                        </Chip>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                      {FOCUS_CHIPS.map((f) => (
+                        <Chip key={f.id} on={focus === f.id} tone="green" onClick={() => setFocus(focus === f.id ? "none" : f.id)}>
+                          <Emoji e={f.emoji} size={16} className="mr-1.5" />
+                          {FOCUS[f.id as Exclude<Focus, "none">].label}
+                        </Chip>
+                      ))}
+                    </div>
                   </div>
 
-                  {!query && (
+                  {!query && focus === "none" && (
                     <div className="flex flex-wrap gap-1.5 pb-3">
                       {SUGGESTIONS.map((s) => (
                         <button key={s} onClick={() => setQuery(s)} className="h-8 px-3 rounded-full border border-line text-xs text-ink-2">
@@ -119,12 +158,15 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                     ) : (
                       <>
                         <p className="text-[11px] font-medium text-ink-3 mb-2">
-                          {query ? `${results.length}${results.length === 60 ? "+" : ""} results` : "Popular Indian dishes"} · per 100 g
+                          {query ? `${results.length}${results.length === 60 ? "+" : ""} results` : focusMeta ? `Richest in ${focusMeta.unit.replace(/^g /, "")} first` : "Popular Indian dishes"} · per 100 g
                         </p>
                         <ul className="space-y-2">
                           {results.map((f) => (
                             <li key={f.id}>
                               <button onClick={() => setSelected(f)} className="w-full text-left rounded-2xl bg-card-2 border border-line px-4 py-3 flex items-center gap-3 active:scale-[0.99] transition">
+                                <span className={`size-3 shrink-0 rounded-[3px] border-2 grid place-items-center ${f.d === "v" ? "border-fit-green-bright" : "border-fit-red"}`} title={f.d === "v" ? "Veg" : "Non-veg"}>
+                                  <span className={`size-1 rounded-full ${f.d === "v" ? "bg-fit-green-bright" : "bg-fit-red"}`} />
+                                </span>
                                 <span className="min-w-0 flex-1">
                                   <span className="block text-ink leading-snug">{f.n}</span>
                                   <span className="block text-[11px] text-ink-3 mt-0.5 truncate">
@@ -132,16 +174,20 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                                     {f.a ? ` · ${f.a}` : ""}
                                   </span>
                                 </span>
-                                <span className="text-right shrink-0 font-mono tabular">
-                                  <span className="block text-sm text-fit-yellow">{f.k}</span>
-                                  <span className="block text-[11px] text-fit-blue">{f.p}g P</span>
+                                <span className="text-right shrink-0 tabular">
+                                  <span className="block text-sm font-medium text-ink">{f.k} kcal</span>
+                                  <span className="block text-[11px] text-fit-green">
+                                    {focusMeta ? `${f[focusMeta.key] ?? 0} ${focusMeta.unit}` : `${f.p} g protein`}
+                                  </span>
                                 </span>
                               </button>
                             </li>
                           ))}
                         </ul>
                         {query && results.length === 0 && (
-                          <p className="text-center text-ink-3 text-sm py-10">No match for “{query}”. Try a simpler word, e.g. “dal” instead of “dal tadka recipe”.</p>
+                          <p className="text-center text-ink-3 text-sm py-10">
+                            No match for “{query}”{diet !== "all" || focus !== "none" ? " with these filters" : ""}. Try a simpler word, or switch to “Veg + non-veg”.
+                          </p>
                         )}
                         <p className="mt-8 text-[11px] leading-relaxed text-ink-3 flex gap-2">
                           <Database size={14} className="shrink-0 mt-0.5" />
@@ -250,5 +296,14 @@ function FoodDetail({ food, onBack, onDone }: { food: Food; onBack: () => void; 
         <Check size={12} /> Counts toward your calorie and protein bars
       </p>
     </motion.div>
+  );
+}
+
+function Chip({ on, onClick, children, tone = "blue" }: { on: boolean; onClick: () => void; children: React.ReactNode; tone?: "blue" | "green" }) {
+  const active = tone === "green" ? "bg-fit-green-soft text-fit-green border-fit-green-bright/50" : "bg-fit-blue-soft text-fit-blue border-fit-blue/40";
+  return (
+    <button onClick={onClick} aria-pressed={on} className={`shrink-0 h-9 px-3.5 rounded-lg border text-sm inline-flex items-center ${on ? `${active} font-medium` : "border-line text-ink-2 bg-card"}`}>
+      {children}
+    </button>
   );
 }

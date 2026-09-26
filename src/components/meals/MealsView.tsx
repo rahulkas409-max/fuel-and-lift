@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, Leaf, Drumstick, RefreshCw, Search, Sparkles, X, Zap } from "lucide-react";
+import { Clock, Dices, Leaf, Drumstick, RefreshCw, RotateCcw, Search, Sparkles, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { MEALS, SLOTS, mealById, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
@@ -198,6 +198,21 @@ export function MealsView() {
       </div>
 
       {/* Daily deck */}
+      <div className="flex items-center justify-between pt-1">
+        <p className="font-medium text-ink">Today&apos;s plan</p>
+        {(Object.keys(plan).length > 0 || logged.length > 0) && (
+          <button
+            onClick={() => {
+              s.clearTodayMeals(today);
+              setVariety(0);
+              toast("Today's meals cleared");
+            }}
+            className="h-9 px-3 -mr-2 rounded-full text-sm text-fit-blue font-medium inline-flex items-center gap-1.5 hover:bg-fit-blue-soft"
+          >
+            <RotateCcw size={15} /> Clear today
+          </button>
+        )}
+      </div>
       {scale !== 1 && (
         <p className="text-sm text-fit-yellow bg-fit-yellow-soft border border-fit-yellow/30 rounded-2xl px-4 py-3">
           Portions scaled <b className="font-mono">×{scale}</b> to hit today&apos;s targets. Macros below are per serving.

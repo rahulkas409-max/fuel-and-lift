@@ -22,6 +22,7 @@ export interface Food {
   kk?: number; // potassium mg
   sv?: string; // typical serving label
   sg?: number; // typical serving grams
+  d: "v" | "n"; // veg / non-veg (eggs count as non-veg)
 }
 
 export const SOURCES: Record<Food["s"], { label: string; short: string; note: string }> = {
@@ -68,19 +69,51 @@ for (const group of SYNONYMS) for (const w of group) SYN.set(w, group);
 const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const SOURCE_BOOST: Record<Food["s"], number> = { dish: 1.5, ifct: 1, tl: 0.3, usda: 0 };
 
-/** Ranked search. Every query word (or one of its synonyms) must match the name, aliases or category. */
-export function searchFoods(foods: Food[], query: string, source: "all" | "indian" | "global" = "all", limit = 60): Food[] {
-  const words = norm(query).split(/[\s,]+/).filter(Boolean);
-  const pool = foods.filter((f) => source === "all" || (source === "indian" ? f.s === "dish" || f.s === "ifct" : f.s === "usda" || f.s === "tl"));
-  if (!words.length) return pool.filter((f) => f.s === "dish").slice(0, limit);
+export type SourceFilter = "all" | "indian" | "global";
+export type DietFilter = "all" | "v" | "n";
+export type Focus = "none" | "protein" | "fiber" | "carbs" | "fat" | "sugar";
 
-  const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Nutrient sections: which field to rank by, and the per-100 g threshold to count as "high". */
+export const FOCUS: Record<Exclude<Focus, "none">, { label: string; key: "p" | "fb" | "cb" | "f" | "su"; min: number; unit: string }> = {
+  protein: { label: "High protein", key: "p", min: 15, unit: "g protein" },
+  fiber: { label: "High fibre", key: "fb", min: 6, unit: "g fibre" },
+  carbs: { label: "High carbs", key: "cb", min: 45, unit: "g carbs" },
+  fat: { label: "High fat", key: "f", min: 20, unit: "g fat" },
+  sugar: { label: "High sugar", key: "su", min: 15, unit: "g sugar" },
+};
+
+const esc = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Ranked search. Every query word (or one of its synonyms) must match the name,
+ * aliases or category. With a nutrient focus and no query, lists the richest foods first.
+ */
+export function searchFoods(
+  foods: Food[],
+  query: string,
+  opts: { source?: SourceFilter; diet?: DietFilter; focus?: Focus } = {},
+  limit = 60,
+): Food[] {
+  const { source = "all", diet = "all", focus = "none" } = opts;
+  const f = focus === "none" ? null : FOCUS[focus];
+  const pool = foods.filter(
+    (x) =>
+      (source === "all" || (source === "indian" ? x.s === "dish" || x.s === "ifct" : x.s === "usda" || x.s === "tl")) &&
+      (diet === "all" || x.d === diet) &&
+      (!f || (x[f.key] ?? 0) >= f.min),
+  );
+  const words = norm(query).split(/[\s,]+/).filter(Boolean);
+  if (!words.length) {
+    if (f) return [...pool].sort((a, b) => (b[f.key] ?? 0) - (a[f.key] ?? 0)).slice(0, limit);
+    return pool.filter((x) => x.s === "dish").slice(0, limit);
+  }
+
   const alts = words.map((w) => (SYN.get(w) ?? [w]).map((x) => ({ w: x, re: new RegExp(`\\b${esc(x)}`) })));
   const results: { f: Food; score: number }[] = [];
-  for (const f of pool) {
-    const name = norm(f.n);
-    const alias = f.a ? norm(f.a) : "";
-    const cat = norm(f.c);
+  for (const item of pool) {
+    const name = norm(item.n);
+    const alias = item.a ? norm(item.a) : "";
+    const cat = norm(item.c);
     let score = 0;
     let ok = true;
     for (const options of alts) {
@@ -99,8 +132,8 @@ export function searchFoods(foods: Food[], query: string, source: "all" | "india
       score += best;
     }
     if (!ok) continue;
-    score += SOURCE_BOOST[f.s] - Math.min(name.length, 80) / 60; // prefer shorter, simpler names
-    results.push({ f, score });
+    score += SOURCE_BOOST[item.s] - Math.min(name.length, 80) / 60; // prefer shorter, simpler names
+    results.push({ f: item, score });
   }
   return results.sort((a, b) => b.score - a.score).slice(0, limit).map((r) => r.f);
 }

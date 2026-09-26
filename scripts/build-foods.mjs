@@ -14,9 +14,22 @@ const r1 = (n) => (n == null || Number.isNaN(n) ? undefined : Math.round(n * 10)
 const kcalFrom = (p, c, f) => Math.round(p * 4 + c * 4 + f * 9);
 const foods = [];
 
+// Veg / non-veg tagging (Indian convention: eggs count as non-veg).
+const NONVEG_WORDS = /\b(chicken|murgh|beef|pork|lamb|mutton|gosht|goat|veal|turkey|duck|goose|quail|venison|bison|rabbit|meat|meats|meatball|meatballs|keema|kebab|kebabs|kabab|seekh|fish|machli|macher|meen|salmon|tuna|cod|sardine|sardines|anchovy|anchovies|herring|mackerel|trout|tilapia|catfish|haddock|pollock|halibut|snapper|carp|rohu|hilsa|ilish|pomfret|surmai|bangda|shrimp|shrimps|prawn|prawns|jhinga|crab|lobster|clam|clams|oyster|oysters|mussel|mussels|squid|octopus|scallop|scallops|roe|caviar|bacon|ham|sausage|sausages|salami|pepperoni|chorizo|prosciutto|jerky|liver|gelatin|gelatins|lard|tallow|egg|eggs|anda|omelette|omelet|haleem|nihari|rogan josh|vindaloo|mangsho|frankfurter|hot dog|hotdog|bologna|pastrami|corned|sweetbread|tripe|giblets)\b/i;
+const VEG_OVERRIDE = /\b(eggplant|egg ?plant|eggless|egg-free|veg |vegetable|vegetarian|vegan|hara bhara|plant-based|meatless|soy|soya|tofu|paneer|mushroom|jackfruit)\b/i;
+const NONVEG_GROUPS = new Set(["Animal Meat", "Poultry", "Marine Fish", "Fresh Water Fish and Shellfish", "Marine Shellfish", "Marine Mollusks", "Egg and Egg Products", "Meat & Poultry", "Fish & Seafood", "Eggs", "Non-Veg Curries"]);
+function dietOf(name, category) {
+  if (VEG_OVERRIDE.test(name)) return "v";
+  if (NONVEG_GROUPS.has(category)) return "n";
+  return NONVEG_WORDS.test(name) ? "n" : "v";
+}
+
 // ── 1. Indian dishes ──
 for (const [name, aliases, category, serving, grams, p, c, f, fb] of INDIAN_DISHES) {
-  foods.push({ n: name, a: aliases || undefined, c: category, s: "dish", k: kcalFrom(p, c, f), p, cb: c, f, fb, sv: serving, sg: grams });
+  // Sugar estimates for sweets and sweetened drinks (most carbs there are added sugar/lactose).
+  const sweetDrink = /chai|coffee|lassi|badam|thandai|nimbu|aam panna|sugarcane|shikanji/i.test(name + " " + aliases);
+  const su = category === "Sweets & Desserts" ? Math.round(c * 0.7) : category === "Drinks" && sweetDrink ? Math.round(c * 0.85) : name.startsWith("Tamarind chutney") || name === "Peanut chikki" ? Math.round(c * 0.6) : undefined;
+  foods.push({ n: name, a: aliases || undefined, c: category, s: "dish", k: kcalFrom(p, c, f), p, cb: c, f, fb, su, sv: serving, sg: grams });
 }
 
 // ── 2. IFCT 2017 ──
@@ -98,9 +111,14 @@ for (const t of tempo) {
   });
 }
 
-foods.forEach((f, i) => (f.id = i));
+foods.forEach((f, i) => {
+  f.id = i;
+  f.d = dietOf(f.n, f.c);
+});
 const out = path.join(root, "public", "data", "foods.json");
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, JSON.stringify(foods));
 const bySrc = foods.reduce((m, f) => ((m[f.s] = (m[f.s] || 0) + 1), m), {});
+const nonveg = foods.filter((f) => f.d === "n").length;
+console.log(`veg ${foods.length - nonveg}, non-veg ${nonveg}`);
 console.log(`Wrote ${foods.length} foods to public/data/foods.json (${(fs.statSync(out).size / 1024).toFixed(0)} KB)`, bySrc, `skipped ${dupes} duplicate USDA names`);

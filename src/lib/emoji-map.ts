@@ -76,5 +76,6 @@ export const EMOJI_SLUGS: Record<string, string> = {
   "🎯": "bullseye",
   "⭐": "star",
   "👟": "running-shoe",
-  "🥦": "broccoli"
+  "🥦": "broccoli",
+  "🍬": "candy"
 };

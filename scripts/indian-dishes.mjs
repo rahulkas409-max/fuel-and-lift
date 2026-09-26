@@ -216,7 +216,7 @@ export const INDIAN_DISHES = [
   ["Chilli chicken", "", "Indo-Chinese & Momos", "1 plate", 150, 16, 10, 12, 1],
   ["Gobi manchurian", "", "Indo-Chinese & Momos", "1 plate", 150, 4, 22, 12, 3],
   ["Chicken manchurian", "", "Indo-Chinese & Momos", "1 bowl", 200, 13, 12, 12, 1],
-  ["Thukpa", "chicken thukpa", "Indo-Chinese & Momos", "1 bowl", 350, 6, 12, 3, 1.5],
+  ["Chicken thukpa", "thukpa", "Indo-Chinese & Momos", "1 bowl", 350, 6, 12, 3, 1.5],
 
   // ───── Sweets & desserts ─────
   ["Gulab jamun", "", "Sweets & Desserts", "2 pieces", 80, 5, 50, 15, 0.5],

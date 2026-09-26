@@ -79,9 +79,36 @@ interface State {
   recordBest: (game: keyof State["best"], score: number) => void;
   logFood: (date: string, item: Omit<LoggedFood, "uid">) => void;
   removeLoggedFood: (date: string, uid: string) => void;
+  clearTodayMeals: (date: string) => void;
+  resetTodayWorkout: (date: string) => void;
+  clearGrocery: () => void;
+  resetAll: () => void;
   toggleSound: () => void;
   grantPass: () => void;
 }
+
+/** Fresh app data — used on first launch and by "Reset everything". */
+type Data = { [K in keyof State as State[K] extends (...args: never[]) => unknown ? never : K]: State[K] };
+const initialData = (): Data => ({
+  tab: "home",
+  routineId: ROUTINES[1].id,
+  customRoutine: null,
+  dayIdByRoutine: {},
+  logs: {},
+  completed: {},
+  lastWeight: {},
+  restSeconds: 90,
+  diet: "veg",
+  profile: { weightKg: 70, goal: "maintain" },
+  plans: {},
+  scales: {},
+  autoSync: true,
+  grocery: [],
+  foodLog: {},
+  best: { guessr: 0, plate: 0, form: 0 },
+  sound: true,
+  customPassUntil: 0,
+});
 
 const emptySet = (): SetLog => ({ weight: "", reps: "", done: false });
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -89,24 +116,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      tab: "home",
-      routineId: ROUTINES[1].id,
-      customRoutine: null,
-      dayIdByRoutine: {},
-      logs: {},
-      completed: {},
-      lastWeight: {},
-      restSeconds: 90,
-      diet: "veg",
-      profile: { weightKg: 70, goal: "maintain" },
-      plans: {},
-      scales: {},
-      autoSync: true,
-      grocery: [],
-      foodLog: {},
-      best: { guessr: 0, plate: 0, form: 0 },
-      sound: true,
-      customPassUntil: 0,
+      ...initialData(),
 
       setTab: (tab) => set({ tab }),
       setRoutine: (routineId) => set({ routineId }),
@@ -165,6 +175,19 @@ export const useStore = create<State>()(
       },
       logFood: (date, item) => set((s) => ({ foodLog: { ...s.foodLog, [date]: [...(s.foodLog[date] ?? []), { ...item, uid: uid() }] } })),
       removeLoggedFood: (date, id) => set((s) => ({ foodLog: { ...s.foodLog, [date]: (s.foodLog[date] ?? []).filter((f) => f.uid !== id) } })),
+      clearTodayMeals: (date) =>
+        set((s) => {
+          const omit = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== date));
+          return { plans: omit(s.plans), scales: omit(s.scales), foodLog: omit(s.foodLog) };
+        }),
+      resetTodayWorkout: (date) =>
+        set((s) => ({
+          logs: Object.fromEntries(Object.entries(s.logs).filter(([k]) => !k.startsWith(`${date}|`))),
+          completed: Object.fromEntries(Object.entries(s.completed).filter(([k]) => k !== date)),
+        })),
+      clearGrocery: () => set({ grocery: [] }),
+      // Keeps the sound preference and any purchased pass; wipes everything else.
+      resetAll: () => set((s) => ({ ...initialData(), sound: s.sound, customPassUntil: s.customPassUntil })),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),
