@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏋️ Fuel & Lift
 
-## Getting Started
+A mobile-first gym tracker, meal planner and macro mini-game arcade. **It's 100% free, with no sign-up.**
+All data lives in the browser's localStorage.
 
-First, run the development server:
+## Features
+
+**Train**
+- Built-in splits: 3-Day Full Body, 4-Day Upper/Lower and 6-Day Push/Pull/Legs.
+- Set-by-set logging of kg and reps, with checkboxes. Your last weight for each lift is pre-filled.
+- A floating rest timer (60/90/120 s) with a progress ring, a chime and vibration.
+- A GitHub-style heatmap and a session streak (up to 2 rest days in a row don't break it).
+
+**Custom Builder**
+- Add, remove and swap exercises from a library of 37.
+- Change sets and reps, rename days, and drag to reorder them.
+- Set each day's intensity (heavy, moderate, light or rest), or let the app work it out from the exercises.
+
+**Meals**
+- 37 high-protein recipes split into vegetarian (paneer, tofu, soya, dal) and non-veg.
+- A roulette wheel for each meal slot, plus recipe cards with macros, ingredients and three method steps.
+
+**Smart Auto-Sync**
+- Daily targets come from your body weight, your goal and the day's intensity. Heavy days get +300 kcal and more carbs; rest days get −200 kcal and a recovery focus.
+- Auto-Sync tries every meal combination and portion size (1–2×) to hit those targets.
+
+**Grocery**
+- "Add to Grocery List" pulls a recipe's ingredients into a checklist sorted into Produce, Protein & Dairy and Pantry.
+- Tap an item to cross it off.
+
+**Arcade**
+- Macro Guessr: 18 food matchups.
+- Plate Balancer: 4 challenges.
+- Form Check: swipe through 12 lifting cues.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev   # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## The ₹9 Custom Pass (switched off)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The paywall is built in but disabled. When `NEXT_PUBLIC_ENABLE_PAYWALL=true`:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Saving a custom routine or using Auto-Sync opens the ₹9 modal.
+- `/api/razorpay/create-order` creates a 900-paise INR order.
+- `/api/razorpay/verify-payment` checks the HMAC-SHA256 signature.
+- The pass (7 days) is then stored in localStorage.
+- If `NEXT_PUBLIC_RAZORPAY_KEY_ID` is empty, a **Simulate ₹9 Payment (Sandbox Mode)** button appears instead of real checkout.
 
-## Learn More
+Because the pass lives in localStorage, a tech-savvy user could grant it to themselves. For real
+enforcement, store passes server-side against a user account.
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/data/        workouts.ts · meals.ts · games.ts   (seed data)
+src/lib/         store.ts (Zustand + persist) · nutrition.ts (targets & Auto-Sync) · date.ts · sound.ts
+src/components/  workout/ · meals/ · arcade/ · paywall/ · ui/
+src/app/api/razorpay/   create-order · verify-payment
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Macros are per-serving estimates. Deploys to Vercel with default settings.
