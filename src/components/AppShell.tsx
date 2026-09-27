@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Dumbbell, Gamepad2, House, Settings, ShoppingBasket, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
+import { Dumbbell, Gamepad2, House, MapPin, Settings, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { useHydrated, useSoundSync } from "@/lib/hooks";
 import { useStore, type Tab } from "@/lib/store";
@@ -10,6 +10,7 @@ import { ArcadeView } from "./arcade/ArcadeView";
 import { LogoMark, Wordmark } from "./brand/Logo";
 import { HomeView } from "./home/HomeView";
 import { Onboarding } from "./onboarding/Onboarding";
+import { GymsView } from "./gyms/GymsView";
 import { GroceryList } from "./meals/GroceryList";
 import { MealsView } from "./meals/MealsView";
 import { PaywallProvider } from "./paywall/PaywallProvider";
@@ -21,7 +22,7 @@ const TABS: { id: Tab; label: string; icon: typeof Dumbbell }[] = [
   { id: "home", label: "Home", icon: House },
   { id: "train", label: "Train", icon: Dumbbell },
   { id: "meals", label: "Meals", icon: UtensilsCrossed },
-  { id: "grocery", label: "Grocery", icon: ShoppingBasket },
+  { id: "gyms", label: "Gyms", icon: MapPin },
   { id: "arcade", label: "Arcade", icon: Gamepad2 },
 ];
 
@@ -81,6 +82,7 @@ export function AppShell() {
               {tab === "home" && <HomeView />}
               {tab === "train" && <WorkoutView />}
               {tab === "meals" && <MealsView />}
+              {tab === "gyms" && <GymsView />}
               {tab === "grocery" && <GroceryList />}
               {tab === "arcade" && <ArcadeView />}
             </motion.main>
@@ -109,13 +111,14 @@ export function AppShell() {
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-card-2/95 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-2xl grid grid-cols-5">
           {TABS.map(({ id, label, icon: Icon }) => {
-            const on = tab === id;
+            // Grocery lives under Meals now
+            const on = tab === id || (id === "meals" && tab === "grocery");
             return (
               <button key={id} onClick={() => setTab(id)} className="h-20 flex flex-col items-center justify-center gap-1" aria-current={on ? "page" : undefined}>
                 <span className="relative h-8 w-16 grid place-items-center">
                   {on && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-fit-blue-soft" transition={{ type: "spring", damping: 26, stiffness: 380 }} />}
                   <Icon size={22} strokeWidth={on ? 2.4 : 2} className={`relative ${on ? "text-fit-blue" : "text-ink-2"}`} />
-                  {id === "grocery" && hydrated && groceryLeft > 0 && (
+                  {id === "meals" && hydrated && groceryLeft > 0 && (
                     <span className="absolute top-0 right-2.5 min-w-4 h-4 px-1 rounded-full bg-fit-red text-[10px] font-medium text-white grid place-items-center">{groceryLeft}</span>
                   )}
                 </span>

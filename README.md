@@ -29,6 +29,13 @@ All data lives in the browser's localStorage.
 - Each food shows calories, protein, carbs and fat, plus fibre, sugars, saturated fat, sodium, potassium, calcium, iron and vitamin C where the source provides them.
 - Pick a serving or enter grams, then log the food to today's totals.
 
+**Gym finder (India)**
+- Finds nearby gyms automatically. It guesses the city from Vercel's IP headers with no prompt, or uses GPS if you tap "Use my exact location".
+- Filters: women only, men only, unisex, distance, nearest, top rated, budget.
+- Flip cards show distance, rating, open now, an estimated monthly price, what the gym offers, and Call and Directions buttons.
+- Data comes from Google Places when `GOOGLE_MAPS_API_KEY` is set. Otherwise it uses OpenStreetMap, which is free but has patchier coverage and no ratings.
+- Prices and women/men-only status are estimates. The app labels them that way.
+
 **Grocery**
 - "Add to Grocery List" pulls a recipe's ingredients into a checklist sorted into Produce, Protein & Dairy and Pantry.
 - Tap an item to cross it off.

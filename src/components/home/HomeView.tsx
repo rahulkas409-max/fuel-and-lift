@@ -157,7 +157,7 @@ export function HomeView() {
         <Shortcut onClick={() => s.setTab("meals")} icon={<Search size={20} className="text-fit-blue" />} title="Food search" sub="7,000+ Indian & world foods" tint="bg-fit-blue-soft" />
         <Shortcut onClick={() => s.setTab("grocery")} icon={<Emoji e="🛒" size={22} />} title="Grocery list" sub={groceryLeft ? `${groceryLeft} item${groceryLeft > 1 ? "s" : ""} to buy` : "All stocked up"} tint="bg-fit-green-soft" />
         <Shortcut onClick={() => s.setTab("arcade")} icon={<Emoji e="🎮" size={22} />} title="Arcade" sub="Macro mini-games" tint="bg-fit-yellow-soft" />
-        <Shortcut onClick={() => s.setTab("train")} icon={<Emoji e="🏆" size={22} />} title="Streak" sub={`${streak} session${streak === 1 ? "" : "s"} in a row`} tint="bg-fit-red-soft" />
+        <Shortcut onClick={() => s.setTab("gyms")} icon={<Emoji e="🏋️" size={22} />} title="Gyms near you" sub={s.gymPlace ? s.gymPlace.label : "Find gyms in your city"} tint="bg-fit-red-soft" />
       </section>
 
       <button onClick={() => s.setTab("train")} className="w-full h-12 rounded-full border border-line text-sm text-ink-2 flex items-center justify-center gap-2">

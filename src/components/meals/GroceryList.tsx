@@ -30,6 +30,9 @@ export function GroceryList() {
 
   return (
     <div className="space-y-6">
+      <button onClick={() => setTab("meals")} className="h-10 -ml-2 px-2 text-sm text-ink-2 inline-flex items-center gap-1">
+        ← Meals
+      </button>
       <header className="flex items-end justify-between">
         <div>
           <p className="text-xs font-medium text-ink-2">Grocery list</p>

@@ -138,6 +138,12 @@ export function MealsView() {
         </details>
       </section>
 
+      <button onClick={() => s.setTab("grocery")} className="w-full glass rounded-2xl px-4 h-14 flex items-center gap-3 text-left">
+        <Emoji e="🛒" size={24} />
+        <span className="flex-1 text-sm font-medium text-ink">Grocery list</span>
+        <span className="text-xs text-ink-3">{s.grocery.filter((g) => !g.checked).length} to buy</span>
+      </button>
+
       {/* Food database search */}
       <motion.button
         whileTap={{ scale: 0.98 }}

@@ -6,9 +6,10 @@ import type { DietPref, GrocerySection, Meal, Slot } from "@/data/meals";
 import { ROUTINES, type Routine } from "@/data/workouts";
 import { PASS_DAYS } from "./config";
 import { dayKey } from "./date";
+import type { Place } from "./gyms";
 import type { Plan, Profile } from "./nutrition";
 
-export type Tab = "home" | "train" | "meals" | "grocery" | "arcade";
+export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade";
 
 export interface SetLog {
   weight: string;
@@ -50,6 +51,9 @@ interface State {
   /** Set once the welcome questions are answered. */
   onboarded: boolean;
   diet: DietPref;
+  /** Where the gym finder searches (GPS, IP guess or picked city). */
+  gymPlace: Place | null;
+  gymRadius: number;
   profile: Profile;
   plans: Record<string, Plan>; // date → plan
   scales: Record<string, number>; // date → portion multiplier from Auto-Sync
@@ -86,6 +90,8 @@ interface State {
   resetAll: () => void;
   finishOnboarding: (o: { routineId: string; diet: DietPref; profile: Profile }) => void;
   restartOnboarding: () => void;
+  setGymPlace: (p: Place | null) => void;
+  setGymRadius: (km: number) => void;
   toggleSound: () => void;
   grantPass: () => void;
 }
@@ -103,6 +109,8 @@ const initialData = (): Data => ({
   restSeconds: 90,
   onboarded: false,
   diet: "both",
+  gymPlace: null,
+  gymRadius: 5,
   profile: { weightKg: 70, goal: "maintain" },
   plans: {},
   scales: {},
@@ -194,6 +202,8 @@ export const useStore = create<State>()(
       finishOnboarding: ({ routineId, diet, profile }) =>
         set((s) => ({ onboarded: true, routineId, diet, profile: { ...s.profile, ...profile }, tab: "home" })),
       restartOnboarding: () => set({ onboarded: false }),
+      setGymPlace: (gymPlace) => set({ gymPlace }),
+      setGymRadius: (gymRadius) => set({ gymRadius }),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),
