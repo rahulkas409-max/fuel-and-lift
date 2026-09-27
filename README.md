@@ -31,13 +31,21 @@ All data lives in the browser's localStorage.
 
 **Gym finder (India)**
 - Finds nearby gyms automatically. It guesses the city from Vercel's IP headers with no prompt, or uses GPS if you tap "Use my exact location".
+- Your location shows the actual town you're in (from 1,549 Indian towns and cities with gyms). You can also search for any of them under "Change".
 - Filters: women only, men only, unisex, distance, nearest, top rated, budget.
 - Flip cards show distance, rating, open now, an estimated monthly price, what the gym offers, and Call and Directions buttons.
-- **Built-in open data:** 36,527 gyms and fitness studios across India from [Overture Maps](https://overturemaps.org) (release in `data/gyms/meta.json`, licence in `data/gyms/LICENSE.txt`). About 87% have phone numbers.
+- **Built-in open data:** 35,418 unique gyms and fitness studios (duplicate listings merged) across India from [Overture Maps](https://overturemaps.org) (release in `data/gyms/meta.json`, licence in `data/gyms/LICENSE.txt`). About 87% have phone numbers.
   - Refresh the data with `python scripts/fetch-gyms-overture.py <release>`. It needs `pip install pyarrow`.
 - If nothing is bundled for an area, the app falls back to live OpenStreetMap.
 - If `GOOGLE_MAPS_API_KEY` is set, it uses Google Places instead, which adds ratings and opening hours.
+- Price estimates depend on town size (how many gyms are within 10 km), gym style (CrossFit, studio, premium club, traditional akhada and so on), whether the gym has a website, and whether it's in a busy central area or on the outskirts. Known chains use their typical prices. Each card is tagged Budget, Standard or Premium.
 - Prices and women/men-only status are estimates. The app labels them that way.
+
+**Fitness News**
+- Indian fitness headlines, grouped into Top stories, Competitions, Influencers, Diet & nutrition and Athletes.
+- Tap an Indian fitness creator to see news about them.
+- Tap a story to open a readable view with a "Read full story" link to the publisher.
+- Headlines come from Google News RSS (India edition), cached for 30 minutes (`/api/news`). For a commercial launch, switch to a licensed news API.
 
 **Grocery**
 - "Add to Grocery List" pulls a recipe's ingredients into a checklist sorted into Produce, Protein & Dairy and Pantry.

@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { Clock, ExternalLink, Globe, MapPin, Navigation, Phone, RotateCcw, Star } from "lucide-react";
 import { useState } from "react";
-import { formatINR, formatPhone, type Gym } from "@/lib/gyms";
+import { formatINR, formatPhone, priceTier, type Gym } from "@/lib/gyms";
+
+const TIER_STYLE = { Budget: "bg-fit-green-soft text-fit-green", Standard: "bg-fit-blue-soft text-fit-blue", Premium: "bg-fit-yellow-soft text-fit-yellow" } as const;
 
 const AUDIENCE = {
   women: { label: "Women only", cls: "bg-fit-red-soft text-fit-red" },
@@ -59,7 +61,10 @@ export function GymCard({ gym, index }: { gym: Gym; index: number }) {
             </div>
 
             <div className="rounded-2xl bg-card-2 px-4 py-3">
-              <p className="text-xs text-ink-3">Estimated membership</p>
+              <p className="text-xs text-ink-3 flex items-center justify-between gap-2">
+                Estimated membership
+                <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${TIER_STYLE[priceTier(gym.price.min)]}`}>{priceTier(gym.price.min)}</span>
+              </p>
               <p className="text-lg font-medium text-ink tabular">
                 {formatINR(gym.price.min)}–{formatINR(gym.price.max)} <span className="text-sm text-ink-3 font-normal">/ month</span>
               </p>

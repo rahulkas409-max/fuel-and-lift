@@ -9,7 +9,7 @@ import { dayKey } from "./date";
 import type { Place } from "./gyms";
 import type { Plan, Profile } from "./nutrition";
 
-export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade";
+export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news";
 
 export interface SetLog {
   weight: string;

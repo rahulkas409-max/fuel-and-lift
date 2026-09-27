@@ -133,7 +133,6 @@ const CHAINS: [RegExp, string, number, number][] = [
   [/crunch fitness/i, "Crunch Fitness", 1500, 3500],
   [/multifit/i, "Multifit", 2000, 4000],
 ];
-const TIER_RANGE = { 1: [1000, 2500], 2: [700, 1800], 3: [500, 1200] } as const;
 const GOOGLE_PRICE: Record<string, [number, number]> = {
   PRICE_LEVEL_INEXPENSIVE: [500, 1200],
   PRICE_LEVEL_MODERATE: [1000, 2500],
@@ -141,16 +140,61 @@ const GOOGLE_PRICE: Record<string, [number, number]> = {
   PRICE_LEVEL_VERY_EXPENSIVE: [5000, 10000],
 };
 
-export function estimatePrice(name: string, at: { lat: number; lng: number }, googlePriceLevel?: string): Gym["price"] & { brand?: string } {
+/** Town size from how many gyms are within 10 km (a good proxy for how big/pricey the market is). */
+export function marketFor(gymsWithin10km: number): { label: string; range: [number, number] } {
+  if (gymsWithin10km >= 400) return { label: "metro", range: [1200, 2500] };
+  if (gymsWithin10km >= 120) return { label: "big city", range: [900, 2000] };
+  if (gymsWithin10km >= 40) return { label: "city", range: [700, 1500] };
+  return { label: "small town", range: [500, 1100] };
+}
+
+// Gym "style" from its name → price multiplier
+const STYLES: [RegExp, string, number][] = [
+  [/premium|elite|luxury|lounge|signature|platinum|athletic|performance|hyrox|\bclub\b(?!.*health)/i, "premium-style club", 1.6],
+  [/crossfit|cross fit|functional|\bbox\b|bootcamp/i, "CrossFit / functional box", 1.45],
+  [/studio|pilates|zumba|dance|barre/i, "fitness studio", 1.2],
+  [/yoga/i, "yoga centre", 1.0],
+  [/boxing|mma|martial|karate|taekwondo|kick ?box|judo|kalari/i, "martial-arts / boxing club", 1.0],
+  [/vyayam|akhada|akhara|body ?build|power ?house|iron|muscle|desi|health club/i, "traditional bodybuilding gym", 0.8],
+];
+
+export type PriceTier = "Budget" | "Standard" | "Premium";
+export const priceTier = (min: number): PriceTier => (min < 700 ? "Budget" : min < 1500 ? "Standard" : "Premium");
+
+export function estimatePrice(
+  name: string,
+  at: { lat: number; lng: number },
+  opts: { googlePriceLevel?: string; hasWebsite?: boolean; gymsWithin10km?: number } = {},
+): Gym["price"] & { brand?: string } {
   for (const [re, brand, min, max] of CHAINS) if (re.test(name)) return { min, max, basis: `Estimate from typical ${brand} pricing`, brand };
-  if (googlePriceLevel && GOOGLE_PRICE[googlePriceLevel]) {
-    const [min, max] = GOOGLE_PRICE[googlePriceLevel];
+  if (opts.googlePriceLevel && GOOGLE_PRICE[opts.googlePriceLevel]) {
+    const [min, max] = GOOGLE_PRICE[opts.googlePriceLevel];
     return { min, max, basis: "Estimate from Google price level" };
   }
-  const city = nearestCity(at);
-  const tier = distanceKm(at, city) < 40 ? city.tier : 3;
-  const [min, max] = TIER_RANGE[tier];
-  return { min, max, basis: tier === 3 ? "Estimate for a local gym in a smaller town" : `Estimate for a local gym in ${city.name}` };
+  const market = opts.gymsWithin10km != null ? marketFor(opts.gymsWithin10km) : marketFor(distanceKm(at, nearestCity(at)) < 25 ? 400 : 30);
+  const style = STYLES.find(([re]) => re.test(name));
+  let factor = style ? style[2] : 1;
+  if (opts.hasWebsite) factor *= 1.1;
+  const r100 = (n: number) => Math.max(300, Math.round(n / 100) * 100);
+  const min = r100(market.range[0] * factor);
+  const max = Math.max(min + 300, r100(market.range[1] * factor));
+  const what = style ? style[1] : "standard gym";
+  return { min, max, basis: `Estimate for a ${what} in a ${market.label}${opts.hasWebsite ? " (has its own website)" : ""}` };
+}
+
+/**
+ * Busy central areas (many gyms close by) charge more than the outskirts.
+ * `nearby` = gyms within 1.5 km of this gym, `typical` = the median of that across the search area.
+ * Only applied to our own estimates (not chain or Google price levels).
+ */
+export function adjustForArea(price: Gym["price"], nearby: number, typical: number): Gym["price"] {
+  if (!price.basis.startsWith("Estimate for a") || typical < 2) return price;
+  const ratio = nearby / typical;
+  const [factor, note] = ratio >= 1.5 ? [1.15, "busy central area"] : ratio <= 0.5 ? [0.85, "quieter outer area"] : [1, ""];
+  if (factor === 1) return price;
+  const r100 = (n: number) => Math.max(300, Math.round(n / 100) * 100);
+  const min = r100(price.min * factor);
+  return { min, max: Math.max(min + 300, r100(price.max * factor)), basis: `${price.basis}, ${note}` };
 }
 
 /** "+918149777797" / "09560195573" → "+91 81497 77797" (other formats returned as-is). */

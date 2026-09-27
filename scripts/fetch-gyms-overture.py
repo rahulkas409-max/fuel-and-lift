@@ -7,7 +7,7 @@ Reads only the parquet row groups that overlap India, straight from the public S
   python scripts/fetch-gyms-overture.py [release]          # e.g. 2026-09-23.1
   python scripts/fetch-gyms-overture.py --from-raw raw.json  # rebuild tiles only
 """
-import json, os, re, sys, collections, datetime
+import json, math, os, re, sys, collections, datetime
 from urllib.parse import urlparse
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "gyms")
@@ -92,16 +92,99 @@ def extract(release):
     return out
 
 
+def _norm(n):
+    n = n.lower().replace("'s", " ").replace("\u2019s", " ")
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9 ]", " ", n)).strip()
+
+
+def _phone10(p):
+    d = re.sub(r"\D", "", p or "")
+    return d[-10:] if len(d) >= 10 else None
+
+
+def _km(a, b):
+    return 111 * math.hypot(a["lat"] - b["lat"], (a["lng"] - b["lng"]) * math.cos(math.radians(a["lat"])))
+
+
+def dedupe(gyms):
+    """Merge listings that are the same gym: same phone within 3 km, or same normalised name within 1 km."""
+    parent = list(range(len(gyms)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    groups = collections.defaultdict(list)
+    for i, g in enumerate(gyms):
+        if _phone10(g.get("ph")):
+            groups["p" + _phone10(g["ph"])].append(i)
+        groups["n" + _norm(g["n"])].append(i)
+    for key, idx in groups.items():
+        limit = 3 if key[0] == "p" else 1
+        for a_i, a in enumerate(idx):
+            for b in idx[a_i + 1 :]:
+                if _km(gyms[a], gyms[b]) < limit:
+                    parent[find(a)] = find(b)
+    clusters = collections.defaultdict(list)
+    for i in range(len(gyms)):
+        clusters[find(i)].append(gyms[i])
+    out = []
+    for members in clusters.values():
+        # keep the most complete, most confident record; fill gaps from the others
+        members.sort(key=lambda g: (bool(g.get("ph")), bool(g.get("web")), bool(g.get("adr")), g.get("conf", 0)), reverse=True)
+        best = dict(members[0])
+        for m in members[1:]:
+            for k in ("ph", "web", "adr", "city", "pin", "brand"):
+                if not best.get(k) and m.get(k):
+                    best[k] = m[k]
+        out.append(best)
+    return out
+
+
+def build_cities(gyms):
+    """Every town that has gyms, split when same-named towns are far apart (e.g. three Bilaspurs)."""
+    by = collections.defaultdict(list)
+    for g in gyms:
+        c = (g.get("city") or "").strip()
+        if not c or len(c) < 3 or any(ch.isdigit() for ch in c):
+            continue
+        by[c.title()].append(g)
+    cities = []
+    for name, gs in by.items():
+        # cluster members that are within ~60 km of each other
+        clusters = []
+        for g in gs:
+            for cl in clusters:
+                if _km(cl[0], g) < 60:
+                    cl.append(g)
+                    break
+            else:
+                clusters.append([g])
+        for cl in clusters:
+            if len(cl) < 2:
+                continue
+            lats = sorted(x["lat"] for x in cl)
+            lngs = sorted(x["lng"] for x in cl)
+            states = collections.Counter((x.get("st") or "").upper() for x in cl if x.get("st"))
+            st = states.most_common(1)[0][0] if states else ""
+            cities.append([name, round(lats[len(lats) // 2], 4), round(lngs[len(lngs) // 2], 4), len(cl), st if len(st) <= 3 else ""])
+    cities.sort(key=lambda c: -c[3])
+    return cities
+
+
 def build_tiles(raw, release):
-    seen, gyms = set(), []
-    for g in raw:
-        if NOT_A_GYM.search(g["n"]) and not CLEARLY_GYM.search(g["n"]):
-            continue
-        key = (g["n"].lower(), round(g["lat"], 3), round(g["lng"], 3))
-        if key in seen:
-            continue
-        seen.add(key)
-        gyms.append(g)
+    gyms = [g for g in raw if not (NOT_A_GYM.search(g["n"]) and not CLEARLY_GYM.search(g["n"]))]
+    before = len(gyms)
+    gyms = dedupe(gyms)
+    print(f"merged {before - len(gyms)} duplicate listings")
+    cities = build_cities(gyms)
+    pub = os.path.join(os.path.dirname(__file__), "..", "public", "data")
+    os.makedirs(pub, exist_ok=True)
+    with open(os.path.join(pub, "cities.json"), "w") as fh:
+        json.dump(cities, fh, ensure_ascii=False, separators=(",", ":"))
+    print(f"{len(cities)} towns/cities -> public/data/cities.json")
     tiles = collections.defaultdict(list)
     for g in gyms:
         # Compact row: [name, lat, lng, phone, website, address, city, pincode, category, brand]
@@ -122,11 +205,12 @@ def build_tiles(raw, release):
         "license": "CDLA-Permissive-2.0 (some records Apache-2.0 / CC0-1.0)",
         "built": datetime.date.today().isoformat(),
         "gyms": len(gyms),
+        "cities": len(cities),
         "tiles": len(tiles),
         "row": ["name", "lat", "lng", "phone", "website", "address", "city", "pincode", "category", "brand"],
     }
     json.dump(meta, open(os.path.join(OUT_DIR, "meta.json"), "w"), indent=2)
-    print(f"{len(gyms)} gyms (dropped {len(raw) - len(gyms)}) in {len(tiles)} tiles")
+    print(f"{len(gyms)} gyms (from {len(raw)} raw listings) in {len(tiles)} tiles")
 
 
 if __name__ == "__main__":

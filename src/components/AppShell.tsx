@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Dumbbell, Gamepad2, House, MapPin, Settings, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
+import { Dumbbell, House, MapPin, Newspaper, Settings, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { useHydrated, useSoundSync } from "@/lib/hooks";
 import { useStore, type Tab } from "@/lib/store";
 import { useToast } from "@/lib/toast";
 import { ArcadeView } from "./arcade/ArcadeView";
+import { NewsView } from "./news/NewsView";
 import { LogoMark, Wordmark } from "./brand/Logo";
 import { HomeView } from "./home/HomeView";
 import { Onboarding } from "./onboarding/Onboarding";
@@ -23,7 +24,7 @@ const TABS: { id: Tab; label: string; icon: typeof Dumbbell }[] = [
   { id: "train", label: "Train", icon: Dumbbell },
   { id: "meals", label: "Meals", icon: UtensilsCrossed },
   { id: "gyms", label: "Gyms", icon: MapPin },
-  { id: "arcade", label: "Arcade", icon: Gamepad2 },
+  { id: "news", label: "News", icon: Newspaper },
 ];
 
 export function AppShell() {
@@ -85,6 +86,7 @@ export function AppShell() {
               {tab === "gyms" && <GymsView />}
               {tab === "grocery" && <GroceryList />}
               {tab === "arcade" && <ArcadeView />}
+              {tab === "news" && <NewsView />}
             </motion.main>
           </AnimatePresence>
         )}
@@ -111,8 +113,8 @@ export function AppShell() {
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-card-2/95 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto max-w-2xl grid grid-cols-5">
           {TABS.map(({ id, label, icon: Icon }) => {
-            // Grocery lives under Meals now
-            const on = tab === id || (id === "meals" && tab === "grocery");
+            // Grocery lives under Meals, Arcade under Home
+            const on = tab === id || (id === "meals" && tab === "grocery") || (id === "home" && tab === "arcade");
             return (
               <button key={id} onClick={() => setTab(id)} className="h-20 flex flex-col items-center justify-center gap-1" aria-current={on ? "page" : undefined}>
                 <span className="relative h-8 w-16 grid place-items-center">

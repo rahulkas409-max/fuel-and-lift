@@ -1,21 +1,35 @@
+import { useId } from "react";
+
 /**
- * Fuel & Lift mark: a Fit-style progress ring (blue = training, green = nutrition)
- * around a dumbbell with a sprouting leaf. Mirrors public/logo.svg.
+ * Fuel & Lift mark: a flame (fuel — the energy from your food) with an up-arrow inside
+ * (lift — getting stronger every week), resting on a barbell. Blue→green tile = training + nutrition.
+ * Mirrors public/logo.svg.
  */
 export function LogoMark({ size = 40, className = "" }: { size?: number; className?: string }) {
+  const id = useId();
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} role="img" aria-label="Fuel & Lift">
-      <circle cx="32" cy="32" r="24" fill="none" stroke="#34a853" strokeWidth="6.5" strokeLinecap="round" strokeDasharray="150.8" transform="rotate(-90 32 32)" />
-      <circle cx="32" cy="32" r="24" fill="none" stroke="var(--fit-blue)" strokeWidth="6.5" strokeLinecap="round" strokeDasharray="95 200" transform="rotate(-90 32 32)" />
-      <g transform="rotate(-20 32 35)" fill="var(--fit-blue)">
-        <rect x="19" y="33.5" width="26" height="3.5" rx="1.75" />
-        <rect x="21.5" y="27" width="5" height="16.5" rx="2.2" />
-        <rect x="37.5" y="27" width="5" height="16.5" rx="2.2" />
-        <rect x="16.5" y="30" width="4" height="10.5" rx="1.8" />
-        <rect x="43.5" y="30" width="4" height="10.5" rx="1.8" />
+      <defs>
+        <linearGradient id={id} x1="8" y1="58" x2="56" y2="6" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#1e8e3e" />
+          <stop offset="0.55" stopColor="#1a73e8" />
+          <stop offset="1" stopColor="#4285f4" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="15" fill={`url(#${id})`} />
+      <path
+        fill="#fff"
+        fillRule="evenodd"
+        d="M32 8.5C37.8 15.3 45 21.6 45 30.6 45 37.9 39.2 43 32 43S19 37.9 19 30.6c0-5.2 3.1-8.9 5.8-11.4.5 4.1 2.3 6.7 4.6 7.8C28.4 20.2 29.4 14.4 32 8.5ZM32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z"
+      />
+      <path fill="#fbbc04" d="M32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z" />
+      <g fill="#fff">
+        <rect x="12" y="47.5" width="40" height="3" rx="1.5" />
+        <rect x="15" y="43" width="4.5" height="12" rx="2" />
+        <rect x="44.5" y="43" width="4.5" height="12" rx="2" />
+        <rect x="20.5" y="44.8" width="3" height="8.4" rx="1.5" />
+        <rect x="40.5" y="44.8" width="3" height="8.4" rx="1.5" />
       </g>
-      <path d="M31.2 25.5c-3.1-.3-5.2-2.4-5.3-5.6 3.1.2 5.2 2.4 5.3 5.6Z" fill="#34a853" />
-      <path d="M31.2 25.5c.3-3.9 2.4-6.5 6.1-6.9-.2 3.8-2.4 6.4-6.1 6.9Z" fill="#34a853" />
     </svg>
   );
 }

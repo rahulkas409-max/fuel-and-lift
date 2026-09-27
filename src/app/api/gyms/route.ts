@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { distanceKm, estimatePrice, inIndia, inferAudience, inferOffers, type Gym } from "@/lib/gyms";
+import { adjustForArea, distanceKm, estimatePrice, inIndia, inferAudience, inferOffers, type Gym } from "@/lib/gyms";
 
 // Nearby gyms, in order of preference:
 //   1. Google Places (New) — only when GOOGLE_MAPS_API_KEY is set (ratings, hours)
@@ -17,9 +17,9 @@ const GOOGLE_BASE = process.env.GOOGLE_PLACES_URL ?? "https://places.googleapis.
 const mapsLink = (name: string, lat: number, lng: number, placeId?: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name)}%20${lat},${lng}${placeId ? `&query_place_id=${placeId}` : ""}`;
 
-function build(base: Omit<Gym, "audience" | "audienceBasis" | "offers" | "price" | "distanceKm" | "brand">, at: { lat: number; lng: number }, tags: Record<string, string> = {}, priceLevel?: string): Gym {
+function build(base: Omit<Gym, "audience" | "audienceBasis" | "offers" | "price" | "distanceKm" | "brand">, at: { lat: number; lng: number }, tags: Record<string, string> = {}, priceLevel?: string, gymsWithin10km?: number): Gym {
   const { audience, basis } = inferAudience(base.name, tags);
-  const price = estimatePrice(base.name + " " + (tags.brand ?? ""), base, priceLevel);
+  const price = estimatePrice(base.name + " " + (tags.brand ?? ""), base, { googlePriceLevel: priceLevel, hasWebsite: !!base.website, gymsWithin10km });
   return {
     ...base,
     audience,
@@ -53,13 +53,25 @@ function loadTile(ty: number, tx: number): Promise<Row[]> {
   return p;
 }
 
-async function fromOverture(at: { lat: number; lng: number }, radiusKm: number): Promise<Gym[]> {
+/** How many bundled gyms are within 10 km — used to judge town size for price estimates. */
+async function localDensity(at: { lat: number; lng: number }): Promise<number> {
+  const rows = await tilesAround(at, 10);
+  return rows.filter(([, lat, lng]) => distanceKm(at, { lat, lng }) <= 10).length;
+}
+
+async function tilesAround(at: { lat: number; lng: number }, radiusKm: number): Promise<Row[]> {
   const dLat = radiusKm / 111;
   const dLng = radiusKm / (111 * Math.cos((at.lat * Math.PI) / 180));
   const tiles: Promise<Row[]>[] = [];
   for (let ty = Math.floor(at.lat - dLat); ty <= Math.floor(at.lat + dLat); ty++)
     for (let tx = Math.floor(at.lng - dLng); tx <= Math.floor(at.lng + dLng); tx++) tiles.push(loadTile(ty, tx));
-  const rows = (await Promise.all(tiles)).flat();
+  return (await Promise.all(tiles)).flat();
+}
+
+async function fromOverture(at: { lat: number; lng: number }, radiusKm: number, density: number): Promise<Gym[]> {
+  const dLat = radiusKm / 111;
+  const dLng = radiusKm / (111 * Math.cos((at.lat * Math.PI) / 180));
+  const rows = await tilesAround(at, radiusKm);
   const gyms: Gym[] = [];
   for (const [name, lat, lng, phone, website, address, city, pin, cat, brand] of rows) {
     if (Math.abs(lat - at.lat) > dLat || Math.abs(lng - at.lng) > dLng) continue;
@@ -69,6 +81,8 @@ async function fromOverture(at: { lat: number; lng: number }, radiusKm: number):
         { id: `ov-${lat}-${lng}-${name.length}`, name, lat, lng, address: full || undefined, phone: phone ?? undefined, website: website ?? undefined, mapsUrl: mapsLink(name, lat, lng), source: "overture" },
         at,
         { ...(cat ? CATEGORY_TAGS[cat] : {}), ...(brand ? { brand } : {}) },
+        undefined,
+        density,
       ),
     );
   }
@@ -78,7 +92,7 @@ async function fromOverture(at: { lat: number; lng: number }, radiusKm: number):
 // ── OpenStreetMap ──
 interface OsmEl { type: string; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }
 
-async function fromOsm(at: { lat: number; lng: number }, radiusM: number): Promise<Gym[]> {
+async function fromOsm(at: { lat: number; lng: number }, radiusM: number, density: number): Promise<Gym[]> {
   const q = `[out:json][timeout:25];(
   nwr["leisure"="fitness_centre"](around:${radiusM},${at.lat},${at.lng});
   nwr["amenity"="gym"](around:${radiusM},${at.lat},${at.lng});
@@ -117,6 +131,8 @@ async function fromOsm(at: { lat: number; lng: number }, radiusM: number): Promi
             },
             at,
             t,
+            undefined,
+            density,
           );
         })
         .filter((g): g is Gym => !!g);
@@ -149,7 +165,7 @@ const FIELDS = [
   "places.regularOpeningHours", "places.currentOpeningHours.openNow", "nextPageToken",
 ].join(",");
 
-async function fromGoogle(key: string, at: { lat: number; lng: number }, radiusM: number): Promise<Gym[]> {
+async function fromGoogle(key: string, at: { lat: number; lng: number }, radiusM: number, density: number): Promise<Gym[]> {
   const places: GPlace[] = [];
   let pageToken: string | undefined;
   // Text search returns up to 20 per page. Each page is one billable request, so keep
@@ -198,6 +214,7 @@ async function fromGoogle(key: string, at: { lat: number; lng: number }, radiusM
         at,
         {},
         p.priceLevel,
+        density,
       ),
     );
 }
@@ -215,31 +232,50 @@ export async function GET(req: Request) {
   try {
     let gyms: Gym[] = [];
     let source: Gym["source"] = "overture";
+    const density = await localDensity(at);
     if (key) {
       try {
-        gyms = await fromGoogle(key, at, radiusKm * 1000);
+        gyms = await fromGoogle(key, at, radiusKm * 1000, density);
         source = "google";
       } catch (err) {
         console.error("[gyms] Google Places failed, falling back to OpenStreetMap:", err);
       }
     }
-    if (source === "overture") gyms = await fromOverture(at, radiusKm);
+    if (source === "overture") gyms = await fromOverture(at, radiusKm, density);
     if (source === "overture" && !gyms.length) {
       try {
-        gyms = await fromOsm(at, radiusKm * 1000);
+        gyms = await fromOsm(at, radiusKm * 1000, density);
         source = "osm";
       } catch (err) {
         console.error("[gyms] OpenStreetMap fallback failed:", err);
       }
     }
 
-    // De-duplicate (same name within ~60 m) and keep the radius
+    // One card per gym: drop repeats with the same phone number (within 3 km) or the
+    // same name ignoring punctuation / "'s" (within 1 km), and keep to the radius.
+    const norm = (n: string) => n.toLowerCase().replace(/['’]s\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+    const ph = (p?: string) => (p ? p.replace(/\D/g, "").slice(-10) : "");
     const seen: Gym[] = [];
     for (const g of gyms.sort((a, b) => a.distanceKm - b.distanceKm)) {
       if (g.distanceKm > radiusKm * 1.2) continue;
-      if (seen.some((s) => s.name.toLowerCase() === g.name.toLowerCase() && Math.abs(s.distanceKm - g.distanceKm) < 0.06)) continue;
+      const dup = seen.find((s) => {
+        const d = distanceKm(s, g);
+        return (ph(s.phone) && ph(s.phone) === ph(g.phone) && d < 3) || (norm(s.name) === norm(g.name) && d < 1);
+      });
+      if (dup) {
+        dup.phone ??= g.phone;
+        dup.website ??= g.website;
+        dup.address ??= g.address;
+        continue;
+      }
       seen.push(g);
     }
+
+    // Central vs outer-area pricing, from how many gyms cluster around each one.
+    const all = (await tilesAround(at, radiusKm + 2)).map(([, la, ln]) => ({ lat: la, lng: ln }));
+    const nearby = seen.map((g) => all.filter((p) => Math.abs(p.lat - g.lat) < 0.014 && distanceKm(g, p) <= 1.5).length);
+    const typical = [...nearby].sort((a, b) => a - b)[Math.floor(nearby.length / 2)] ?? 0;
+    seen.forEach((g, i) => (g.price = adjustForArea(g.price, nearby[i], typical)));
     return Response.json({ source, count: seen.length, gyms: seen }, { headers: { "Cache-Control": "private, max-age=300" } });
   } catch (err) {
     console.error("[gyms] lookup failed", err);

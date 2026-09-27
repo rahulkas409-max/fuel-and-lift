@@ -4,15 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Crosshair, Loader2, MapPin, RefreshCw, Search, X } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  CITIES,
-  inIndia,
-  nearestCity,
-  type Audience,
-  type Gym,
-  type Place,
-} from "@/lib/gyms";
+import { inIndia, nearestCity, type Audience, type Gym, type Place } from "@/lib/gyms";
 import { useStore } from "@/lib/store";
+import { loadTowns, nearestTown, stateName, type Town } from "@/lib/towns";
 import { Sheet } from "../ui/Sheet";
 import { GymCard } from "./GymCard";
 
@@ -69,12 +63,10 @@ export function GymsView() {
         setPickerOpen(true);
         return;
       }
-      setPlace({
-        lat,
-        lng,
-        label: `Near you · ${nearestCity({ lat, lng }).name}`,
-        source: "gps",
-      });
+      const town = await loadTowns()
+        .then((t) => nearestTown({ lat, lng }, t)?.name)
+        .catch(() => nearestCity({ lat, lng }).name);
+      setPlace({ lat, lng, label: `Near you · ${town}`, source: "gps" });
     } catch (e) {
       setStatus("idle");
       const denied = (e as GeolocationPositionError)?.code === 1;
@@ -395,7 +387,7 @@ export function GymsView() {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onPick={(c) => {
-          setPlace({ lat: c.lat, lng: c.lng, label: c.name, source: "city" });
+          setPlace({ lat: c.lat, lng: c.lng, label: c.state ? `${c.name}, ${stateName(c.state) || c.state}` : c.name, source: "city" });
           setPickerOpen(false);
         }}
         onGps={() => {
@@ -415,13 +407,21 @@ function CityPicker({
 }: {
   open: boolean;
   onClose: () => void;
-  onPick: (c: (typeof CITIES)[number]) => void;
+  onPick: (t: Town) => void;
   onGps: () => void;
 }) {
   const [q, setQ] = useState("");
-  const list = CITIES.filter((c) =>
-    c.name.toLowerCase().includes(q.trim().toLowerCase()),
-  );
+  const [towns, setTowns] = useState<Town[]>([]);
+  useEffect(() => {
+    if (open && !towns.length) loadTowns().then(setTowns, () => {});
+  }, [open, towns.length]);
+  const needle = q.trim().toLowerCase();
+  const list = needle
+    ? towns
+        .filter((t) => t.name.toLowerCase().includes(needle) || stateName(t.state).toLowerCase().includes(needle))
+        .sort((a, b) => Number(!a.name.toLowerCase().startsWith(needle)) - Number(!b.name.toLowerCase().startsWith(needle)) || b.gyms - a.gyms)
+        .slice(0, 60)
+    : towns.slice(0, 30);
   return (
     <Sheet open={open} onClose={onClose} title="Choose location">
       <button
@@ -438,25 +438,36 @@ function CityPicker({
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search city"
-          aria-label="Search city"
+          placeholder={`Search ${towns.length ? towns.length.toLocaleString("en-IN") + " " : ""}towns & cities`}
+          aria-label="Search city or town"
           className="w-full h-12 rounded-2xl bg-card-2 pl-11 pr-3 outline-none focus:ring-1 focus:ring-fit-blue"
         />
       </div>
-      <ul className="mt-3 grid grid-cols-2 gap-2 pb-2">
-        {list.map((c) => (
-          <li key={c.name}>
+      {!needle && towns.length > 0 && (
+        <p className="text-xs text-ink-3 mt-3">Popular cities · type to find your town</p>
+      )}
+      <ul className="mt-2 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2 pb-2">
+        {list.map((t) => (
+          <li key={`${t.name}|${t.state}|${t.lat}`}>
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={() => onPick(c)}
-              className="w-full h-12 rounded-2xl border border-line bg-card text-sm text-ink text-left px-4 flex items-center gap-2"
+              onClick={() => onPick(t)}
+              className="w-full min-h-14 rounded-2xl border border-line bg-card text-left px-3 py-2 flex items-center gap-2"
             >
-              <MapPin size={15} className="text-fit-green shrink-0" />{" "}
-              <span className="truncate">{c.name}</span>
+              <MapPin size={15} className="text-fit-green shrink-0" />
+              <span className="min-w-0">
+                <span className="block text-sm text-ink truncate">{t.name}</span>
+                <span className="block text-[11px] text-ink-3 truncate">
+                  {[stateName(t.state), `${t.gyms.toLocaleString("en-IN")} gyms`].filter(Boolean).join(" · ")}
+                </span>
+              </span>
             </motion.button>
           </li>
         ))}
       </ul>
+      {needle && !list.length && towns.length > 0 && (
+        <p className="text-sm text-ink-2 py-4 text-center">No town called “{q}” in our list yet.</p>
+      )}
       <p className="text-[11px] text-ink-3 pb-2">
         Don&apos;t see your town? Use “exact location”, which works anywhere in
         India.
