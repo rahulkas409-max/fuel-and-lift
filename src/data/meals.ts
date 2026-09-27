@@ -26,6 +26,8 @@ export interface Meal {
   carbs: number;
   fat: number;
   kcal: number;
+  /** Home-cooked cost per serving in ₹ (typical 2026 Indian retail prices) */
+  cost: number;
   tags: MealTag[];
   ingredients: Ingredient[];
   steps: [string, string, string];
@@ -42,8 +44,28 @@ const P = (item: string, qty: string): Ingredient => ({ item, qty, section: "Pro
 const D = (item: string, qty: string): Ingredient => ({ item, qty, section: "Protein & Dairy" });
 const T = (item: string, qty: string): Ingredient => ({ item, qty, section: "Pantry" });
 
-type MealInput = Omit<Meal, "kcal" | "tags"> & { tags?: MealTag[] };
-const meal = (m: MealInput): Meal => ({ ...m, tags: m.tags ?? [], kcal: Math.round(m.protein * 4 + m.carbs * 4 + m.fat * 9) });
+// Rough home-cooked cost per serving (₹): paneer ~₹450/kg, chicken ~₹280/kg, eggs ~₹7 each, whey ~₹60/scoop, dal & rice ~₹120/kg.
+const COST: Record<string, number> = {
+  "paneer-bhurji-toast": 75, "moong-chilla-paneer": 50, "protein-overnight-oats": 85, "tofu-scramble-wrap": 80, "besan-chilla-curd": 35, "poha-peanut-curd": 30,
+  "rajma-chawal": 40, "soya-pulao": 35, "palak-paneer-roti": 70, "chickpea-quinoa-salad": 90, "dal-tadka-rice": 35,
+  "greek-yogurt-berries": 110, "banana-whey-shake": 70, "paneer-tikka-skewers": 65, "sprouts-chaat": 25, "sattu-shake": 30,
+  "tofu-stirfry-rice": 85, "soya-keema-roti": 35, "paneer-tikka-masala-cauli": 85, "masoor-khichdi": 35, "chole-roti": 40,
+  "egg-white-omelette": 45, "egg-bhurji-roti": 35, "chicken-egg-wrap": 75, "protein-pancakes": 60, "eggs-avocado-toast": 110,
+  "lean-chicken-biryani": 95, "grilled-chicken-rice-bowl": 100, "kerala-fish-curry": 120, "chicken-tikka-salad": 110, "egg-curry-rice": 45,
+  "tuna-sandwich": 150, "chicken-tikka-bites": 85, "eggs-banana-box": 30, "whey-oats-shake": 70,
+  "tandoori-chicken-veg": 100, "lemon-fish-sweet-potato": 130, "chicken-curry-roti": 85, "chicken-keema-rice": 90, "prawn-noodles": 140,
+};
+
+type MealInput = Omit<Meal, "kcal" | "tags" | "cost"> & { tags?: MealTag[] };
+const meal = (m: MealInput): Meal => ({ ...m, tags: m.tags ?? [], cost: COST[m.id] ?? 60, kcal: Math.round(m.protein * 4 + m.carbs * 4 + m.fat * 9) });
+
+/** The meal's main protein (used to keep a day's plan varied — e.g. paneer at most once). */
+export function mainProtein(m: Meal): string {
+  const items = m.ingredients.map((i) => i.item.toLowerCase()).join("|");
+  for (const k of ["paneer", "tofu", "soya", "chicken", "fish", "prawn", "tuna", "egg", "whey", "rajma", "chickpea", "chole", "dal", "moong", "besan", "sattu"])
+    if (items.includes(k)) return k;
+  return m.id;
+}
 
 export const MEALS: Meal[] = [
   // ───────────── VEG · Breakfast ─────────────
@@ -62,6 +84,10 @@ export const MEALS: Meal[] = [
   meal({ id: "besan-chilla-curd", name: "Besan Chilla with Hung Curd", emoji: "🫓", diet: "veg", slot: "breakfast", prepMins: 15, protein: 20, carbs: 34, fat: 10, tags: ["quick"],
     ingredients: [T("Besan (gram flour)", "60 g"), D("Hung curd", "100 g"), P("Onion", "½"), P("Tomato", "½"), P("Coriander", "handful")],
     steps: ["Whisk besan with water, chopped onion, tomato, coriander and spices.", "Cook thin chillas on a lightly oiled pan.", "Serve with hung curd seasoned with salt and roasted cumin."] }),
+
+  meal({ id: "poha-peanut-curd", name: "Peanut Veg Poha & Curd", emoji: "🍚", diet: "veg", slot: "breakfast", prepMins: 15, protein: 15, carbs: 58, fat: 13, tags: ["quick"],
+    ingredients: [T("Thick poha", "60 g"), T("Peanuts", "20 g"), P("Onion", "½"), P("Green peas", "½ cup"), P("Curry leaves", "1 sprig"), D("Curd", "150 g")],
+    steps: ["Rinse poha and let it soften for 2 minutes.", "Temper mustard seeds, curry leaves, peanuts, onion and peas; add turmeric and the poha.", "Finish with lemon and coriander; serve with a bowl of curd."] }),
 
   // ───────────── VEG · Lunch ─────────────
   meal({ id: "rajma-chawal", name: "Rajma Chawal Power Bowl", emoji: "🍛", diet: "veg", slot: "lunch", prepMins: 35, protein: 20, carbs: 80, fat: 8, tags: ["carb-load"],
@@ -90,6 +116,9 @@ export const MEALS: Meal[] = [
   meal({ id: "paneer-tikka-skewers", name: "Paneer Tikka Skewers", emoji: "🍢", diet: "veg", slot: "snack", prepMins: 25, protein: 22, carbs: 8, fat: 16, tags: ["recovery"],
     ingredients: [D("Paneer", "100 g"), D("Hung curd", "50 g"), P("Bell pepper", "1"), P("Onion", "1"), T("Tikka masala", "1 tbsp")],
     steps: ["Marinate paneer, pepper and onion in curd and tikka masala for 15 min.", "Thread onto skewers.", "Grill or air-fry at 200 °C for 10–12 min, turning once."] }),
+  meal({ id: "sattu-shake", name: "Sattu Protein Shake", emoji: "🥛", diet: "veg", slot: "snack", prepMins: 5, protein: 20, carbs: 38, fat: 7, tags: ["quick", "carb-load"],
+    ingredients: [T("Sattu (roasted chana flour)", "40 g"), D("Milk", "250 ml"), P("Banana", "1"), T("Jaggery", "1 tsp")],
+    steps: ["Add sattu, milk, banana and jaggery to a blender.", "Blend until smooth; add a pinch of cardamom.", "Drink within 30 minutes of training."] }),
   meal({ id: "sprouts-chaat", name: "Moong Sprouts Chaat", emoji: "🌱", diet: "veg", slot: "snack", prepMins: 10, protein: 14, carbs: 32, fat: 3, tags: ["quick"],
     ingredients: [T("Moong sprouts", "1 cup"), P("Onion", "½"), P("Tomato", "½"), P("Lemon", "½"), T("Chaat masala", "1 tsp")],
     steps: ["Steam sprouts for 5 minutes and cool.", "Mix with chopped onion, tomato and coriander.", "Finish with lemon juice and chaat masala."] }),
@@ -104,6 +133,9 @@ export const MEALS: Meal[] = [
   meal({ id: "paneer-tikka-masala-cauli", name: "Paneer Tikka Masala & Cauli Rice", emoji: "🧀", diet: "veg", slot: "dinner", prepMins: 30, protein: 28, carbs: 16, fat: 26, tags: ["recovery"],
     ingredients: [D("Paneer", "120 g"), P("Cauliflower", "250 g"), P("Tomato", "2"), D("Low-fat cream", "2 tbsp"), T("Kasuri methi", "1 tsp")],
     steps: ["Grate cauliflower and dry-roast into 'rice'.", "Simmer a tomato-onion gravy with spices and a splash of cream.", "Add grilled paneer cubes and kasuri methi; serve over cauli rice."] }),
+  meal({ id: "chole-roti", name: "Chole with 2 Rotis & Salad", emoji: "🫘", diet: "veg", slot: "dinner", prepMins: 35, protein: 20, carbs: 66, fat: 12, tags: ["carb-load"],
+    ingredients: [T("Kabuli chana (soaked)", "70 g dry"), P("Onion", "1"), P("Tomato", "2"), P("Ginger-garlic", "1 tbsp"), T("Chole masala", "1 tbsp"), T("Whole-wheat atta", "60 g"), P("Cucumber", "1")],
+    steps: ["Pressure-cook soaked chana for 5–6 whistles.", "Cook onion, ginger-garlic and tomato with chole masala; add chana and simmer 10 minutes.", "Serve with 2 rotis and cucumber salad."] }),
   meal({ id: "masoor-khichdi", name: "Masoor Dal Khichdi & Curd", emoji: "🥘", diet: "veg", slot: "dinner", prepMins: 25, protein: 22, carbs: 64, fat: 10, tags: ["carb-load"],
     ingredients: [T("Masoor dal", "50 g"), T("Rice", "40 g"), P("Mixed veg", "1 cup"), D("Curd", "150 g"), T("Ghee", "1 tsp")],
     steps: ["Wash dal and rice together.", "Pressure-cook with veg, turmeric and 3× water for 3 whistles.", "Finish with a ghee-cumin tadka and serve with curd."] }),

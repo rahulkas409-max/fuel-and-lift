@@ -1,4 +1,4 @@
-import { SLOTS, mealById, mealsFor, type DietPref, type Meal, type Slot } from "@/data/meals";
+import { SLOTS, mainProtein, mealById, mealsFor, type DietPref, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
 
 export type Goal = "cut" | "maintain" | "bulk";
@@ -51,6 +51,21 @@ export const scaleMacros = (t: Targets, k: number): Targets => ({
   fat: Math.round(t.fat * k),
 });
 
+/** A day shouldn't repeat itself: paneer, soya and tofu at most once, any other main protein at most twice. */
+const ONCE = new Set(["paneer", "soya", "tofu"]);
+export function variedEnough(combo: Meal[]) {
+  const n: Record<string, number> = {};
+  for (const m of combo) {
+    const k = mainProtein(m);
+    n[k] = (n[k] ?? 0) + 1;
+    if (n[k] > (ONCE.has(k) ? 1 : 2)) return false;
+  }
+  return true;
+}
+
+/** Cost of a planned day in ₹ (portions scaled). */
+export const planCost = (meals: (Meal | undefined)[], scale = 1) => Math.round(meals.reduce((c, m) => c + (m?.cost ?? 0), 0) * scale);
+
 /**
  * Auto-Sync: pick one meal per slot plus a portion multiplier (1–2×) so the day's
  * totals land near the calorie and protein targets. Heavy days prefer glycogen-refill
@@ -62,7 +77,9 @@ export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0,
 
   const walk = (i: number, combo: Meal[]) => {
     if (i === bySlot.length) {
+      if (!variedEnough(combo)) return;
       const base = totals(combo);
+      const cost = combo.reduce((c, m) => c + m.cost, 0);
       let tagBonus = 0;
       for (const m of combo) {
         if (intensity === "heavy" && m.tags.includes("carb-load")) tagBonus -= 0.04;
@@ -75,6 +92,7 @@ export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0,
         score += (1.5 * Math.max(0, targets.protein - t.protein)) / targets.protein;
         score += (0.5 * Math.abs(t.carbs - targets.carbs)) / Math.max(targets.carbs, 1);
         score += (scale - 1) * 0.02; // prefer real single servings when they fit
+        score += (cost * scale) / 6000; // cheaper wins when nutrition is close (₹300/day ≈ +0.05)
         scored.push({ combo, scale, score: score + tagBonus });
       }
       return;

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { MEALS, SLOTS, mealById, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
 import { useToday } from "@/lib/hooks";
-import { dayTargets, scaleMacros, syncPlan, totals, type Goal } from "@/lib/nutrition";
+import { dayTargets, planCost, scaleMacros, syncPlan, totals, variedEnough, type Goal } from "@/lib/nutrition";
 import { play } from "@/lib/sound";
 import { currentRoutine, useStore } from "@/lib/store";
 import { useToast } from "@/lib/toast";
@@ -61,9 +61,14 @@ export function MealsView() {
 
   const spinAll = () => {
     const next: Partial<Record<Slot, string>> = {};
-    for (const slot of SLOTS) {
-      const options = mealsFor(slot.id, s.diet);
-      next[slot.id] = options[Math.floor(Math.random() * options.length)].id;
+    // Re-roll until the day is varied (paneer at most once).
+    for (let tries = 0; tries < 50; tries++) {
+      const picks = SLOTS.map((slot) => {
+        const options = mealsFor(slot.id, s.diet);
+        return options[Math.floor(Math.random() * options.length)];
+      });
+      picks.forEach((m) => (next[m.slot] = m.id));
+      if (variedEnough(picks)) break;
     }
     s.setPlan(today, next, 1);
     play("check");
@@ -188,7 +193,14 @@ export function MealsView() {
 
       {/* Daily deck */}
       <div className="flex items-center justify-between pt-1">
-        <p className="font-medium text-ink">Today&apos;s plan</p>
+        <p className="font-medium text-ink">
+          Today&apos;s plan
+          {meals.some(Boolean) && (
+            <span className="ml-2 text-sm font-normal text-ink-2">
+              ≈ <b className="font-medium text-fit-green">₹{planCost(meals, scale)}</b> for the day
+            </span>
+          )}
+        </p>
         {(Object.keys(plan).length > 0 || logged.length > 0) && (
           <button
             onClick={() => {
@@ -229,8 +241,9 @@ export function MealsView() {
                 <p className="text-[11px] font-medium text-ink-3">{slot.label}</p>
                 <p className="text-ink font-medium leading-snug mt-0.5 line-clamp-2">{m?.name ?? "Tap to spin the roulette"}</p>
                 {m && (
-                  <div className="flex items-center gap-2 mt-1.5">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
                     <MacroPills m={m} />
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-fit-green-soft text-fit-green tabular">₹{Math.round(m.cost * scale)}</span>
                     <span className="text-[11px] text-ink-3 flex items-center gap-1"><Clock size={11} />{m.prepMins}m</span>
                   </div>
                 )}
@@ -242,7 +255,7 @@ export function MealsView() {
           );
         })}
       </section>
-      <p className="text-center text-xs text-ink-3">{MEALS.length} planner recipes · macros are per-serving estimates</p>
+      <p className="text-center text-xs text-ink-3">{MEALS.length} planner recipes · macros are per-serving estimates · ₹ = home-cooked cost at typical Indian prices</p>
 
       <MealSpinner
         open={spinSlot != null}

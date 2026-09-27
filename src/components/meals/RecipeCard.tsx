@@ -25,6 +25,7 @@ export function RecipeCard({ meal, onClose }: { meal: Meal | null; onClose: () =
               {meal.diet === "veg" ? <Leaf size={12} /> : <Drumstick size={12} />} {meal.diet === "veg" ? "Vegetarian" : "Non-veg"}
             </span>
             <span className="inline-flex items-center gap-1 text-ink-2"><Clock size={12} /> {meal.prepMins} min</span>
+            <span className="text-fit-green font-medium">≈ ₹{meal.cost} per serving</span>
           </div>
           <h2 className="font-display text-3xl leading-tight mt-2">{meal.name}</h2>
           <div className="mt-3"><MacroPills m={meal} size="lg" /></div>
