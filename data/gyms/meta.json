@@ -1,0 +1,20 @@
+{
+  "source": "Overture Maps Foundation \u2014 places theme",
+  "release": "2026-09-23.1",
+  "license": "CDLA-Permissive-2.0 (some records Apache-2.0 / CC0-1.0)",
+  "built": "2026-09-27",
+  "gyms": 36527,
+  "tiles": 300,
+  "row": [
+    "name",
+    "lat",
+    "lng",
+    "phone",
+    "website",
+    "address",
+    "city",
+    "pincode",
+    "category",
+    "brand"
+  ]
+}

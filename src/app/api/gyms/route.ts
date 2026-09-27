@@ -1,7 +1,11 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { distanceKm, estimatePrice, inIndia, inferAudience, inferOffers, type Gym } from "@/lib/gyms";
 
-// Nearby gyms. Uses Google Places (New) when GOOGLE_MAPS_API_KEY is set on the server —
-// best coverage, ratings and phone numbers — otherwise free OpenStreetMap data via Overpass.
+// Nearby gyms, in order of preference:
+//   1. Google Places (New) — only when GOOGLE_MAPS_API_KEY is set (ratings, hours)
+//   2. Bundled open data: ~36k Indian gyms from Overture Maps (data/gyms, CDLA-Permissive-2.0)
+//   3. Live OpenStreetMap via Overpass — if the bundled data has nothing nearby
 
 const OVERPASS = (process.env.OVERPASS_URL?.split(",") ?? [
   "https://overpass-api.de/api/interpreter",
@@ -25,6 +29,50 @@ function build(base: Omit<Gym, "audience" | "audienceBasis" | "offers" | "price"
     price: { min: price.min, max: price.max, basis: price.basis },
     distanceKm: Math.round(distanceKm(at, base) * 10) / 10,
   };
+}
+
+// ── Bundled Overture data ──
+// Row: [name, lat, lng, phone, website, address, city, pincode, category, brand]
+type Row = [string, number, number, string | null, string | null, string, string | null, string | null, string | null, string | null];
+const tileCache = new Map<string, Promise<Row[]>>();
+const TILE_DIR = path.join(process.cwd(), "data", "gyms", "tiles");
+const CATEGORY_TAGS: Record<string, Record<string, string>> = {
+  yoga_studio: { sport: "yoga" }, pilates_studio: { sport: "pilates" }, martial_arts_club: { sport: "martial_arts" },
+  boxing_class: { sport: "boxing" }, boxing_gym: { sport: "boxing" }, kickboxing_club: { sport: "boxing" }, dance_studio: { sport: "aerobics" },
+};
+
+function loadTile(ty: number, tx: number): Promise<Row[]> {
+  const key = `${ty}_${tx}`;
+  let p = tileCache.get(key);
+  if (!p) {
+    p = readFile(path.join(TILE_DIR, `${key}.json`), "utf8")
+      .then((t) => JSON.parse(t) as Row[])
+      .catch(() => []); // no gyms mapped in this square
+    tileCache.set(key, p);
+  }
+  return p;
+}
+
+async function fromOverture(at: { lat: number; lng: number }, radiusKm: number): Promise<Gym[]> {
+  const dLat = radiusKm / 111;
+  const dLng = radiusKm / (111 * Math.cos((at.lat * Math.PI) / 180));
+  const tiles: Promise<Row[]>[] = [];
+  for (let ty = Math.floor(at.lat - dLat); ty <= Math.floor(at.lat + dLat); ty++)
+    for (let tx = Math.floor(at.lng - dLng); tx <= Math.floor(at.lng + dLng); tx++) tiles.push(loadTile(ty, tx));
+  const rows = (await Promise.all(tiles)).flat();
+  const gyms: Gym[] = [];
+  for (const [name, lat, lng, phone, website, address, city, pin, cat, brand] of rows) {
+    if (Math.abs(lat - at.lat) > dLat || Math.abs(lng - at.lng) > dLng) continue;
+    const full = [address, address && city && address.toLowerCase().includes(city.toLowerCase()) ? null : city, pin].filter(Boolean).join(", ");
+    gyms.push(
+      build(
+        { id: `ov-${lat}-${lng}-${name.length}`, name, lat, lng, address: full || undefined, phone: phone ?? undefined, website: website ?? undefined, mapsUrl: mapsLink(name, lat, lng), source: "overture" },
+        at,
+        { ...(cat ? CATEGORY_TAGS[cat] : {}), ...(brand ? { brand } : {}) },
+      ),
+    );
+  }
+  return gyms;
 }
 
 // ── OpenStreetMap ──
@@ -166,7 +214,7 @@ export async function GET(req: Request) {
   const key = process.env.GOOGLE_MAPS_API_KEY?.trim();
   try {
     let gyms: Gym[] = [];
-    let source: "google" | "osm" = "osm";
+    let source: Gym["source"] = "overture";
     if (key) {
       try {
         gyms = await fromGoogle(key, at, radiusKm * 1000);
@@ -175,7 +223,15 @@ export async function GET(req: Request) {
         console.error("[gyms] Google Places failed, falling back to OpenStreetMap:", err);
       }
     }
-    if (source === "osm") gyms = await fromOsm(at, radiusKm * 1000);
+    if (source === "overture") gyms = await fromOverture(at, radiusKm);
+    if (source === "overture" && !gyms.length) {
+      try {
+        gyms = await fromOsm(at, radiusKm * 1000);
+        source = "osm";
+      } catch (err) {
+        console.error("[gyms] OpenStreetMap fallback failed:", err);
+      }
+    }
 
     // De-duplicate (same name within ~60 m) and keep the radius
     const seen: Gym[] = [];

@@ -15,7 +15,7 @@ export interface Gym {
   ratingCount?: number;
   hours?: string[];
   openNow?: boolean;
-  source: "google" | "osm";
+  source: "google" | "overture" | "osm";
   audience: Audience;
   /** "listed" = the listing says so; "name" = guessed from the gym's name; "assumed" = no info, most Indian gyms are unisex */
   audienceBasis: "listed" | "name" | "assumed";
@@ -151,6 +151,14 @@ export function estimatePrice(name: string, at: { lat: number; lng: number }, go
   const tier = distanceKm(at, city) < 40 ? city.tier : 3;
   const [min, max] = TIER_RANGE[tier];
   return { min, max, basis: tier === 3 ? "Estimate for a local gym in a smaller town" : `Estimate for a local gym in ${city.name}` };
+}
+
+/** "+918149777797" / "09560195573" → "+91 81497 77797" (other formats returned as-is). */
+export function formatPhone(p: string) {
+  const d = p.replace(/[^\d]/g, "");
+  const ten = d.length === 12 && d.startsWith("91") ? d.slice(2) : d.length === 11 && d.startsWith("0") ? d.slice(1) : d.length === 10 ? d : null;
+  if (ten && /^[6-9]/.test(ten)) return `+91 ${ten.slice(0, 5)} ${ten.slice(5)}`;
+  return p;
 }
 
 export const formatINR = (n: number) => `₹${n.toLocaleString("en-IN")}`;
