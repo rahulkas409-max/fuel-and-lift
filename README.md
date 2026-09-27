@@ -41,12 +41,16 @@ All data lives in the browser's localStorage.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
 - Data lives in `src/data/programs.ts`. Photos come from free-exercise-db via `scripts/fetch-exercise-media.mjs`.
 
-**Fitso: AI fitness coach** (the "Ask Fitso" button on every screen)
-- A chat coach powered by Claude (`claude-opus-5` by default; set `FITSO_MODEL` to change it). Route: `src/app/api/fitso/route.ts`. Personality and coaching rules: `src/lib/fitso-prompt.ts`.
-- Replies stream in live, in the member's language (English, Hindi or Hinglish). Answers are evidence-based and Indian-food aware, with safety rules for injuries, medical issues and eating disorders.
-- Each question is sent with the member's profile (weight, goal, veg/non-veg, today's workout and meals) so answers are personal. Chat history stays on the device.
-- It uses low effort for fast replies, prompt caching and server-side refusal fallbacks. There is basic rate limiting per server instance.
-- **Setup:** add `ANTHROPIC_API_KEY` in Vercel → Settings → Environment Variables, then redeploy. Until then, Fitso replies that it's almost ready.
+**Fitso: fitness coach chat** (the "Ask Fitso" button on every screen)
+- **Works free, with no API key.** A built-in coach (`src/lib/fitso-brain.ts`) answers about 60 topics:
+  - Nutrition and weight: protein, calories, fat loss, belly/face/thigh fat, muscle and weight gain, meal ideas from the app's recipes, pre/post-workout food, supplements, budget protein, water, fasting/keto, cravings and alcohol.
+  - Pain and injuries: knee, back and shoulder pain, and muscle soreness.
+  - Training: beginner and home workouts, workout frequency, cardio and steps, abs, plateaus, results, motivation, warm-ups, yoga, women's training, sleep and workout timing.
+  - Food nutrition lookup from the 7,000+ food database, and BMI with Indian cut-offs.
+- It understands Hinglish (for example "pet kaise kam kare"), follows up on short questions like "and for veg?", and offers tap-to-ask follow-up suggestions. Replies are typed out naturally.
+- Safety comes first: emergencies go to 112, mental health to Tele-MANAS 14416, and steroids and crash diets get a firm no.
+- Answers use the member's profile, today's workout and today's meals.
+- **Optional upgrade:** if `ANTHROPIC_API_KEY` is set in Vercel, Fitso automatically uses Claude (`src/app/api/fitso/route.ts`, prompt in `src/lib/fitso-prompt.ts`) and falls back to the built-in coach if that fails.
 
 **Streak leaderboard** (Home → Streak leaderboard)
 - A 1-2-3 podium with medals, plus places 4–20, on three boards: current streak, longest streak, and this week (resets every Monday).

@@ -13,6 +13,9 @@ export interface ChatMsg {
   role: "user" | "assistant";
   content: string;
   error?: boolean;
+  /** tap-to-ask follow-up suggestions (built-in coach) */
+  chips?: string[];
+  topic?: string;
 }
 
 export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news";
