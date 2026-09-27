@@ -54,6 +54,8 @@ interface State {
   /** Where the gym finder searches (GPS, IP guess or picked city). */
   gymPlace: Place | null;
   gymRadius: number;
+  /** Streak leaderboard: private device id, public name and town (only sent after joining) */
+  lb: { id: string; name: string; city: string; joined: boolean };
   /** Train tab: your routine or the body-part workout library */
   trainMode: "routine" | "library";
   profile: Profile;
@@ -68,6 +70,8 @@ interface State {
 
   setTab: (t: Tab) => void;
   setTrainMode: (m: "routine" | "library") => void;
+  joinLeaderboard: (name: string, city: string) => void;
+  leaveLeaderboard: () => void;
   setRoutine: (id: string) => void;
   setDay: (routineId: string, dayId: string) => void;
   saveCustomRoutine: (r: Routine) => void;
@@ -115,6 +119,7 @@ const initialData = (): Data => ({
   gymPlace: null,
   gymRadius: 5,
   trainMode: "routine",
+  lb: { id: "", name: "", city: "", joined: false },
   profile: { weightKg: 70, goal: "maintain" },
   plans: {},
   scales: {},
@@ -202,13 +207,16 @@ export const useStore = create<State>()(
         })),
       clearGrocery: () => set({ grocery: [] }),
       // Keeps the sound preference and any purchased pass; wipes everything else.
-      resetAll: () => set((s) => ({ ...initialData(), sound: s.sound, customPassUntil: s.customPassUntil })),
+      resetAll: () => set((s) => ({ ...initialData(), sound: s.sound, customPassUntil: s.customPassUntil, lb: s.lb })),
       finishOnboarding: ({ routineId, diet, profile }) =>
         set((s) => ({ onboarded: true, routineId, diet, profile: { ...s.profile, ...profile }, tab: "home" })),
       restartOnboarding: () => set({ onboarded: false }),
       setGymPlace: (gymPlace) => set({ gymPlace }),
       setGymRadius: (gymRadius) => set({ gymRadius }),
       setTrainMode: (trainMode) => set({ trainMode }),
+      joinLeaderboard: (name, city) =>
+        set((s) => ({ lb: { id: s.lb.id || crypto.randomUUID(), name: name.trim().slice(0, 20), city: city.trim().slice(0, 24), joined: true } })),
+      leaveLeaderboard: () => set((s) => ({ lb: { ...s.lb, joined: false } })),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),

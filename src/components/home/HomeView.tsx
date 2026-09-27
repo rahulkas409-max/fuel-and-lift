@@ -9,6 +9,7 @@ import { activeStreak, addDays, dayKey } from "@/lib/date";
 import { useToday } from "@/lib/hooks";
 import { todayNutrition, todaySession } from "@/lib/progress";
 import { currentRoutine, useStore } from "@/lib/store";
+import { LeaderboardCard } from "../leaderboard/Leaderboard";
 import { Emoji } from "../ui/Emoji";
 
 const greeting = () => {
@@ -151,6 +152,8 @@ export function HomeView() {
           </div>
         )}
       </section>
+
+      <LeaderboardCard />
 
       {/* Shortcuts */}
       <section className="grid grid-cols-2 gap-3">

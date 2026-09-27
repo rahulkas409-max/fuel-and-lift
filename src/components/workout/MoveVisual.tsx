@@ -2,19 +2,19 @@
 
 import { ExternalLink } from "lucide-react";
 import { moveInfo, type ProgramMove } from "@/data/programs";
-import { Emoji } from "../ui/Emoji";
 import { Sheet } from "../ui/Sheet";
 import { ExerciseAnimation } from "./ExerciseDemo";
+import { Figure, hasFigure } from "./Figure";
 
-/** Photo (start/end flip) when we have one, otherwise a big emoji tile. */
-export function MoveVisual({ id, className = "", emojiSize = 40 }: { id: string; className?: string; emojiSize?: number }) {
+/**
+ * Animated illustration for home / yoga / face moves, start–end photos for gym lifts.
+ * `still` shows the finished position only (for small thumbnails in lists).
+ */
+export function MoveVisual({ id, className = "", still = false }: { id: string; className?: string; still?: boolean }) {
   const info = moveInfo(id);
+  if (hasFigure(id)) return <Figure id={id} className={className} frame={still ? 99 : undefined} />;
   if (info.hasPhoto) return <ExerciseAnimation id={id} label={info.name} className={className} />;
-  return (
-    <span className={`grid place-items-center bg-gradient-to-br from-fit-green-soft to-fit-blue-soft ${className}`} role="img" aria-label={info.name}>
-      <Emoji e={info.emoji} size={emojiSize} />
-    </span>
-  );
+  return <span className={`block bg-[var(--fig-bg)] ${className}`} />;
 }
 
 /** "8 (5 sec hold)" → "8 reps (5 sec hold)", "10 each leg" → "10 reps each leg" */
@@ -31,8 +31,9 @@ export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => v
     <Sheet open={!!id} onClose={onClose} title="How to do it">
       {info && (
         <div className="pb-2">
-          <MoveVisual id={info.id} className="w-full aspect-[3/2] rounded-3xl overflow-hidden" emojiSize={96} />
+          <MoveVisual id={info.id} className="w-full aspect-[3/2] rounded-3xl overflow-hidden" />
           <h2 className="text-2xl font-medium text-ink mt-4">{info.name}</h2>
+          {hasFigure(info.id) && <p className="text-xs text-ink-3 mt-2">The figure shows the start and finish of each rep.</p>}
           <ol className="mt-4 space-y-3">
             {info.steps.map((s, i) => (
               <li key={i} className="flex gap-3 text-[15px] text-ink-2 leading-relaxed">

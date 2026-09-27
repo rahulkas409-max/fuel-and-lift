@@ -17,19 +17,6 @@ const MAP = {
   "front-squat": "Front_Barbell_Squat", rdl: "Romanian_Deadlift", "leg-press": "Leg_Press", "bulgarian-split-squat": "Split_Squat_with_Dumbbells",
   "walking-lunge": "Dumbbell_Lunges", "leg-curl": "Lying_Leg_Curls", "leg-extension": "Leg_Extensions", "hip-thrust": "Barbell_Hip_Thrust",
   "calf-raise": "Standing_Calf_Raises", "goblet-squat": "Goblet_Squat", plank: "Plank", "hanging-leg-raise": "Hanging_Leg_Raise", "cable-crunch": "Cable_Crunch",
-  // Home / abs / yoga moves (src/data/programs.ts)
-  crunch: "Crunches", "bicycle-crunch": "Air_Bike", "reverse-crunch": "Reverse_Crunch", "flutter-kicks": "Flutter_Kicks",
-  "scissor-kicks": "Scissor_Kick", "russian-twist": "Russian_Twist", "heel-touch": "Alternate_Heel_Touchers", "mountain-climber": "Mountain_Climbers",
-  "dead-bug": "Dead_Bug", "side-plank": "Side_Bridge", "oblique-crunch": "Oblique_Crunches_-_On_The_Floor", "jackknife": "Jackknife_Sit-Up",
-  "elbow-to-knee": "Elbow_to_Knee", "glute-bridge": "Butt_Lift_Bridge", "single-leg-bridge": "Single_Leg_Glute_Bridge", "donkey-kick": "Glute_Kickback",
-  "side-leg-raise": "Side_Leg_Raises", "rear-leg-raise": "Rear_Leg_Raises", "bw-squat": "Bodyweight_Squat", "jump-squat": "Freehand_Jump_Squat",
-  "bw-lunge": "Bodyweight_Walking_Lunge", "sumo-squat": "Plie_Dumbbell_Squat", "step-up": "Step-up_with_Knee_Raise", "bw-calf-raise": "Standing_Dumbbell_Calf_Raise",
-  "incline-push-up": "Incline_Push-Up", "wide-push-up": "Push-Up_Wide", "chair-dip": "Bench_Dips", "arm-circles": "Arm_Circles",
-  "towel-tricep": "Standing_Towel_Triceps_Extension", superman: "Superman", inchworm: "Inchworm", skipping: "Rope_Jumping", "tuck-jump": "Knee_Tuck_Jump",
-  "neck-side-stretch": "Side_Neck_Stretch", "neck-isometric": "Isometric_Neck_Exercise_-_Front_And_Back", "chin-to-chest": "Chin_To_Chest_Stretch",
-  "childs-pose": "Childs_Pose", "cat-cow": "Cat_Stretch", "knees-to-chest": "Hug_Knees_To_Chest", "low-lunge": "Kneeling_Hip_Flexor",
-  "seated-forward-bend": "Seated_Floor_Hamstring_Stretch", "forward-fold": "Standing_Toe_Touches", tadasana: "Upward_Stretch", "worlds-greatest": "Worlds_Greatest_Stretch",
-  "pelvic-tilt-bridge": "Pelvic_Tilt_Into_Bridge",
 };
 
 const all = await (await fetch(`${BASE}/dist/exercises.json`)).json();

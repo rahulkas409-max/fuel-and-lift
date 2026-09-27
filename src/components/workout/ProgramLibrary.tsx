@@ -1,20 +1,25 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Check, Clock, Info, Play, Repeat } from "lucide-react";
+import { Check, Clock, Dumbbell, Flower2, House, Info, LayoutGrid, Play, Repeat } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AREAS, KINDS, PROGRAMS, moveInfo, programMinutes, type Area, type Program, type ProgramKind, type ProgramMove } from "@/data/programs";
 import { useToday } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
-import { Emoji } from "../ui/Emoji";
+import { hasFigure } from "./Figure";
 import { Sheet } from "../ui/Sheet";
 import { MoveHowTo, MoveVisual, doseLabel } from "./MoveVisual";
 import { ProgramPlayer } from "./ProgramPlayer";
 
-const KIND_STYLE: Record<ProgramKind, { band: string; badge: string }> = {
-  gym: { band: "from-fit-blue/15 to-transparent", badge: "bg-fit-blue-soft text-fit-blue" },
-  home: { band: "from-fit-green/15 to-transparent", badge: "bg-fit-green-soft text-fit-green" },
-  yoga: { band: "from-fit-yellow/20 to-transparent", badge: "bg-fit-yellow-soft text-fit-yellow" },
+const KIND_ICON = { all: LayoutGrid, gym: Dumbbell, home: House, yoga: Flower2 } as const;
+
+/** The move that best represents a workout, for its card picture. */
+const heroMove = (p: Program) => (p.moves.find((m) => hasFigure(m.move)) ?? p.moves[0]).move;
+
+const KIND_STYLE: Record<ProgramKind, { badge: string }> = {
+  gym: { badge: "bg-fit-blue-soft text-fit-blue" },
+  home: { badge: "bg-fit-green-soft text-fit-green" },
+  yoga: { badge: "bg-fit-yellow-soft text-fit-yellow" },
 };
 
 export function ProgramLibrary() {
@@ -53,16 +58,17 @@ export function ProgramLibrary() {
 
       {/* Gym / Home / Yoga + women */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4">
-        {[{ id: "all" as const, label: "All", emoji: "✨" }, ...KINDS].map((k) => {
+        {[{ id: "all" as const, label: "All" }, ...KINDS].map((k) => {
           const on = kind === k.id;
+          const Icon = KIND_ICON[k.id];
           return (
             <button
               key={k.id}
               onClick={() => setKind(k.id)}
               aria-pressed={on}
-              className={`shrink-0 h-10 pl-2.5 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
+              className={`shrink-0 h-10 pl-3 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
             >
-              <Emoji e={k.emoji} size={18} />
+              <Icon size={17} />
               {k.label}
             </button>
           );
@@ -98,11 +104,13 @@ export function ProgramLibrary() {
                 onClick={() => setArea(on ? null : a.id)}
                 disabled={!n}
                 aria-pressed={on}
-                className={`rounded-2xl border p-2.5 flex flex-col items-center gap-1 text-center min-h-24 justify-center disabled:opacity-40 ${on ? "bg-fit-blue-soft border-fit-blue/50" : "bg-card border-line"}`}
+                className={`rounded-2xl border overflow-hidden text-left disabled:opacity-40 ${on ? "border-fit-blue ring-2 ring-fit-blue/30" : "border-line bg-card"}`}
               >
-                <Emoji e={a.emoji} size={28} />
-                <span className={`text-xs leading-tight ${on ? "text-fit-blue font-medium" : "text-ink"}`}>{a.label}</span>
-                <span className="text-[10px] text-ink-3">{n} workout{n === 1 ? "" : "s"}</span>
+                <MoveVisual id={a.figure} still className="w-full aspect-[3/2]" />
+                <span className={`block px-2.5 pt-1.5 text-[13px] leading-tight ${on ? "text-fit-blue font-medium" : "text-ink"}`}>{a.label}</span>
+                <span className="block px-2.5 pb-2 text-[11px] text-ink-3">
+                  {n} workout{n === 1 ? "" : "s"}
+                </span>
               </motion.button>
             );
           })}
@@ -145,10 +153,8 @@ function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: (
   const st = KIND_STYLE[p.kind];
   return (
     <motion.button whileTap={{ scale: 0.98 }} onClick={onOpen} className="w-full h-full text-left rounded-3xl bg-card border border-line overflow-hidden flex flex-col">
-      <div className={`bg-gradient-to-b ${st.band} px-4 pt-4 flex items-start gap-3`}>
-        <span className="size-14 shrink-0 rounded-2xl bg-card grid place-items-center shadow-sm">
-          <Emoji e={p.emoji} size={34} />
-        </span>
+      <MoveVisual id={heroMove(p)} still className="w-full h-32" />
+      <div className="px-4 pt-3 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1">
             <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${st.badge}`}>{KINDS.find((k) => k.id === p.kind)!.label}</span>
@@ -199,10 +205,8 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
       <Sheet open={!!p} onClose={onClose} title="Workout" wide>
         {p && (
           <div className="pb-2">
-            <div className="flex items-start gap-3">
-              <span className="size-16 shrink-0 rounded-2xl bg-card-2 grid place-items-center">
-                <Emoji e={p.emoji} size={40} />
-              </span>
+            <MoveVisual id={heroMove(p)} className="w-full aspect-[5/2] rounded-3xl overflow-hidden" />
+            <div className="mt-4">
               <div className="min-w-0">
                 <h2 className="text-2xl font-medium text-ink leading-tight">{p.title}</h2>
                 <p className="text-sm text-ink-2 mt-1 flex flex-wrap gap-x-3">
@@ -219,8 +223,8 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
               {p.areas.map((a) => {
                 const info = AREAS.find((x) => x.id === a)!;
                 return (
-                  <span key={a} className="rounded-full bg-fit-blue-soft text-fit-blue text-xs font-medium px-2.5 py-1 inline-flex items-center gap-1">
-                    <Emoji e={info.emoji} size={14} /> {info.label}
+                  <span key={a} className="rounded-full bg-fit-blue-soft text-fit-blue text-xs font-medium px-2.5 py-1">
+                    {info.label}
                   </span>
                 );
               })}
@@ -244,7 +248,7 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
                 return (
                   <li key={i}>
                     <button onClick={() => setHowTo(m.move)} className="w-full flex items-center gap-3 py-2.5 text-left">
-                      <MoveVisual id={m.move} className="w-20 h-14 shrink-0 rounded-xl overflow-hidden" emojiSize={30} />
+                      <MoveVisual id={m.move} still className="w-20 h-14 shrink-0 rounded-xl overflow-hidden" />
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] text-ink font-medium leading-snug">{info.name}</span>
                         <span className="block text-sm text-ink-2">

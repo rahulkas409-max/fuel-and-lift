@@ -35,9 +35,16 @@ All data lives in the browser's localStorage.
   - No-equipment home workouts: belly fat, waist, thighs, glutes, toned arms, shoulders and posture, double chin and face, neck, full-body HIIT.
   - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, face yoga, bedtime.
 - Filter by 12 body areas, by Gym, Home or Yoga, and by "For women". "For women" is on by default for women.
-- A guided player shows photos or emoji with steps, runs countdowns for holds and rests, and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
+- Every home, yoga and face move has an animated illustration drawn in one consistent style. It shows the real start and finish position, and Surya Namaskar steps through all 12 positions. The drawings come from a small pose rig: poses in `src/data/figures.ts`, drawing code in `src/lib/figure.ts` and `src/components/workout/Figure.tsx`. Gym lifts keep their free-exercise-db photos.
+- Yoga moves use their proper Sanskrit and English names.
+- A guided player runs countdowns for holds and rests and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
 - Data lives in `src/data/programs.ts`. Photos come from free-exercise-db via `scripts/fetch-exercise-media.mjs`.
+
+**Streak leaderboard** (Home → Streak leaderboard)
+- A 1-2-3 podium with medals, plus places 4–20, on three boards: current streak, longest streak, and this week (resets every Monday).
+- Joining is optional. Only the name and town you type are shown, and you can leave any time. The device keeps a private ID and the server stores only a hash of it.
+- It needs a free Upstash Redis database. In Vercel, open the project, go to **Storage → Create → Upstash for Redis (free)**, connect it to this project, then redeploy. That adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`; `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` also work. Until then the board says "opens soon".
 
 **Gym finder (India)**
 - Finds nearby gyms automatically. It guesses the city from Vercel's IP headers with no prompt, or uses GPS if you tap "Use my exact location".

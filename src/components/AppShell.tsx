@@ -8,6 +8,7 @@ import { useStore, type Tab } from "@/lib/store";
 import { useToast } from "@/lib/toast";
 import { ArcadeView } from "./arcade/ArcadeView";
 import { NewsView } from "./news/NewsView";
+import { useLeaderboardSync } from "./leaderboard/Leaderboard";
 import { LogoMark, Wordmark } from "./brand/Logo";
 import { HomeView } from "./home/HomeView";
 import { Onboarding } from "./onboarding/Onboarding";
@@ -30,6 +31,7 @@ const TABS: { id: Tab; label: string; icon: typeof Dumbbell }[] = [
 export function AppShell() {
   const hydrated = useHydrated();
   useSoundSync();
+  useLeaderboardSync();
   const tab = useStore((s) => s.tab);
   const setTab = useStore((s) => s.setTab);
   const sound = useStore((s) => s.sound);

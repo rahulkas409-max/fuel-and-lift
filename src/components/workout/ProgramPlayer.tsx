@@ -112,7 +112,7 @@ export function ProgramPlayer({ program, onClose }: { program: Program; onClose:
                 <p className="text-sm font-medium text-fit-green uppercase tracking-wide">Rest</p>
                 <Ring pct={pct} label={`${left}`} sub="seconds" color="var(--fit-green-bright)" />
                 <div className="w-full max-w-sm rounded-3xl bg-card border border-line p-3 flex items-center gap-3">
-                  <MoveVisual id={step.move} className="w-20 h-14 shrink-0 rounded-xl overflow-hidden" emojiSize={30} />
+                  <MoveVisual id={step.move} className="w-20 h-14 shrink-0 rounded-xl overflow-hidden" still />
                   <div className="min-w-0 text-left">
                     <p className="text-xs text-ink-3">Up next</p>
                     <p className="text-ink font-medium leading-snug">{info.name}</p>
@@ -122,7 +122,7 @@ export function ProgramPlayer({ program, onClose }: { program: Program; onClose:
             ) : (
               <>
                 <button onClick={() => setHowTo(step.move)} className="relative w-full max-w-md" aria-label={`How to do ${info.name}`}>
-                  <MoveVisual id={step.move} className="w-full aspect-[3/2] max-h-[34dvh] rounded-3xl overflow-hidden" emojiSize={110} />
+                  <MoveVisual id={step.move} className="w-full aspect-[3/2] max-h-[34dvh] rounded-3xl overflow-hidden" />
                   <span className="absolute bottom-2 right-2 rounded-full bg-black/60 text-white text-xs font-medium px-2.5 py-1 inline-flex items-center gap-1">
                     <Info size={13} /> How to
                   </span>
