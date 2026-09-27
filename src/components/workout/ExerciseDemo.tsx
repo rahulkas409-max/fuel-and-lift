@@ -6,11 +6,11 @@ import { exerciseById } from "@/data/workouts";
 import { Sheet } from "../ui/Sheet";
 
 /** Start/end photos alternating like a GIF. Falls back to nothing if we have no media. */
-export function ExerciseAnimation({ id, className = "" }: { id: string; className?: string }) {
+export function ExerciseAnimation({ id, className = "", label }: { id: string; className?: string; label?: string }) {
   const media = EXERCISE_MEDIA[id];
   if (!media) return null;
   const [a, b] = media.frames;
-  const name = exerciseById(id)?.name ?? "Exercise";
+  const name = label ?? exerciseById(id)?.name ?? "Exercise";
   return (
     <span className={`relative block overflow-hidden bg-card-2 ${className}`} role="img" aria-label={`${name} demonstration`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- small pre-optimised WebP frames */}

@@ -54,6 +54,8 @@ interface State {
   /** Where the gym finder searches (GPS, IP guess or picked city). */
   gymPlace: Place | null;
   gymRadius: number;
+  /** Train tab: your routine or the body-part workout library */
+  trainMode: "routine" | "library";
   profile: Profile;
   plans: Record<string, Plan>; // date → plan
   scales: Record<string, number>; // date → portion multiplier from Auto-Sync
@@ -65,6 +67,7 @@ interface State {
   customPassUntil: number;
 
   setTab: (t: Tab) => void;
+  setTrainMode: (m: "routine" | "library") => void;
   setRoutine: (id: string) => void;
   setDay: (routineId: string, dayId: string) => void;
   saveCustomRoutine: (r: Routine) => void;
@@ -111,6 +114,7 @@ const initialData = (): Data => ({
   diet: "both",
   gymPlace: null,
   gymRadius: 5,
+  trainMode: "routine",
   profile: { weightKg: 70, goal: "maintain" },
   plans: {},
   scales: {},
@@ -204,6 +208,7 @@ export const useStore = create<State>()(
       restartOnboarding: () => set({ onboarded: false }),
       setGymPlace: (gymPlace) => set({ gymPlace }),
       setGymRadius: (gymRadius) => set({ gymRadius }),
+      setTrainMode: (trainMode) => set({ trainMode }),
       toggleSound: () => set((s) => ({ sound: !s.sound })),
       grantPass: () => set((s) => ({ customPassUntil: Math.max(Date.now(), s.customPassUntil) + PASS_DAYS * 86400_000 })),
     }),

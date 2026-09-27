@@ -11,9 +11,36 @@ import { currentRoutine, useStore } from "@/lib/store";
 import { CustomRoutineModal } from "./CustomRoutineModal";
 import { ExerciseCard } from "./ExerciseCard";
 import { Heatmap } from "./Heatmap";
+import { ProgramLibrary } from "./ProgramLibrary";
 import { Emoji } from "../ui/Emoji";
 
 export function WorkoutView() {
+  const mode = useStore((s) => s.trainMode);
+  const setMode = useStore((s) => s.setTrainMode);
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-2 p-1 rounded-full bg-card-2" role="tablist" aria-label="Training view">
+        {(
+          [
+            ["routine", "My routine"],
+            ["library", "Body-part workouts"],
+          ] as const
+        ).map(([id, label]) => {
+          const on = mode === id;
+          return (
+            <button key={id} role="tab" aria-selected={on} onClick={() => setMode(id)} className={`relative h-11 rounded-full text-sm font-medium ${on ? "text-white" : "text-ink-2"}`}>
+              {on && <motion.span layoutId="train-mode" className="absolute inset-0 rounded-full bg-fit-blue" transition={{ type: "spring", damping: 26, stiffness: 380 }} />}
+              <span className="relative">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+      {mode === "library" ? <ProgramLibrary /> : <RoutineView />}
+    </div>
+  );
+}
+
+function RoutineView() {
   const today = useToday();
   const state = useStore();
   const routine = currentRoutine(state);

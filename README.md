@@ -29,6 +29,16 @@ All data lives in the browser's localStorage.
 - Each food shows calories, protein, carbs and fat, plus fibre, sugars, saturated fat, sodium, potassium, calcium, iron and vitamin C where the source provides them.
 - Pick a serving or enter grams, then log the food to today's totals.
 
+**Body-part workouts** (Train → Body-part workouts)
+- 31 guided workouts in three groups:
+  - Popular gym days: chest, back, shoulders, arms, legs, glutes and abs.
+  - No-equipment home workouts: belly fat, waist, thighs, glutes, toned arms, shoulders and posture, double chin and face, neck, full-body HIIT.
+  - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, face yoga, bedtime.
+- Filter by 12 body areas, by Gym, Home or Yoga, and by "For women". "For women" is on by default for women.
+- A guided player shows photos or emoji with steps, runs countdowns for holds and rests, and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
+- Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
+- Data lives in `src/data/programs.ts`. Photos come from free-exercise-db via `scripts/fetch-exercise-media.mjs`.
+
 **Gym finder (India)**
 - Finds nearby gyms automatically. It guesses the city from Vercel's IP headers with no prompt, or uses GPS if you tap "Use my exact location".
 - Your location shows the actual town you're in (from 1,549 Indian towns and cities with gyms). You can also search for any of them under "Change".
