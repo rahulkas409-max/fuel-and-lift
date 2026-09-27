@@ -9,6 +9,7 @@ import { useToast } from "@/lib/toast";
 import { ArcadeView } from "./arcade/ArcadeView";
 import { NewsView } from "./news/NewsView";
 import { useLeaderboardSync } from "./leaderboard/Leaderboard";
+import { FitsoChat, FitsoLauncher } from "./fitso/Fitso";
 import { LogoMark, Wordmark } from "./brand/Logo";
 import { HomeView } from "./home/HomeView";
 import { Onboarding } from "./onboarding/Onboarding";
@@ -40,6 +41,7 @@ export function AppShell() {
   const toast = useToast((s) => s.message);
   const openTimer = useRestTimer((s) => s.setOpen);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [fitsoOpen, setFitsoOpen] = useState(false);
   const onboarded = useStore((s) => s.onboarded);
 
   // First visit (or "Change my answers"): show the welcome questions instead of the app.
@@ -95,6 +97,8 @@ export function AppShell() {
       </div>
 
       {hydrated && tab === "train" && <RestTimer />}
+      {hydrated && !fitsoOpen && <FitsoLauncher left={tab === "train"} onOpen={() => setFitsoOpen(true)} />}
+      {hydrated && <FitsoChat open={fitsoOpen} onClose={() => setFitsoOpen(false)} />}
       {hydrated && <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />}
 
       <AnimatePresence>

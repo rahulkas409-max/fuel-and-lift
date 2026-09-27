@@ -41,6 +41,13 @@ All data lives in the browser's localStorage.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
 - Data lives in `src/data/programs.ts`. Photos come from free-exercise-db via `scripts/fetch-exercise-media.mjs`.
 
+**Fitso: AI fitness coach** (the "Ask Fitso" button on every screen)
+- A chat coach powered by Claude (`claude-opus-5` by default; set `FITSO_MODEL` to change it). Route: `src/app/api/fitso/route.ts`. Personality and coaching rules: `src/lib/fitso-prompt.ts`.
+- Replies stream in live, in the member's language (English, Hindi or Hinglish). Answers are evidence-based and Indian-food aware, with safety rules for injuries, medical issues and eating disorders.
+- Each question is sent with the member's profile (weight, goal, veg/non-veg, today's workout and meals) so answers are personal. Chat history stays on the device.
+- It uses low effort for fast replies, prompt caching and server-side refusal fallbacks. There is basic rate limiting per server instance.
+- **Setup:** add `ANTHROPIC_API_KEY` in Vercel → Settings → Environment Variables, then redeploy. Until then, Fitso replies that it's almost ready.
+
 **Streak leaderboard** (Home → Streak leaderboard)
 - A 1-2-3 podium with medals, plus places 4–20, on three boards: current streak, longest streak, and this week (resets every Monday).
 - Joining is optional. Only the name and town you type are shown, and you can leave any time. The device keeps a private ID and the server stores only a hash of it.
