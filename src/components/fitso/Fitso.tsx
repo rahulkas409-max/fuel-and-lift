@@ -1,7 +1,17 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUp, MessageCircle, RotateCcw, Square, X } from "lucide-react";
+import {
+  ArrowUp,
+  Check,
+  Dumbbell,
+  MessageCircle,
+  Play,
+  RotateCcw,
+  Square,
+  UtensilsCrossed,
+  X,
+} from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { mealById, SLOTS } from "@/data/meals";
 import { INTENSITY_META } from "@/data/workouts";
@@ -10,15 +20,18 @@ import { fitsoReply, type BrainContext } from "@/lib/fitso-brain";
 import { useToday } from "@/lib/hooks";
 import { todayNutrition, todaySession } from "@/lib/progress";
 import { useStore, type ChatMsg } from "@/lib/store";
+import type { Program } from "@/data/programs";
+import type { ChatAction } from "@/lib/fitso-plans";
 import { LogoMark } from "../brand/Logo";
+import { ProgramPlayer } from "../workout/ProgramPlayer";
 
 const SUGGESTIONS = [
+  "Make me a 4-day gym plan for muscle gain",
+  "3-day home workout plan for fat loss, 30 minutes",
+  "Make me a meal plan",
   "How much protein do I need a day?",
-  "Give me a veg high-protein breakfast",
   "How do I lose belly fat?",
-  "Make me a 3-day beginner home workout",
   "My knees hurt when I squat. What should I change?",
-  "What should I eat before and after the gym?",
 ];
 
 /** A tiny, safe Markdown renderer for chat replies: paragraphs, bullets, numbers, headings and **bold**. */
@@ -160,6 +173,7 @@ export function FitsoChat({
 }) {
   const chat = useStore((s) => s.chat);
   const setChat = useStore((s) => s.setChat);
+  const [playing, setPlaying] = useState<Program | null>(null);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
@@ -204,10 +218,12 @@ export function FitsoChat({
 
     // Built-in coach: instant, free and offline. Types the answer out like a person would.
     const local = async () => {
-      const lastTopic = [...prior]
-        .reverse()
-        .find((m) => m.role === "assistant")?.topic;
-      const r = await fitsoReply(q, brainContext(today), lastTopic);
+      const prev = [...prior].reverse().find((m) => m.role === "assistant");
+      const r = await fitsoReply(q, brainContext(today), {
+        topic: prev?.topic,
+        plan: prev?.plan,
+        variety: prev?.variety,
+      });
       await sleep(350 + Math.min(700, r.text.length * 1.5), ctrl.signal);
       const words = r.text.split(/(\s+)/);
       for (let i = 0; i < words.length; i += 6) {
@@ -215,7 +231,13 @@ export function FitsoChat({
         show(reply, { topic: r.topic });
         await sleep(28, ctrl.signal);
       }
-      show(r.text, { topic: r.topic, chips: r.chips });
+      show(r.text, {
+        topic: r.topic,
+        chips: r.chips,
+        action: r.action,
+        plan: r.plan,
+        variety: r.variety,
+      });
     };
 
     try {
@@ -280,217 +302,335 @@ export function FitsoChat({
   const waiting = busy && last?.role === "assistant" && !last.content;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-[70] flex sm:items-center sm:justify-end"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm hidden sm:block"
-            onClick={onClose}
-          />
-          <motion.section
-            role="dialog"
-            aria-modal="true"
-            aria-label="Chat with Fitso"
-            className="relative flex flex-col w-full h-dvh sm:h-[min(860px,94dvh)] sm:max-w-[480px] sm:mr-4 bg-page sm:rounded-[28px] sm:border sm:border-line overflow-hidden shadow-2xl"
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ type: "spring", damping: 28, stiffness: 320 }}
+    <>
+      {playing && (
+        <ProgramPlayer
+          key={playing.id}
+          program={playing}
+          onClose={() => setPlaying(null)}
+        />
+      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="fixed inset-0 z-[70] flex sm:items-center sm:justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            {/* Header */}
-            <header className="flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-line bg-card">
-              <span className="relative">
-                <LogoMark size={40} />
-                <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-fit-green-bright ring-2 ring-card" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-ink leading-tight">Fitso</p>
-                <p className="text-xs text-ink-3">
-                  {busy ? "typing…" : "Your fitness coach · online"}
-                </p>
-              </div>
-              {chat.length > 0 && (
-                <button
-                  onClick={() => {
-                    abort.current?.abort();
-                    setChat([]);
-                  }}
-                  className="h-10 px-3 rounded-full text-sm text-ink-2 hover:bg-card-2 inline-flex items-center gap-1.5"
-                >
-                  <RotateCcw size={15} /> New chat
-                </button>
-              )}
-              <button
-                onClick={onClose}
-                className="size-10 rounded-full grid place-items-center text-ink-2 hover:bg-card-2"
-                aria-label="Close chat"
-              >
-                <X size={20} />
-              </button>
-            </header>
-
-            {/* Messages */}
             <div
-              ref={scroller}
-              className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-              aria-live="polite"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm hidden sm:block"
+              onClick={onClose}
+            />
+            <motion.section
+              role="dialog"
+              aria-modal="true"
+              aria-label="Chat with Fitso"
+              className="relative flex flex-col w-full h-dvh sm:h-[min(860px,94dvh)] sm:max-w-[480px] sm:mr-4 bg-page sm:rounded-[28px] sm:border sm:border-line overflow-hidden shadow-2xl"
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: "spring", damping: 28, stiffness: 320 }}
             >
-              {chat.length === 0 ? (
-                <div className="pt-4">
-                  <div className="flex gap-2.5">
-                    <LogoMark size={32} className="shrink-0 mt-0.5" />
-                    <div className="rounded-3xl rounded-tl-lg bg-card border border-line px-4 py-3 text-[15px] leading-relaxed text-ink-2">
-                      <p>
-                        Hi! I&apos;m{" "}
-                        <b className="font-medium text-ink">Fitso</b>, your
-                        fitness coach. 👋
-                      </p>
-                      <p className="mt-2">
-                        Ask me anything about workouts, diet, weight loss or
-                        muscle gain, recovery or motivation. I know your plan in
-                        this app, so my answers are made for you.
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-ink-3 mt-5 mb-2 px-1">
-                    Try asking
+              {/* Header */}
+              <header className="flex items-center gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 border-b border-line bg-card">
+                <span className="relative">
+                  <LogoMark size={40} />
+                  <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-fit-green-bright ring-2 ring-card" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-ink leading-tight">Fitso</p>
+                  <p className="text-xs text-ink-3">
+                    {busy ? "typing…" : "Your fitness coach · online"}
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {SUGGESTIONS.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => send(q)}
-                        className="text-left text-sm rounded-2xl border border-line bg-card px-3.5 py-2.5 text-ink hover:border-fit-blue/50"
-                      >
-                        {q}
-                      </button>
-                    ))}
-                  </div>
                 </div>
-              ) : (
-                chat.map((m, i) =>
-                  m.role === "user" ? (
-                    <div key={i} className="flex justify-end">
-                      <p className="max-w-[85%] rounded-3xl rounded-tr-lg bg-fit-blue text-white px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
-                        {m.content}
-                      </p>
-                    </div>
-                  ) : (
-                    <div key={i} className="flex gap-2.5">
-                      <LogoMark size={32} className="shrink-0 mt-0.5" />
-                      <div className="max-w-[88%] min-w-0">
-                        <div
-                          className={`min-w-0 rounded-3xl rounded-tl-lg px-4 py-3 text-[15px] leading-relaxed break-words ${m.error ? "bg-fit-yellow-soft text-ink-2" : "bg-card border border-line text-ink-2"}`}
-                        >
-                          {m.content ? (
-                            <Rich text={m.content} />
-                          ) : waiting && i === chat.length - 1 ? (
-                            <span
-                              className="flex gap-1 py-1.5"
-                              aria-label="Fitso is typing"
-                            >
-                              {[0, 1, 2].map((d) => (
-                                <motion.span
-                                  key={d}
-                                  className="size-2 rounded-full bg-ink-3"
-                                  animate={{ opacity: [0.3, 1, 0.3] }}
-                                  transition={{
-                                    duration: 1,
-                                    repeat: Infinity,
-                                    delay: d * 0.18,
-                                  }}
-                                />
-                              ))}
-                            </span>
-                          ) : null}
-                        </div>
-                        {!busy && i === chat.length - 1 && m.chips?.length ? (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {m.chips.map((c) => (
-                              <button
-                                key={c}
-                                onClick={() => send(c)}
-                                className="text-sm rounded-full border border-fit-blue/40 bg-fit-blue-soft text-fit-blue px-3 py-1.5"
-                              >
-                                {c}
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ),
-                )
-              )}
-            </div>
-
-            {/* Composer */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void send(input);
-              }}
-              className="border-t border-line bg-card px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-            >
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={field}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
-                  }}
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      !e.shiftKey &&
-                      !e.nativeEvent.isComposing
-                    ) {
-                      e.preventDefault();
-                      void send(input);
-                    }
-                  }}
-                  rows={1}
-                  maxLength={2000}
-                  placeholder="Ask Fitso anything about fitness…"
-                  aria-label="Message Fitso"
-                  className="flex-1 resize-none rounded-3xl bg-card-2 px-4 py-3 text-[15px] text-ink outline-none focus:ring-2 focus:ring-fit-blue/40 max-h-36"
-                />
-                {busy ? (
+                {chat.length > 0 && (
                   <button
-                    type="button"
-                    onClick={() => abort.current?.abort()}
-                    className="size-12 shrink-0 rounded-full bg-ink text-page grid place-items-center"
-                    aria-label="Stop reply"
+                    onClick={() => {
+                      abort.current?.abort();
+                      setChat([]);
+                    }}
+                    className="h-10 px-3 rounded-full text-sm text-ink-2 hover:bg-card-2 inline-flex items-center gap-1.5"
                   >
-                    <Square size={16} fill="currentColor" />
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    disabled={!input.trim()}
-                    className="size-12 shrink-0 rounded-full bg-fit-blue text-white grid place-items-center disabled:opacity-40"
-                    aria-label="Send"
-                  >
-                    <ArrowUp size={22} />
+                    <RotateCcw size={15} /> New chat
                   </button>
                 )}
+                <button
+                  onClick={onClose}
+                  className="size-10 rounded-full grid place-items-center text-ink-2 hover:bg-card-2"
+                  aria-label="Close chat"
+                >
+                  <X size={20} />
+                </button>
+              </header>
+
+              {/* Messages */}
+              <div
+                ref={scroller}
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
+                aria-live="polite"
+              >
+                {chat.length === 0 ? (
+                  <div className="pt-4">
+                    <div className="flex gap-2.5">
+                      <LogoMark size={32} className="shrink-0 mt-0.5" />
+                      <div className="rounded-3xl rounded-tl-lg bg-card border border-line px-4 py-3 text-[15px] leading-relaxed text-ink-2">
+                        <p>
+                          Hi! I&apos;m{" "}
+                          <b className="font-medium text-ink">Fitso</b>, your
+                          fitness coach. 👋
+                        </p>
+                        <p className="mt-2">
+                          Ask me anything about workouts, diet, weight loss or
+                          muscle gain, recovery or motivation. I can also{" "}
+                          <b className="font-medium text-ink">
+                            build you a workout plan or meal plan
+                          </b>{" "}
+                          in seconds. Just tell me your goal, days per week and
+                          gym or home.
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-ink-3 mt-5 mb-2 px-1">
+                      Try asking
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {SUGGESTIONS.map((q) => (
+                        <button
+                          key={q}
+                          onClick={() => send(q)}
+                          className="text-left text-sm rounded-2xl border border-line bg-card px-3.5 py-2.5 text-ink hover:border-fit-blue/50"
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  chat.map((m, i) =>
+                    m.role === "user" ? (
+                      <div key={i} className="flex justify-end">
+                        <p className="max-w-[85%] rounded-3xl rounded-tr-lg bg-fit-blue text-white px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                          {m.content}
+                        </p>
+                      </div>
+                    ) : (
+                      <div key={i} className="flex gap-2.5">
+                        <LogoMark size={32} className="shrink-0 mt-0.5" />
+                        <div className="max-w-[88%] min-w-0">
+                          <div
+                            className={`min-w-0 rounded-3xl rounded-tl-lg px-4 py-3 text-[15px] leading-relaxed break-words ${m.error ? "bg-fit-yellow-soft text-ink-2" : "bg-card border border-line text-ink-2"}`}
+                          >
+                            {m.content ? (
+                              <Rich text={m.content} />
+                            ) : waiting && i === chat.length - 1 ? (
+                              <span
+                                className="flex gap-1 py-1.5"
+                                aria-label="Fitso is typing"
+                              >
+                                {[0, 1, 2].map((d) => (
+                                  <motion.span
+                                    key={d}
+                                    className="size-2 rounded-full bg-ink-3"
+                                    animate={{ opacity: [0.3, 1, 0.3] }}
+                                    transition={{
+                                      duration: 1,
+                                      repeat: Infinity,
+                                      delay: d * 0.18,
+                                    }}
+                                  />
+                                ))}
+                              </span>
+                            ) : null}
+                          </div>
+                          {m.action && !(busy && i === chat.length - 1) ? (
+                            <PlanActions
+                              action={m.action}
+                              onStart={(p) => {
+                                setPlaying(p);
+                                onClose();
+                              }}
+                              onDone={onClose}
+                            />
+                          ) : null}
+                          {!busy && i === chat.length - 1 && m.chips?.length ? (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {m.chips.map((c) => (
+                                <button
+                                  key={c}
+                                  onClick={() => send(c)}
+                                  className="text-sm rounded-full border border-fit-blue/40 bg-fit-blue-soft text-fit-blue px-3 py-1.5"
+                                >
+                                  {c}
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    ),
+                  )
+                )}
               </div>
-              <p className="text-[11px] text-ink-3 text-center mt-2">
-                Fitso gives general fitness guidance and can be wrong. For pain,
-                injuries or medical conditions, see a doctor.
-              </p>
-            </form>
-          </motion.section>
-        </motion.div>
+
+              {/* Composer */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void send(input);
+                }}
+                className="border-t border-line bg-card px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+              >
+                <div className="flex items-end gap-2">
+                  <textarea
+                    ref={field}
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      e.target.style.height = "auto";
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, 140)}px`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        !e.nativeEvent.isComposing
+                      ) {
+                        e.preventDefault();
+                        void send(input);
+                      }
+                    }}
+                    rows={1}
+                    maxLength={2000}
+                    placeholder="Ask Fitso anything about fitness…"
+                    aria-label="Message Fitso"
+                    className="flex-1 resize-none rounded-3xl bg-card-2 px-4 py-3 text-[15px] text-ink outline-none focus:ring-2 focus:ring-fit-blue/40 max-h-36"
+                  />
+                  {busy ? (
+                    <button
+                      type="button"
+                      onClick={() => abort.current?.abort()}
+                      className="size-12 shrink-0 rounded-full bg-ink text-page grid place-items-center"
+                      aria-label="Stop reply"
+                    >
+                      <Square size={16} fill="currentColor" />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={!input.trim()}
+                      className="size-12 shrink-0 rounded-full bg-fit-blue text-white grid place-items-center disabled:opacity-40"
+                      aria-label="Send"
+                    >
+                      <ArrowUp size={22} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-ink-3 text-center mt-2">
+                  Fitso gives general fitness guidance and can be wrong. For
+                  pain, injuries or medical conditions, see a doctor.
+                </p>
+              </form>
+            </motion.section>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+/** Buttons under a generated plan: save the routine, start a home day, or load the meal plan. */
+function PlanActions({
+  action,
+  onStart,
+  onDone,
+}: {
+  action: ChatAction;
+  onStart: (p: Program) => void;
+  onDone: () => void;
+}) {
+  const saveRoutine = useStore((s) => s.saveCustomRoutine);
+  const hasCustom = useStore((s) => !!s.customRoutine);
+  const setTab = useStore((s) => s.setTab);
+  const setTrainMode = useStore((s) => s.setTrainMode);
+  const setPlan = useStore((s) => s.setPlan);
+  const today = useToday();
+  const [done, setDone] = useState(false);
+  const btn =
+    "h-11 px-4 rounded-full text-sm font-medium inline-flex items-center gap-2";
+  if (action.type === "routine")
+    return (
+      <div className="mt-2">
+        <button
+          onClick={() => {
+            saveRoutine(action.routine);
+            setTrainMode("routine");
+            setDone(true);
+          }}
+          disabled={done}
+          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+        >
+          {done ? <Check size={16} /> : <Dumbbell size={16} />}{" "}
+          {done ? "Saved to Train" : "Save as my routine"}
+        </button>
+        {done ? (
+          <button
+            onClick={() => {
+              setTab("train");
+              onDone();
+            }}
+            className={`${btn} ml-2 border border-line bg-card text-ink`}
+          >
+            Open Train
+          </button>
+        ) : (
+          hasCustom && (
+            <p className="text-[11px] text-ink-3 mt-1.5">
+              This replaces your current custom routine.
+            </p>
+          )
+        )}
+      </div>
+    );
+  if (action.type === "programs")
+    return (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {action.programs.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => onStart(p)}
+            className={`${btn} bg-fit-blue text-white`}
+          >
+            <Play size={14} fill="currentColor" /> Start {p.title.split(":")[0]}
+          </button>
+        ))}
+      </div>
+    );
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => {
+          setPlan(today, action.plan, action.scale);
+          setDone(true);
+        }}
+        disabled={done}
+        className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+      >
+        {done ? <Check size={16} /> : <UtensilsCrossed size={16} />}{" "}
+        {done ? "Added to today" : "Use as today's plan"}
+      </button>
+      {done && (
+        <button
+          onClick={() => {
+            setTab("meals");
+            onDone();
+          }}
+          className={`${btn} ml-2 border border-line bg-card text-ink`}
+        >
+          Open Meals
+        </button>
       )}
-    </AnimatePresence>
+    </div>
   );
 }
 

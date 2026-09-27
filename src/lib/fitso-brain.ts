@@ -5,6 +5,8 @@
 // (If an AI key is configured on the server, Fitso uses that instead - see /api/fitso.)
 import { MEALS, mealsFor, type DietPref, type Slot } from "@/data/meals";
 import { PROGRAMS, programMinutes, type Area } from "@/data/programs";
+import { buildDietPlan, buildWorkoutPlan, type ChatAction, type PlanRequest } from "./fitso-plans";
+import { matchFaq } from "./fitso-faq";
 import { loadFoods, searchFoods, type Food } from "./foods";
 
 export interface BrainContext {
@@ -25,13 +27,23 @@ export interface BrainReply {
   text: string;
   chips?: string[];
   topic?: string;
+  action?: ChatAction;
+  /** remembered so "make it 4 days" can tweak the last plan */
+  plan?: PlanRequest;
+  variety?: number;
+}
+
+export interface LastTurn {
+  topic?: string;
+  plan?: PlanRequest;
+  variety?: number;
 }
 
 // ── Text helpers ──
 const SYN: [RegExp, string][] = [
   [/\b(pet|tummy|stomach|tond|paunch|abdomen|abdominal)\b/g, "belly"],
   [/\b(vajan|wajan|wazan|vazan|bodyweight)\b/g, "weight"],
-  [/\b(kam|ghatana|ghatao|ghataye|ghatau|reduce|cutting|patla|slim|slimming|lose|losing|shed|burn|burning)\b/g, "lose"],
+  [/\b(kam|ghatana|ghatao|ghataye|ghatau|hatana|hatao|hataye|hatau|remove|removing|reduce|cutting|patla|slim|slimming|lose|losing|shed|burn|burning)\b/g, "lose"],
   [/\b(badhana|badhao|badhaye|increase|mota|bulk|bulking|gaining)\b/g, "gain"],
   [/\b(khana|khaana|khane|diet|foods|meals)\b/g, "food"],
   [/\b(nashta|nasta)\b/g, "breakfast"],
@@ -98,12 +110,29 @@ const programsFor = (area: Area, kinds?: string[]) =>
 const bullets = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
 
 // ── Food lookup ("protein in paneer", "calories of 2 roti") ──
+// Typical piece weights, so "3 eggs" or "2 roti" can be answered in pieces.
+const PIECE: Record<string, [number, string]> = {
+  egg: [50, "egg"], roti: [40, "roti"], chapati: [40, "chapati"], phulka: [30, "phulka"], banana: [118, "banana"], idli: [40, "idli"],
+  apple: [180, "apple"], bread: [30, "slice"], almond: [1.2, "almond"], date: [8, "date"], paratha: [80, "paratha"], dosa: [100, "dosa"],
+};
+
+// Everyday words → the plain version in the food database.
+const BASIC: Record<string, string> = {
+  egg: "Egg, poultry, whole, boiled", "egg white": "Egg, poultry, white, boiled", roti: "Chapati", chapati: "Chapati", phulka: "Chapati",
+  dosa: "Plain dosa", idli: "Idli",
+};
+
 async function foodAnswer(t: string): Promise<BrainReply | null> {
   const m =
-    t.match(/\b(?:protein|calories|carbs|carb|fat|fibre|fiber|nutrition|macros|nutrients)\s+(?:in|of|me|mein)\s+(?:a |an |one |1 |100g |100 g )?([a-z][a-z\s]{1,40})/) ??
-    t.match(/\b([a-z][a-z\s]{1,40}?)\s+(?:me|mein|mai|has|contains)\s+(?:kitna|kitni|how much)?\s*(?:protein|calories|carbs|fat)/);
+    t.match(/\b(?:protein|calories|carbs|carb|fat|fibre|fiber|nutrition|macros|nutrients)\s+(?:in|of|me|mein)\s+((?:a |an |one |\d+\s*|100g |100 g )?[a-z][a-z\s]{1,40})/) ??
+    t.match(/\b((?:\d+\s*)?[a-z][a-z\s]{1,40}?)\s+(?:me|mein|mai|has|contains)\s+(?:kitna|kitni|how much)?\s*(?:protein|calories|carbs|fat)/);
   if (!m) return null;
-  const q = m[1].replace(/\b(have|has|contain|contains|kitna|kitni|hai|is|are|the|per|100|g|gram|grams)\b/g, " ").trim();
+  const count = Number(m[1].match(/^(\d+)\s*/)?.[1] ?? (/^(a|an|one) /.test(m[1]) ? 1 : 0));
+  let q = m[1]
+    .replace(/^(?:a |an |one |\d+\s*|100g |100 g )/, "")
+    .replace(/\b(have|has|contain|contains|kitna|kitni|hai|is|are|the|per|100|g|gram|grams|pieces?)\b/g, " ")
+    .trim();
+  q = q.replace(/\b([a-z]{2,}[^s])s\b/g, "$1"); // eggs → egg, rotis → roti
   if (q.length < 2) return null;
   let foods: Food[];
   try {
@@ -111,13 +140,25 @@ async function foodAnswer(t: string): Promise<BrainReply | null> {
   } catch {
     return null;
   }
-  const hit = searchFoods(foods, q, {}, 3);
-  if (!hit.length) return null;
-  const f = hit[0];
-  const serving = f.sg ? `\n\nA typical serving (${f.sv ?? `${f.sg} g`}) has about **${Math.round((f.k * f.sg) / 100)} kcal and ${r1((f.p * f.sg) / 100)} g protein**.` : "";
-  const others = hit.length > 1 ? `\n\nSimilar: ${hit.slice(1).map((x) => `${x.n} (${r1(x.p)} g protein/100 g)`).join(", ")}.` : "";
+  const basic = BASIC[q] ? foods.find((x) => x.n === BASIC[q]) : undefined;
+  const hits = searchFoods(foods, q, {}, 15);
+  if (basic) hits.unshift(basic);
+  if (!hits.length) return null;
+  // Prefer the plain ingredient ("Egg, poultry, whole, raw") or an exact dish name over a recipe that merely contains the word.
+  const lower = (x: Food) => x.n.toLowerCase();
+  const rank = (x: Food) => (x === basic ? 110 : lower(x) === q ? 100 : lower(x) === `plain ${q}` ? 95 : lower(x).startsWith(`${q},`) ? (/whole|raw|boiled|cooked/.test(lower(x)) ? 90 : 80) : 0);
+  const f = [...hits].sort((a, b) => rank(b) - rank(a))[0];
+  const piece = PIECE[q];
+  let extra = "";
+  if (count > 0 && piece) {
+    const g = count * piece[0];
+    extra = `\n\n**${count} ${piece[1]}${count > 1 ? "s" : ""}** (about ${Math.round(g)} g) comes to about **${Math.round((f.k * g) / 100)} kcal and ${r1((f.p * g) / 100)} g protein**.`;
+  } else if (f.sg) {
+    extra = `\n\nA typical serving (${f.sv ?? `${f.sg} g`}) has about **${Math.round((f.k * f.sg) / 100)} kcal and ${r1((f.p * f.sg) / 100)} g protein**.`;
+  }
+  const others = hits.filter((x) => x !== f && x.n !== f.n).slice(0, 2);
   return {
-    text: `**${f.n}**, per 100 g:\n${bullets([`Calories: ${Math.round(f.k)} kcal`, `Protein: ${r1(f.p)} g`, `Carbs: ${r1(f.cb)} g`, `Fat: ${r1(f.f)} g`, ...(f.fb != null ? [`Fibre: ${r1(f.fb)} g`] : [])])}${serving}${others}`,
+    text: `**${f.n}**, per 100 g:\n${bullets([`Calories: ${Math.round(f.k)} kcal`, `Protein: ${r1(f.p)} g`, `Carbs: ${r1(f.cb)} g`, `Fat: ${r1(f.f)} g`, ...(f.fb != null ? [`Fibre: ${r1(f.fb)} g`] : [])])}${extra}${others.length ? `\n\nSimilar: ${others.map((x) => `${x.n} (${r1(x.p)} g protein/100 g)`).join(", ")}.` : ""}`,
     chips: ["Best veg protein sources?", "How much protein do I need?"],
     topic: "food",
   };
@@ -658,7 +699,8 @@ const OPENERS_HI = ["Bilkul!", "Achha sawaal hai!", "Haan ji!", "Zaroor!"];
 const FOLLOW_UP = /^\s*(why|how|more|explain|details|and|also|kaise|kyu|kyun|aur|veg|non veg|nonveg|vegetarian|for veg|for non veg|what about)\b/;
 
 /** Answer a message. `lastTopic` lets short follow-ups ("and for veg?") continue the conversation. */
-export async function fitsoReply(message: string, ctx: BrainContext, lastTopic?: string): Promise<BrainReply> {
+export async function fitsoReply(message: string, ctx: BrainContext, last: LastTurn = {}): Promise<BrainReply> {
+  const lastTopic = last.topic;
   const t = normalize(message);
   const hinglish = HINGLISH.test(message.toLowerCase());
 
@@ -674,6 +716,28 @@ export async function fitsoReply(message: string, ctx: BrainContext, lastTopic?:
   const scored = TOPICS.map((tp, i) => ({ tp, s: tp.score(t), i })).filter((x) => x.s > 0);
   scored.sort((a, b) => b.s - a.s || a.i - b.i);
   const top = scored[0];
+  if (top && ["emergency", "mental", "eating-disorder", "steroids", "pregnancy"].includes(top.tp.id)) return { ...top.tp.reply(c, t), topic: top.tp.id };
+
+  // ── Plan builders ──
+  const wantsDiet =
+    has(t, "meal plan", "food plan", "food chart", "diet chart", "another meal plan") || (has(t, "food") && has(t, "plan", "chart") && !has(t, "workout", "gym"));
+  const wantsWorkout =
+    has(t, "workout plan", "gym plan", "home plan", "training plan", "exercise plan", "workout routine", "gym routine", "workout schedule", "split") ||
+    (has(t, "plan", "routine", "schedule", "program") && has(t, "workout", "gym", "home", "day", "days", "week", "din")) ||
+    /\b(make|create|build|give|bana|banao)\b.*\b(workout|routine)\b/.test(t);
+  const tweak = /^\s*(make it|change|instead|only|with|without|for|at|add|more|less|shorter|longer|harder|easier|\d)/.test(t) || has(t, "days", "home plan", "gym plan", "beginner", "advanced");
+  if (wantsDiet || (lastTopic === "dietplan" && has(t, "another", "different", "new", "change", "more"))) {
+    const variety = wantsDiet && !has(t, "another", "different") ? 0 : (last.variety ?? 0) + 1;
+    const r = buildDietPlan({ weightKg: c.weightKg, goal: has(t, "lose", "fat") ? "cut" : has(t, "gain", "muscle", "bulk") ? "bulk" : c.goal, sex: c.sex }, c.diet, variety);
+    return { ...r, topic: "dietplan", variety };
+  }
+  if (wantsWorkout || (lastTopic === "plan" && tweak)) {
+    // Tweaks ("make it a home plan", "4 days") keep everything else from the last plan.
+    const keep = lastTopic === "plan" && (tweak || t.trim().split(" ").length <= 7);
+    const r = buildWorkoutPlan(t, c.goal, keep ? last.plan : undefined);
+    const opener = hinglish ? pick(["Ye lo!", "Bilkul, ready hai!"]) : pick(["Done! 💪", "Here you go! 💪", "Love it, let's build this. 💪"]);
+    return { text: `${opener} ${r.text}`, chips: r.chips, action: r.action, plan: r.req, topic: "plan" };
+  }
   // "is rice bad" style questions: the carbs answer beats the generic fat-loss one
   if (/\b(rice|roti|carbs?)\b.*\bbad\b/.test(t) && top?.tp.id === "fatloss") {
     const alt = TOPICS.find((x) => x.id === "fasting")!;
@@ -683,6 +747,13 @@ export async function fitsoReply(message: string, ctx: BrainContext, lastTopic?:
 
   const food = await foodAnswer(t);
   if (food) return food;
+
+  // Specific quick answers beat a weak or generic topic match.
+  const faq = matchFaq(t);
+  if (faq && (!top || top.s < 6 || (faq.strong && top.s < 7))) {
+    const opener = hinglish ? pick(OPENERS_HI) : pick(["Good question!", "Ah, common one!", "Okay, here's the deal.", ""]);
+    return { text: opener ? `${opener} ${faq.a}` : faq.a, chips: faq.chips, topic: `faq-${faq.id}` };
+  }
 
   let chosen = top;
   const SAFETY = ["emergency", "mental", "eating-disorder", "steroids", "medical", "pregnancy", "greeting", "thanks", "who"];
@@ -699,7 +770,7 @@ export async function fitsoReply(message: string, ctx: BrainContext, lastTopic?:
 
   return {
     text: `${hinglish ? "Hmm, ye wala mujhe theek se samajh nahi aaya." : "Hmm, I'm not sure I understood that one."} I'm best at training, food and fitness questions. Try asking it another way, or pick one of these:`,
-    chips: ["How much protein do I need?", "How do I lose belly fat?", "Beginner home workout", "My knees hurt when I squat", "Protein in paneer"],
+    chips: ["Make me a 3-day gym plan", "Make me a meal plan", "How do I lose belly fat?", "Protein in paneer"],
     topic: "unknown",
   };
 }

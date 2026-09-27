@@ -16,6 +16,10 @@ export interface ChatMsg {
   /** tap-to-ask follow-up suggestions (built-in coach) */
   chips?: string[];
   topic?: string;
+  /** a plan Fitso generated, with buttons to use it */
+  action?: import("./fitso-plans").ChatAction;
+  plan?: import("./fitso-plans").PlanRequest;
+  variety?: number;
 }
 
 export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news";

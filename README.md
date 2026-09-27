@@ -47,6 +47,13 @@ All data lives in the browser's localStorage.
   - Pain and injuries: knee, back and shoulder pain, and muscle soreness.
   - Training: beginner and home workouts, workout frequency, cardio and steps, abs, plateaus, results, motivation, warm-ups, yoga, women's training, sleep and workout timing.
   - Food nutrition lookup from the 7,000+ food database, and BMI with Indian cut-offs.
+- **Builds plans** (`src/lib/fitso-plans.ts`):
+  - **Workout plans**, gym or home, 2–6 days a week. It reads the goal (fat loss, muscle, strength), level, focus area (glutes, arms, abs and so on) and minutes per session from the message, e.g. "4-day gym plan for muscle gain" or "3-day home plan for glutes, 30 minutes".
+  - Gym plans save straight into **Train** as your routine. Home plans have **Start Day 1/2/3** buttons that open the guided player.
+  - **Meal plans** built from the app's recipes to your calorie and protein targets, with a **Use as today's plan** button. Ask for another plan to get a different combination.
+  - Follow-ups like "make it 3 days" or "make it a home plan" tweak the last plan.
+- About 40 extra quick answers (`src/lib/fitso-faq.ts`), e.g. eggs, ghee, milk at night, height, stamina, push-ups, pull-ups, reps and sets, being sick, smoking, hair fall, fasting (Navratri/Ramadan), squat/deadlift/bench form, soya, teens, older adults, bloating, chai. Typos like "stamna" still match.
+- Food lookups understand counts, e.g. "protein in 3 eggs" or "calories in 2 roti".
 - It understands Hinglish (for example "pet kaise kam kare"), follows up on short questions like "and for veg?", and offers tap-to-ask follow-up suggestions. Replies are typed out naturally.
 - Safety comes first: emergencies go to 112, mental health to Tele-MANAS 14416, and steroids and crash diets get a firm no.
 - Answers use the member's profile, today's workout and today's meals.
