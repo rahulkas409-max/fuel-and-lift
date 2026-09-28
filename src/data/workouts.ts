@@ -1,5 +1,5 @@
 export type Muscle =
-  | "Chest" | "Back" | "Shoulders" | "Biceps" | "Triceps" | "Quads" | "Hamstrings" | "Glutes" | "Calves" | "Core";
+  | "Chest" | "Back" | "Shoulders" | "Biceps" | "Triceps" | "Forearms" | "Quads" | "Hamstrings" | "Glutes" | "Calves" | "Core";
 
 /** Drives the nutrition engine: heavy compound days get more fuel, rest days less. */
 export type DayIntensity = "heavy" | "moderate" | "light" | "rest";
@@ -9,9 +9,10 @@ export interface Exercise {
   name: string;
   muscles: Muscle[];
   compound: boolean;
-  equipment: "Barbell" | "Dumbbell" | "Cable" | "Machine" | "Bodyweight";
+  equipment: "Barbell" | "Dumbbell" | "Cable" | "Machine" | "Bodyweight" | "Kettlebell";
   sets: number;
   reps: string; // e.g. "8-10"
+  level?: "beginner" | "intermediate";
 }
 
 export interface WorkoutExercise {
@@ -38,7 +39,9 @@ export interface Routine {
 
 const ex = (e: Exercise) => e;
 
-export const EXERCISES: Exercise[] = [
+import { LIBRARY_EXERCISES } from "./exercise-library";
+
+const BASE_EXERCISES: Exercise[] = [
   // Chest
   ex({ id: "bench-press", name: "Barbell Bench Press", muscles: ["Chest", "Triceps", "Shoulders"], compound: true, equipment: "Barbell", sets: 4, reps: "6-8" }),
   ex({ id: "incline-db-press", name: "Incline Dumbbell Press", muscles: ["Chest", "Shoulders"], compound: true, equipment: "Dumbbell", sets: 3, reps: "8-10" }),
@@ -84,7 +87,10 @@ export const EXERCISES: Exercise[] = [
   ex({ id: "cable-crunch", name: "Cable Crunch", muscles: ["Core"], compound: false, equipment: "Cable", sets: 3, reps: "12-15" }),
 ];
 
-export const exerciseById = (id: string) => EXERCISES.find((e) => e.id === id);
+/** Core list plus the extended library (about 100 more gym exercises from free-exercise-db). */
+export const EXERCISES: Exercise[] = [...BASE_EXERCISES, ...LIBRARY_EXERCISES];
+const BY_ID = new Map(EXERCISES.map((e) => [e.id, e]));
+export const exerciseById = (id: string) => BY_ID.get(id);
 
 const w = (exerciseId: string, sets?: number, reps?: string): WorkoutExercise => {
   const e = exerciseById(exerciseId);
@@ -131,6 +137,70 @@ export const ROUTINES: Routine[] = [
     ],
   },
 ];
+
+
+/** Body-part splits: one or two muscle groups per day, the classic gym "chest day / back day" style. */
+export const SPLIT_ROUTINES: Routine[] = [
+  {
+    id: "bp3",
+    name: "3-Day Body-Part Split",
+    short: "3-Day Split",
+    blurb: "Chest & Triceps · Back & Biceps · Legs & Shoulders. Great for 3 gym days.",
+    days: [
+      { id: "bp3-ct", name: "Chest & Triceps", focus: "Chest · Triceps", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("pec-deck", 3, "12-15"), w("tricep-dips", 3, "8-12"), w("tricep-pushdown"), w("overhead-ext")] },
+      { id: "bp3-bb", name: "Back & Biceps", focus: "Back · Biceps", intensity: "heavy", exercises: [w("lat-pulldown", 4, "8-10"), w("barbell-row"), w("seated-row"), w("face-pull"), w("barbell-curl"), w("hammer-curl")] },
+      { id: "bp3-ls", name: "Legs & Shoulders", focus: "Legs · Shoulders", intensity: "heavy", exercises: [w("back-squat"), w("rdl"), w("leg-press"), w("db-shoulder-press"), w("lateral-raise"), w("calf-raise")] },
+    ],
+  },
+  {
+    id: "bp4",
+    name: "4-Day Body-Part Split",
+    short: "4-Day Split",
+    blurb: "Chest & Triceps · Back & Biceps · Legs · Shoulders & Abs.",
+    days: [
+      { id: "bp4-ct", name: "Chest & Triceps", focus: "Chest · Triceps", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("cable-fly"), w("dips"), w("tricep-pushdown"), w("overhead-ext")] },
+      { id: "bp4-bb", name: "Back & Biceps", focus: "Back · Biceps", intensity: "heavy", exercises: [w("lat-pulldown", 4, "8-10"), w("barbell-row"), w("seated-row"), w("straight-arm-pulldown", 3, "12-15"), w("barbell-curl"), w("hammer-curl")] },
+      { id: "bp4-legs", name: "Legs", focus: "Quads · Hamstrings · Calves", intensity: "heavy", exercises: [w("back-squat"), w("leg-press"), w("rdl"), w("walking-lunge"), w("leg-curl"), w("leg-extension"), w("calf-raise")] },
+      { id: "bp4-sa", name: "Shoulders & Abs", focus: "Shoulders · Traps · Core", intensity: "moderate", exercises: [w("ohp", 4, "6-10"), w("lateral-raise", 4), w("rear-delt-fly"), w("db-shrug", 3, "12-15"), w("hanging-leg-raise"), w("cable-crunch")] },
+    ],
+  },
+  {
+    id: "bp5",
+    name: "5-Day Bro Split",
+    short: "Bro Split",
+    blurb: "One muscle group a day: Chest · Back · Shoulders · Legs · Arms.",
+    days: [
+      { id: "bp5-chest", name: "Chest", focus: "Upper, middle & lower chest", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("machine-chest-press"), w("pec-deck", 3, "12-15"), w("cable-fly"), w("push-up", 2, "Max")] },
+      { id: "bp5-back", name: "Back", focus: "Width · Thickness · Traps", intensity: "heavy", exercises: [w("deadlift", 3, "5"), w("lat-pulldown"), w("barbell-row"), w("seated-row"), w("straight-arm-pulldown", 3, "12-15"), w("barbell-shrug", 3, "12")] },
+      { id: "bp5-shoulders", name: "Shoulders", focus: "Front · Side · Rear delts", intensity: "moderate", exercises: [w("ohp", 4, "6-10"), w("arnold-press"), w("lateral-raise", 4), w("front-raise"), w("reverse-pec-deck", 3, "12-15"), w("face-pull")] },
+      { id: "bp5-legs", name: "Legs", focus: "Quads · Hamstrings · Glutes · Calves", intensity: "heavy", exercises: [w("back-squat"), w("leg-press"), w("rdl"), w("walking-lunge"), w("leg-curl"), w("leg-extension"), w("calf-raise")] },
+      { id: "bp5-arms", name: "Arms", focus: "Biceps · Triceps · Forearms", intensity: "moderate", exercises: [w("barbell-curl"), w("close-grip-bench", 3, "8-10"), w("preacher-curl"), w("tricep-pushdown"), w("hammer-curl"), w("overhead-ext")] },
+    ],
+  },
+  {
+    id: "glute4",
+    name: "4-Day Glute-Focused Split",
+    short: "Glute Focus",
+    blurb: "Popular with women: two lower-body glute days plus two upper-body days.",
+    days: [
+      { id: "g4-gq", name: "Glutes & Quads", focus: "Glutes · Quads", intensity: "heavy", exercises: [w("hip-thrust", 4, "8-12"), w("goblet-squat"), w("bulgarian-split-squat"), w("leg-press"), w("hip-abduction", 3, "15-20"), w("leg-extension")] },
+      { id: "g4-upper", name: "Upper Body", focus: "Back · Shoulders · Chest", intensity: "moderate", exercises: [w("lat-pulldown"), w("db-shoulder-press"), w("seated-row"), w("incline-db-press"), w("lateral-raise"), w("tricep-pushdown")] },
+      { id: "g4-gh", name: "Glutes & Hamstrings", focus: "Glutes · Hamstrings", intensity: "heavy", exercises: [w("rdl", 4, "8-10"), w("barbell-glute-bridge", 3, "10-12"), w("cable-kickback", 3, "12-15"), w("seated-leg-curl"), w("reverse-lunge"), w("hip-abduction", 3, "15-20")] },
+      { id: "g4-sa", name: "Shoulders, Arms & Abs", focus: "Shoulders · Arms · Core", intensity: "moderate", exercises: [w("arnold-press"), w("lateral-raise"), w("reverse-pec-deck", 3, "12-15"), w("db-curl"), w("rope-overhead-ext"), w("plank", 3, "45s")] },
+    ],
+  },
+];
+
+/** Every built-in routine: classic splits plus body-part splits. */
+export const ALL_ROUTINES: Routine[] = [...ROUTINES, ...SPLIT_ROUTINES];
+
+/** Which schedule to pick for how many days you can train. */
+export const SCHEDULE_ADVICE: Record<number, { ids: string[]; why: string }> = {
+  3: { ids: ["full-body", "bp3"], why: "Full Body is best for beginners; the 3-Day Split suits you if you like one-to-two muscles per day." },
+  4: { ids: ["upper-lower", "bp4", "glute4"], why: "Upper/Lower trains everything twice a week; the 4-Day Split is classic gym style; Glute Focus for lower-body goals." },
+  5: { ids: ["bp5", "upper-lower"], why: "The Bro Split gives each muscle its own day with lots of volume." },
+  6: { ids: ["ppl"], why: "Push/Pull/Legs twice a week is great for experienced lifters who recover well." },
+};
 
 export const INTENSITY_META: Record<DayIntensity, { label: string; emoji: string; kcalDelta: number; blurb: string }> = {
   heavy: { label: "Heavy", emoji: "🔥", kcalDelta: 300, blurb: "Heavy compounds: +300 kcal and extra carbs for glycogen" },

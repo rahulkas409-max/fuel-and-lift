@@ -124,15 +124,19 @@ export const W = 240;
  * Places every keyframe: grounded on the floor, with the anchor joint kept still between frames,
  * then scaled and centred so all frames fit the 240×160 stage.
  */
-export function layout(frames: Pose[], anchor: Anchor = "feet") {
+export function layout(frames: Pose[], anchor: Anchor = "feet", anchorY = false) {
   const skels = frames.map(skeleton);
   const offs: Pt[] = [];
   let ax = 0;
+  let ay = 0;
   skels.forEach((s, i) => {
     const b = bounds(s);
-    const dy = FLOOR - b.y1 - (frames[i].air ?? 0);
+    let dy = FLOOR - b.y1 - (frames[i].air ?? 0);
     const dx = i === 0 ? 0 : ax - anchorPt(s, anchor).x;
-    if (i === 0) ax = anchorPt(s, anchor).x;
+    if (i === 0) {
+      ax = anchorPt(s, anchor).x;
+      ay = anchorPt(s, anchor).y + dy;
+    } else if (anchorY) dy = ay - anchorPt(s, anchor).y;
     offs.push({ x: dx, y: dy });
   });
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity;
@@ -142,7 +146,7 @@ export function layout(frames: Pose[], anchor: Anchor = "feet") {
   });
   const scale = Math.min(1.25, (W - 24) / (x1 - x0), (FLOOR - 8) / (FLOOR - y0));
   const cx = (x0 + x1) / 2;
-  return { offs, scale, cx };
+  return { offs, scale, cx, anchorY };
 }
 
 /** Skeleton for an in-between moment, in stage coordinates (before scaling around the floor centre). */
@@ -151,8 +155,8 @@ export function frameAt(frames: Pose[], lay: ReturnType<typeof layout>, i: numbe
   const p = t <= 0 ? frames[i] : lerpPose(frames[i], frames[j], t);
   const s = skeleton(p);
   const dx = lerp(lay.offs[i].x, lay.offs[j].x, t);
-  // Re-ground every in-between so feet/hips never sink into the mat.
+  // Re-ground every in-between so feet/hips never sink into the mat (or keep the anchor height).
   const b = bounds(shift(s, dx, 0));
-  const dy = FLOOR - b.y1 - (p.air ?? 0);
+  const dy = lay.anchorY ? lerp(lay.offs[i].y, lay.offs[j].y, t) : FLOOR - b.y1 - (p.air ?? 0);
   return shift(s, dx - lay.cx, dy);
 }

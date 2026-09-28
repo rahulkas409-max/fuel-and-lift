@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { DietPref, GrocerySection, Meal, Slot } from "@/data/meals";
-import { ROUTINES, type Routine } from "@/data/workouts";
+import { ALL_ROUTINES, ROUTINES, type Routine } from "@/data/workouts";
 import { PASS_DAYS } from "./config";
 import { dayKey } from "./date";
 import type { Place } from "./gyms";
@@ -20,6 +20,7 @@ export interface ChatMsg {
   action?: import("./fitso-plans").ChatAction;
   plan?: import("./fitso-plans").PlanRequest;
   variety?: number;
+  query?: string;
 }
 
 export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news";
@@ -262,4 +263,4 @@ export const useStore = create<State>()(
 );
 
 export const currentRoutine = (s: Pick<State, "routineId" | "customRoutine">): Routine =>
-  (s.routineId === s.customRoutine?.id ? s.customRoutine : ROUTINES.find((r) => r.id === s.routineId)) ?? ROUTINES[1];
+  (s.routineId === s.customRoutine?.id ? s.customRoutine : ALL_ROUTINES.find((r) => r.id === s.routineId)) ?? ROUTINES[1];

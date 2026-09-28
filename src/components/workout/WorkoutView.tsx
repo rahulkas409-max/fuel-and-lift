@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil, Plus, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { INTENSITY_META, ROUTINES } from "@/data/workouts";
+import { ALL_ROUTINES, INTENSITY_META, SCHEDULE_ADVICE } from "@/data/workouts";
 import { celebrate } from "@/lib/confetti";
 import { useToday } from "@/lib/hooks";
 import { play } from "@/lib/sound";
@@ -70,10 +70,12 @@ function RoutineView() {
     prev.current = { key: logKey, done: pct === 1 };
   }, [pct, logKey, day, today, markCompleted]);
 
-  const routines = state.customRoutine ? [...ROUTINES, state.customRoutine] : ROUTINES;
+  const routines = state.customRoutine ? [...ALL_ROUTINES, state.customRoutine] : ALL_ROUTINES;
 
   return (
     <div className="space-y-6">
+      <ScheduleAdvice current={routine.id} onPick={(id) => state.setRoutine(id)} />
+
       {/* Routine picker */}
       <section>
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 snap-x">
@@ -177,6 +179,49 @@ function RoutineView() {
       <Heatmap today={today} />
       <CustomRoutineModal open={builderOpen} onClose={() => setBuilderOpen(false)} />
     </div>
+  );
+}
+
+/** "How many days can you train?" → the schedules that fit. */
+function ScheduleAdvice({ current, onPick }: { current: string; onPick: (id: string) => void }) {
+  const [days, setDays] = useState<number | null>(null);
+  const advice = days ? SCHEDULE_ADVICE[days] : null;
+  return (
+    <section className="rounded-3xl bg-card border border-line p-4">
+      <p className="font-medium text-ink">How many days a week can you train?</p>
+      <div className="mt-2.5 grid grid-cols-4 gap-2">
+        {[3, 4, 5, 6].map((n) => (
+          <button
+            key={n}
+            onClick={() => setDays(days === n ? null : n)}
+            aria-pressed={days === n}
+            className={`h-11 rounded-xl text-sm font-medium border ${days === n ? "bg-fit-blue text-white border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
+          >
+            {n} days
+          </button>
+        ))}
+      </div>
+      {advice && (
+        <div className="mt-3">
+          <p className="text-sm text-ink-2">{advice.why}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {advice.ids.map((id) => {
+              const r = ALL_ROUTINES.find((x) => x.id === id)!;
+              const on = current === id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => onPick(id)}
+                  className={`h-10 px-4 rounded-full text-sm inline-flex items-center gap-1.5 ${on ? "bg-fit-green-soft text-fit-green font-medium" : "bg-fit-blue-soft text-fit-blue font-medium"}`}
+                >
+                  {on && <Check size={14} />} {r.name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 

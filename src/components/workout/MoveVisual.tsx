@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react";
 import { moveInfo, type ProgramMove } from "@/data/programs";
 import { Sheet } from "../ui/Sheet";
 import { ExerciseAnimation } from "./ExerciseDemo";
+import { FIGURES } from "@/data/figures";
 import { Figure, hasFigure } from "./Figure";
 
 /**
@@ -33,7 +34,29 @@ export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => v
         <div className="pb-2">
           <MoveVisual id={info.id} className="w-full aspect-[3/2] rounded-3xl overflow-hidden" />
           <h2 className="text-2xl font-medium text-ink mt-4">{info.name}</h2>
-          {hasFigure(info.id) && <p className="text-xs text-ink-3 mt-2">The figure shows the start and finish of each rep.</p>}
+          {hasFigure(info.id) && FIGURES[info.id].frames.length > 3 && (
+            <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {FIGURES[info.id].frames.map((_, n) => (
+                <figure key={n} className="rounded-xl overflow-hidden border border-line">
+                  <Figure id={info.id} frame={n} className="w-full aspect-[3/2]" />
+                  <figcaption className="text-[11px] text-ink-2 text-center py-1 bg-card">Step {n + 1}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
+          {hasFigure(info.id) && FIGURES[info.id].frames.length <= 3 && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {[
+                ["Start", 0],
+                ["Finish", 99],
+              ].map(([label, f]) => (
+                <figure key={label as string} className="rounded-2xl overflow-hidden border border-line">
+                  <Figure id={info.id} frame={f as number} className="w-full aspect-[3/2]" />
+                  <figcaption className="text-xs text-ink-2 text-center py-1.5 bg-card">{label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
           <ol className="mt-4 space-y-3">
             {info.steps.map((s, i) => (
               <li key={i} className="flex gap-3 text-[15px] text-ink-2 leading-relaxed">

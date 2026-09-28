@@ -19,7 +19,7 @@ import { activeStreak } from "@/lib/date";
 import { fitsoReply, type BrainContext } from "@/lib/fitso-brain";
 import { useToday } from "@/lib/hooks";
 import { todayNutrition, todaySession } from "@/lib/progress";
-import { useStore, type ChatMsg } from "@/lib/store";
+import { currentRoutine, useStore, type ChatMsg } from "@/lib/store";
 import type { Program } from "@/data/programs";
 import type { ChatAction } from "@/lib/fitso-plans";
 import { LogoMark } from "../brand/Logo";
@@ -219,11 +219,7 @@ export function FitsoChat({
     // Built-in coach: instant, free and offline. Types the answer out like a person would.
     const local = async () => {
       const prev = [...prior].reverse().find((m) => m.role === "assistant");
-      const r = await fitsoReply(q, brainContext(today), {
-        topic: prev?.topic,
-        plan: prev?.plan,
-        variety: prev?.variety,
-      });
+      const r = await fitsoReply(q, brainContext(today), { topic: prev?.topic, plan: prev?.plan, variety: prev?.variety, query: prev?.query });
       await sleep(350 + Math.min(700, r.text.length * 1.5), ctrl.signal);
       const words = r.text.split(/(\s+)/);
       for (let i = 0; i < words.length; i += 6) {
@@ -237,6 +233,7 @@ export function FitsoChat({
         action: r.action,
         plan: r.plan,
         variety: r.variety,
+        query: r.query,
       });
     };
 
@@ -589,6 +586,38 @@ function PlanActions({
               This replaces your current custom routine.
             </p>
           )
+        )}
+      </div>
+    );
+  if (action.type === "day")
+    return (
+      <div className="mt-2">
+        <button
+          onClick={() => {
+            const st = useStore.getState();
+            const base = st.customRoutine ?? currentRoutine(st);
+            const day = { ...action.day, id: `c-${Date.now().toString(36)}` };
+            const days = [...base.days.map((d) => ({ ...d })), day].slice(-7);
+            saveRoutine({ id: "custom", name: st.customRoutine?.name ?? `My ${base.short}`, short: "Custom", blurb: "Your own split, built in the Custom Builder.", days });
+            st.setDay("custom", day.id);
+            setTrainMode("routine");
+            setDone(true);
+          }}
+          disabled={done}
+          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+        >
+          {done ? <Check size={16} /> : <Dumbbell size={16} />} {done ? "Added to Train" : "Add to my routine"}
+        </button>
+        {done && (
+          <button
+            onClick={() => {
+              setTab("train");
+              onDone();
+            }}
+            className={`${btn} ml-2 border border-line bg-card text-ink`}
+          >
+            Open Train
+          </button>
         )}
       </div>
     );

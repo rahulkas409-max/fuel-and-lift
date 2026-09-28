@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { PlayCircle } from "lucide-react";
 import { useState } from "react";
-import { EXERCISE_MEDIA } from "@/data/exercise-media";
+import { MEDIA as EXERCISE_MEDIA } from "@/data/media";
 import { exerciseById, type WorkoutExercise } from "@/data/workouts";
 import { play } from "@/lib/sound";
 import { useStore, type SetLog } from "@/lib/store";

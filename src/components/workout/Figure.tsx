@@ -43,8 +43,9 @@ export function Figure({ id, className = "", still = false, frame }: { id: strin
 
 function BodyFigure({ spec, className, still, frame }: { spec: Extract<FigureSpec, { kind: "body" }>; className: string; still: boolean; frame?: number }) {
   const reduce = useReducedMotion();
-  const lay = useMemo(() => layout(spec.frames, spec.anchor), [spec]);
-  const tl = useTimeline(spec.frames.length, spec.move ?? 0.9, spec.hold ?? 0.45, still || !!reduce || frame != null);
+  const lay = useMemo(() => layout(spec.frames, spec.anchor, spec.anchorY), [spec]);
+  // Calm, readable pace: never faster than ~1 s per movement, with a pause at each end.
+  const tl = useTimeline(spec.frames.length, Math.max(1, (spec.move ?? 1) * 1.5), Math.max(0.5, (spec.hold ?? 0.5) * 1.5), still || !!reduce || frame != null);
   const { i, t } = frame != null ? { i: Math.min(frame, spec.frames.length - 1), t: 0 } : tl;
   const s = frameAt(spec.frames, lay, i, t);
   const k = lay.scale;
@@ -64,69 +65,125 @@ const line = (a: { x: number; y: number }, b: { x: number; y: number }, w: numbe
   <line key={key} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={c} strokeWidth={w} strokeLinecap="round" />
 );
 
+type P = { x: number; y: number };
+/** A tapered limb: width w1 at `a`, w2 at `b`, rounded ends. */
+function Seg({ a, b, w1, w2, fill }: { a: P; b: P; w1: number; w2: number; fill: string }) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const l = Math.hypot(dx, dy) || 1;
+  const nx = -dy / l, ny = dx / l;
+  const d = `M${a.x + nx * (w1 / 2)} ${a.y + ny * (w1 / 2)}L${b.x + nx * (w2 / 2)} ${b.y + ny * (w2 / 2)}L${b.x - nx * (w2 / 2)} ${b.y - ny * (w2 / 2)}L${a.x - nx * (w1 / 2)} ${a.y - ny * (w1 / 2)}Z`;
+  return (
+    <g fill={fill}>
+      <path d={d} />
+      <circle cx={a.x} cy={a.y} r={w1 / 2} />
+      <circle cx={b.x} cy={b.y} r={w2 / 2} />
+    </g>
+  );
+}
+const mix = (a: P, b: P, t: number): P => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+
+/** An athlete: skin, blue T-shirt, dark track pants and shoes. Far-side limbs are shaded for depth. */
 function Body({ s }: { s: Skeleton }) {
-  const near = "var(--fig)";
-  const far = s.view === "side" ? "var(--fig-far)" : near;
-  const leg = (h: "N" | "F", c: string) => (
-    <g key={`l${h}`}>
-      {line(s[`hp${h}`], s[`kn${h}`], 13, c)}
-      {line(s[`kn${h}`], s[`an${h}`], 11, c)}
-      {line(s[`an${h}`], s[`to${h}`], 7, c)}
-    </g>
-  );
-  const arm = (h: "N" | "F", c: string) => (
-    <g key={`a${h}`}>
-      {line(s[`sh${h}`], s[`el${h}`], 10, c)}
-      {line(s[`el${h}`], s[`ha${h}`], 8.5, c)}
-      <circle cx={s[`ha${h}`].x} cy={s[`ha${h}`].y} r={4.6} fill={c} />
-    </g>
-  );
-  const hx = s.head.x - s.neck.x, hy = s.head.y - s.neck.y;
-  const hl = Math.hypot(hx, hy) || 1;
+  const side = s.view === "side";
+  const C = {
+    skin: "var(--fig-skin)",
+    skinFar: side ? "var(--fig-skin-far)" : "var(--fig-skin)",
+    shirt: "var(--fig-shirt)",
+    shirtFar: side ? "var(--fig-shirt-far)" : "var(--fig-shirt)",
+    pants: "var(--fig-pants)",
+    pantsFar: side ? "var(--fig-pants-far)" : "var(--fig-pants)",
+    shoe: "var(--fig-shoe)",
+    hair: "var(--fig-hair)",
+  };
+  const leg = (h: "N" | "F") => {
+    const far = h === "F";
+    return (
+      <g key={`l${h}`}>
+        <Seg a={s[`hp${h}`]} b={s[`kn${h}`]} w1={15} w2={11.5} fill={far ? C.pantsFar : C.pants} />
+        <Seg a={s[`kn${h}`]} b={s[`an${h}`]} w1={11.5} w2={8} fill={far ? C.pantsFar : C.pants} />
+        <Seg a={s[`an${h}`]} b={s[`to${h}`]} w1={8} w2={6} fill={C.shoe} />
+      </g>
+    );
+  };
+  const arm = (h: "N" | "F") => {
+    const far = h === "F";
+    const sh = s[`sh${h}`], el = s[`el${h}`], ha = s[`ha${h}`];
+    return (
+      <g key={`a${h}`}>
+        <Seg a={sh} b={el} w1={10} w2={8} fill={far ? C.skinFar : C.skin} />
+        <Seg a={sh} b={mix(sh, el, 0.42)} w1={11.5} w2={10.5} fill={far ? C.shirtFar : C.shirt} />
+        <Seg a={el} b={ha} w1={8} w2={6.2} fill={far ? C.skinFar : C.skin} />
+        <circle cx={ha.x} cy={ha.y} r={4.3} fill={far ? C.skinFar : C.skin} />
+      </g>
+    );
+  };
+  // Torso: a slightly curved, tapered shape (bend arches the spine for cat-cow, cobra...).
+  const mid0 = mix(s.hip, s.neck, 0.5);
+  const tl = Math.hypot(s.neck.x - s.hip.x, s.neck.y - s.hip.y) || 1;
+  const mid = side && s.bend ? { x: mid0.x - ((s.neck.y - s.hip.y) / tl) * s.bend, y: mid0.y + ((s.neck.x - s.hip.x) / tl) * s.bend } : mid0;
+  const pelvisTop = mix(s.hip, mid, 0.45);
   const fd = (s.faceDir * Math.PI) / 180;
   const fx = Math.sin(fd), fy = Math.cos(fd);
+  const hx = s.head.x - s.neck.x, hy = s.head.y - s.neck.y;
+  const hl = Math.hypot(hx, hy) || 1;
+  const up = { x: hx / hl, y: hy / hl };
   const head = (
     <g key="head">
-      {line(s.neck, s.head, 9, near)}
-      <circle cx={s.head.x} cy={s.head.y} r={10.5} fill={near} />
-      {s.view === "side" && !s.noFace && (
+      <Seg a={s.neck} b={s.head} w1={7} w2={7} fill={C.skin} />
+      {side && !s.noFace ? (
         <>
-          <circle cx={s.head.x + fx * 8.6} cy={s.head.y + fy * 8.6 + (hy / hl) * -1} r={3.4} fill={near} />
-          <circle cx={s.head.x + fx * 4.6 + (hx / hl) * 2.4} cy={s.head.y + fy * 4.6 + (hy / hl) * 2.4} r={1.5} fill="var(--fig-bg)" />
+          <circle cx={s.head.x} cy={s.head.y} r={10} fill={C.hair} />
+          <circle cx={s.head.x + fx * 1.8 - up.x * 0.8} cy={s.head.y + fy * 1.8 - up.y * 0.8} r={9} fill={C.skin} />
+          <circle cx={s.head.x + fx * 9.3} cy={s.head.y + fy * 9.3 - up.y * 0.6} r={2.1} fill={C.skin} />
+          <circle cx={s.head.x + fx * 5.6 + up.x * 1.6} cy={s.head.y + fy * 5.6 + up.y * 1.6} r={1.15} fill="var(--fig-eye)" />
+        </>
+      ) : (
+        <>
+          <circle cx={s.head.x} cy={s.head.y} r={10} fill={C.hair} />
+          <circle cx={s.head.x - up.x * 1.6} cy={s.head.y - up.y * 1.6} r={9} fill={C.skin} />
+          {!side && (
+            <>
+              <circle cx={s.head.x - 3.2} cy={s.head.y - up.y * 0.5} r={1.1} fill="var(--fig-eye)" />
+              <circle cx={s.head.x + 3.2} cy={s.head.y - up.y * 0.5} r={1.1} fill="var(--fig-eye)" />
+            </>
+          )}
         </>
       )}
     </g>
   );
-  if (s.view === "front") {
+  const shadow = <ellipse cx={s.hip.x} cy={FLOOR + 0.5} rx={34} ry={2.6} fill="var(--fig-shadow)" />;
+
+  if (!side) {
     return (
       <g>
-        {leg("F", near)}
-        {leg("N", near)}
-        <path d={`M${s.shN.x} ${s.shN.y}L${s.shF.x} ${s.shF.y}L${s.hpF.x} ${s.hpF.y}L${s.hpN.x} ${s.hpN.y}Z`} fill={near} stroke={near} strokeWidth={10} strokeLinejoin="round" />
+        {shadow}
+        {leg("F")}
+        {leg("N")}
+        <path
+          d={`M${s.shN.x} ${s.shN.y}L${s.shF.x} ${s.shF.y}L${s.hpF.x} ${s.hpF.y}L${s.hpN.x} ${s.hpN.y}Z`}
+          fill={C.shirt}
+          stroke={C.shirt}
+          strokeWidth={11}
+          strokeLinejoin="round"
+        />
+        <path d={`M${mix(s.hpN, s.shN, 0.18).x} ${mix(s.hpN, s.shN, 0.18).y}L${mix(s.hpF, s.shF, 0.18).x} ${mix(s.hpF, s.shF, 0.18).y}L${s.hpF.x} ${s.hpF.y}L${s.hpN.x} ${s.hpN.y}Z`} fill={C.pants} stroke={C.pants} strokeWidth={11} strokeLinejoin="round" />
         {head}
-        {arm("F", near)}
-        {arm("N", near)}
+        {arm("F")}
+        {arm("N")}
       </g>
     );
   }
   return (
     <g>
-      {arm("F", far)}
-      {leg("F", far)}
-      {s.bend ? (
-        <path
-          d={`M${s.hip.x} ${s.hip.y} Q ${(s.hip.x + s.neck.x) / 2 - ((s.neck.y - s.hip.y) / 46) * s.bend} ${(s.hip.y + s.neck.y) / 2 + ((s.neck.x - s.hip.x) / 46) * s.bend} ${s.neck.x} ${s.neck.y}`}
-          fill="none"
-          stroke={near}
-          strokeWidth={17}
-          strokeLinecap="round"
-        />
-      ) : (
-        line(s.hip, s.neck, 17, near)
-      )}
+      {shadow}
+      {arm("F")}
+      {leg("F")}
+      <Seg a={s.hip} b={mid} w1={17} w2={19} fill={C.shirt} />
+      <Seg a={mid} b={s.neck} w1={19} w2={16} fill={C.shirt} />
+      <Seg a={s.hip} b={pelvisTop} w1={17.5} w2={17} fill={C.pants} />
       {head}
-      {leg("N", near)}
-      {arm("N", near)}
+      {leg("N")}
+      {arm("N")}
     </g>
   );
 }

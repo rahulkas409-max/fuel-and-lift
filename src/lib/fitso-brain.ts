@@ -5,7 +5,7 @@
 // (If an AI key is configured on the server, Fitso uses that instead - see /api/fitso.)
 import { MEALS, mealsFor, type DietPref, type Slot } from "@/data/meals";
 import { PROGRAMS, programMinutes, type Area } from "@/data/programs";
-import { buildDietPlan, buildWorkoutPlan, type ChatAction, type PlanRequest } from "./fitso-plans";
+import { buildDietPlan, buildPartDay, buildWorkoutPlan, partsIn, type ChatAction, type PlanRequest } from "./fitso-plans";
 import { matchFaq } from "./fitso-faq";
 import { loadFoods, searchFoods, type Food } from "./foods";
 
@@ -31,12 +31,15 @@ export interface BrainReply {
   /** remembered so "make it 4 days" can tweak the last plan */
   plan?: PlanRequest;
   variety?: number;
+  /** the request text behind a one-day workout, for follow-up tweaks */
+  query?: string;
 }
 
 export interface LastTurn {
   topic?: string;
   plan?: PlanRequest;
   variety?: number;
+  query?: string;
 }
 
 // ── Text helpers ──
@@ -730,6 +733,17 @@ export async function fitsoReply(message: string, ctx: BrainContext, last: LastT
     const variety = wantsDiet && !has(t, "another", "different") ? 0 : (last.variety ?? 0) + 1;
     const r = buildDietPlan({ weightKg: c.weightKg, goal: has(t, "lose", "fat") ? "cut" : has(t, "gain", "muscle", "bulk") ? "bulk" : c.goal, sex: c.sex }, c.diet, variety);
     return { ...r, topic: "dietplan", variety };
+  }
+  // A single body-part session: "chest and triceps workout", "leg day", "best exercises for back"
+  const dayWords = /\b(workout|exercises?|routine|day|session|kasrat)\b/.test(message.toLowerCase());
+  const weekWords = /\b(plan|week|split|schedule|\d\s*-?\s*days?|din)\b/.test(message.toLowerCase());
+  if (dayWords && !weekWords && partsIn(message).length && !has(t, "pain", "fat", "lose")) {
+    const r = buildPartDay(message, c.goal);
+    if (r) return { ...r, topic: "partday", query: message };
+  }
+  if (lastTopic === "partday" && last.query && /^\s*(make it|only|with|without|for|dumbbell|beginner|advanced|harder|easier)/.test(t)) {
+    const r = buildPartDay(`${message} ${last.query}`, c.goal);
+    if (r) return { ...r, topic: "partday", query: `${message} ${last.query}` };
   }
   if (wantsWorkout || (lastTopic === "plan" && tweak)) {
     // Tweaks ("make it a home plan", "4 days") keep everything else from the last plan.

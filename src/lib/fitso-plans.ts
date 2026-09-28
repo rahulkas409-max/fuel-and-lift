@@ -1,7 +1,8 @@
 // Fitso's plan builders: custom weekly workout plans (gym or home) and one-day meal plans.
 import { mealById, SLOTS, type DietPref } from "@/data/meals";
 import { moveInfo, type Program, type ProgramMove } from "@/data/programs";
-import { exerciseById, type DayIntensity, type Routine, type WorkoutDay, type WorkoutExercise } from "@/data/workouts";
+import { exerciseById, inferIntensity, type DayIntensity, type Routine, type WorkoutDay, type WorkoutExercise } from "@/data/workouts";
+import { BODY_PART_SPLITS, buildBodyPartDay, partsLabel, type BodyPart } from "./bodypart";
 import { dayTargets, planCost, planMeals, syncPlan, type Profile } from "./nutrition";
 
 export type PlanGoal = "fat" | "muscle" | "strength" | "general";
@@ -15,12 +16,16 @@ export interface PlanRequest {
   level: PlanLevel;
   focus: Focus;
   minutes: number | null;
+  /** "split" = one or two body parts per day (chest day, back day...) */
+  style?: "classic" | "split";
+  equipment?: "gym" | "dumbbells";
 }
 
 export type ChatAction =
   | { type: "routine"; routine: Routine }
   | { type: "programs"; programs: Program[] }
-  | { type: "meals"; plan: Partial<Record<string, string>>; scale: number };
+  | { type: "meals"; plan: Partial<Record<string, string>>; scale: number }
+  | { type: "day"; day: WorkoutDay };
 
 const WORDS: Record<string, number> = { two: 2, three: 3, four: 4, five: 5, six: 6, do: 2, teen: 3, char: 4, chaar: 4, paanch: 5, panch: 5, chhe: 6 };
 
@@ -67,6 +72,49 @@ export function parsePlanRequest(t: string, profileGoal: "cut" | "maintain" | "b
     level: lvl,
     focus: focus ?? base?.focus ?? null,
     minutes: mm ? Number(mm[1]) : (base?.minutes ?? null),
+    style: /\b(split|bro split|body ?part|bodypart|muscle ?wise|body ?wise|one muscle|chest day|back day|leg day|arm day)\b/.test(t)
+      ? "split"
+      : /\b(full body|upper lower|push pull|ppl)\b/.test(t)
+        ? "classic"
+        : (base?.style ?? "classic"),
+    equipment: /\b(dumbbell|dumbbells|home gym)\b/.test(t) ? "dumbbells" : (base?.equipment ?? "gym"),
+  };
+}
+
+/** Body parts named in a message ("chest and triceps", "arms", "legs"). */
+export function partsIn(raw: string): BodyPart[] {
+  const t = raw.toLowerCase();
+  const out: BodyPart[] = [];
+  const add = (p: BodyPart) => !out.includes(p) && out.push(p);
+  if (/\bchest\b/.test(t)) add("Chest");
+  if (/\bback\b/.test(t) && !/\b(back pain|lower back|back hurts?)\b/.test(t)) add("Back");
+  if (/\bshoulders?\b|\bdelts?\b/.test(t)) add("Shoulders");
+  if (/\barms?\b/.test(t)) { add("Biceps"); add("Triceps"); }
+  if (/\bbiceps?\b/.test(t)) add("Biceps");
+  if (/\btriceps?\b/.test(t)) add("Triceps");
+  if (/\b(legs?|quads?|thighs?)\b/.test(t)) add("Legs");
+  if (/\b(glutes?|butt|booty)\b/.test(t)) add("Glutes");
+  if (/\bhamstrings?\b/.test(t)) add("Hamstrings");
+  if (/\b(calf|calves)\b/.test(t)) add("Calves");
+  if (/\b(abs|core|six pack)\b/.test(t)) add("Abs");
+  if (/\bforearms?\b/.test(t)) add("Forearms");
+  return out.slice(0, 3);
+}
+
+/** A single gym day for the named body parts. */
+export function buildPartDay(raw: string, profileGoal: "cut" | "maintain" | "bulk"): { text: string; action: ChatAction; chips: string[] } | null {
+  const parts = partsIn(raw);
+  if (!parts.length) return null;
+  const req = parsePlanRequest(raw.toLowerCase(), profileGoal);
+  const exercises = buildBodyPartDay(parts, { level: req.level, goal: req.goal, equipment: req.equipment });
+  const day: WorkoutDay = { id: `f-${Date.now().toString(36)}`, name: partsLabel(parts), focus: parts.join(" · "), intensity: inferIntensity(exercises), exercises };
+  const rest = req.goal === "strength" ? "2–3 min on the first lift, 90 sec after" : "60–90 sec between sets";
+  return {
+    text: `Here's a **${partsLabel(parts)} workout**${req.equipment === "dumbbells" ? " (dumbbells only)" : ""}:\n\n${exercises
+      .map((e) => `- ${exerciseById(e.exerciseId)!.name}: ${e.sets} × ${e.reps}`)
+      .join("\n")}\n\nRest ${rest}. Start each exercise with a light warm-up set, and add a little weight when you can do the top of the rep range with good form. Tap **Add to my routine** to log it in Train.`,
+    action: { type: "day", day },
+    chips: [`Make a full ${parts.length === 1 ? "5" : "4"}-day body-part split`, "Make it dumbbells only", "How many sets should I do?"],
   };
 }
 
@@ -129,7 +177,30 @@ function dose(goal: PlanGoal, pattern: Pattern, compound: boolean, level: PlanLe
   return { sets: 3, reps: compound ? "8-12" : "12-15" };
 }
 
+function buildSplit(req: PlanRequest): { routine: Routine; text: string } {
+  const week = BODY_PART_SPLITS[req.days] ?? BODY_PART_SPLITS[4];
+  const days: WorkoutDay[] = week.map((parts, di) => {
+    const repeat = week.slice(0, di).some((p) => p.join() === parts.join());
+    const exercises = buildBodyPartDay(parts, { level: req.level, goal: req.goal, equipment: req.equipment, variant: repeat ? 1 : 0 });
+    return { id: `f-${di}-${parts.join("-")}`, name: `Day ${di + 1}: ${partsLabel(parts)}`, focus: parts.join(" · "), intensity: inferIntensity(exercises), exercises };
+  });
+  const title = `${req.days}-Day Body-Part Split`;
+  const routine: Routine = { id: "custom", name: `Fitso ${title}`, short: "Fitso split", blurb: `Made by Fitso for ${goalLabel(req.goal)} · ${req.level}`, days };
+  const text = `Here's your **${title}** for **${goalLabel(req.goal)}** (${req.level}${req.equipment === "dumbbells" ? ", dumbbells only" : ""}):\n\n${days
+    .map((d) => `**${d.name}**\n${d.exercises.map((e) => `- ${exerciseById(e.exerciseId)!.name}: ${e.sets} × ${e.reps}`).join("\n")}`)
+    .join("\n\n")}\n\n**How to run it**\n${[
+    "Rest 60–90 sec between sets (2–3 min on the first heavy lift)",
+    "Warm up for 5–10 minutes, plus 1–2 light sets of the first exercise",
+    "Add a little weight when you hit the top of the rep range on every set",
+    `Suggested week: ${weekPattern(req.days)}`,
+  ]
+    .map((x) => `- ${x}`)
+    .join("\n")}\n\nTap **Save as my routine** and it'll appear in **Train**.`;
+  return { routine, text };
+}
+
 function buildGym(req: PlanRequest): { routine: Routine; text: string } {
+  if (req.style === "split") return buildSplit(req);
   const split = SPLITS[req.days];
   const maxEx = req.minutes ? Math.max(4, Math.min(8, Math.round(req.minutes / 8))) : req.level === "beginner" ? 6 : 7;
   const seen = new Map<Pattern, number>();
@@ -255,6 +326,7 @@ export function buildWorkoutPlan(
   const other = req.place === "gym" ? "home" : "gym";
   const chips = [
     `Make it ${req.days === 3 ? 4 : 3} days`,
+    req.place === "gym" ? (req.style === "split" ? "Make it full body instead" : "Make it a body-part split") : "Make it a gym plan",
     `Make it a ${other} plan`,
     req.goal === "fat" ? "Make it for muscle gain" : "Make it for fat loss",
   ];

@@ -24,12 +24,21 @@
   /* Exercise demo figures */
   --fig: #1a73e8;
   --fig-far: #a8c7fa;
-  --fig-ink: #0b3d91;
-  --fig-hair: #174ea6;
+  --fig-ink: #3b2418;
+  --fig-hair: #2b1f1a;
   --fig-bg: #f3f7fe;
   --fig-mat: #b7dfc4;
   --fig-prop: #d3dbe6;
   --fig-accent: #f29900;
+  --fig-skin: #c68a63;
+  --fig-skin-far: #a06b48;
+  --fig-shirt: #1a73e8;
+  --fig-shirt-far: #1456b8;
+  --fig-pants: #2b3446;
+  --fig-pants-far: #1c2230;
+  --fig-shoe: #111827;
+  --fig-eye: #1f1f1f;
+  --fig-shadow: rgb(0 0 0 / 0.1);
   --shadow: 0 1px 2px rgb(60 64 67 / 0.08), 0 1px 3px 1px rgb(60 64 67 / 0.06);
   --shadow-lg: 0 4px 8px 3px rgb(60 64 67 / 0.1), 0 1px 3px rgb(60 64 67 / 0.14);
 }
@@ -57,12 +66,21 @@
     --fit-red-soft: #3b1f1d;
     --fig: #8ab4f8;
     --fig-far: #3b5b8f;
-    --fig-ink: #0e1f3d;
-    --fig-hair: #5a86d6;
+    --fig-ink: #2a1a12;
+    --fig-hair: #3d2c24;
     --fig-bg: #1a2230;
     --fig-mat: #2f5a3d;
     --fig-prop: #3a4250;
     --fig-accent: #fdd663;
+    --fig-skin: #d39a74;
+    --fig-skin-far: #a8744f;
+    --fig-shirt: #5b9cf5;
+    --fig-shirt-far: #3b77cc;
+    --fig-pants: #4a5569;
+    --fig-pants-far: #343c4c;
+    --fig-shoe: #0b0f16;
+    --fig-eye: #111;
+    --fig-shadow: rgb(0 0 0 / 0.35);
     --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.5);
   }

@@ -6,13 +6,15 @@ All data lives in the browser's localStorage.
 ## Features
 
 **Train**
-- Built-in splits: 3-Day Full Body, 4-Day Upper/Lower and 6-Day Push/Pull/Legs.
+- Built-in routines: 3-Day Full Body, 4-Day Upper/Lower, 6-Day Push/Pull/Legs, plus body-part splits: 3-Day (Chest & Triceps / Back & Biceps / Legs & Shoulders), 4-Day, 5-Day Bro Split and a 4-Day Glute-Focused split.
+- A "How many days a week can you train?" card suggests the right routine for 3, 4, 5 or 6 days and explains why.
 - Set-by-set logging of kg and reps, with checkboxes. Your last weight for each lift is pre-filled.
 - A floating rest timer (60/90/120 s) with a progress ring, a chime and vibration.
 - A GitHub-style heatmap and a session streak (up to 2 rest days in a row don't break it).
 
 **Custom Builder**
-- Add, remove and swap exercises from a library of 37.
+- Add, remove and swap exercises from a library of 138. The 101 extra lifts (incline press, pec deck, T-bar row, preacher curl, hack squat, hip thrust and more) come from the public-domain free-exercise-db, via `scripts/build-exercise-library.mjs`.
+- **Body-part days:** pick up to 3 parts (Chest, Back, Shoulders, Biceps, Triceps, Legs, Glutes, Hamstrings, Calves, Abs, Forearms), choose full gym or dumbbells only and beginner or experienced, and get a ready day: compound lifts first, then isolation work. Shuffle for different exercises, or build a whole 2–6 day body-part week (`src/lib/bodypart.ts`).
 - Change sets and reps, rename days, and drag to reorder them.
 - Set each day's intensity (heavy, moderate, light or rest), or let the app work it out from the exercises.
 
@@ -30,12 +32,12 @@ All data lives in the browser's localStorage.
 - Pick a serving or enter grams, then log the food to today's totals.
 
 **Body-part workouts** (Train → Body-part workouts)
-- 31 guided workouts in three groups:
-  - Popular gym days: chest, back, shoulders, arms, legs, glutes and abs.
+- 44 guided workouts in three groups:
+  - Popular gym days: chest & triceps, back & biceps, shoulders, biceps, triceps, forearms, quads, hamstrings & glutes, calves, core, dumbbell-only and machine-only beginner days.
   - No-equipment home workouts: belly fat, waist, thighs, glutes, toned arms, shoulders and posture, double chin and face, neck, full-body HIIT.
-  - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, face yoga, bedtime.
+  - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, bedtime.
 - Filter by 12 body areas, by Gym, Home or Yoga, and by "For women". "For women" is on by default for women.
-- Every home, yoga and face move has an animated illustration drawn in one consistent style. It shows the real start and finish position, and Surya Namaskar steps through all 12 positions. The drawings come from a small pose rig: poses in `src/data/figures.ts`, drawing code in `src/lib/figure.ts` and `src/components/workout/Figure.tsx`. Gym lifts keep their free-exercise-db photos.
+- Every home, yoga and face move has a slow, clear illustration of a person drawn in one consistent style, plus Start and Finish pictures in the how-to. It shows the real start and finish position, and Surya Namaskar steps through all 12 positions. The drawings come from a small pose rig: poses in `src/data/figures.ts`, drawing code in `src/lib/figure.ts` and `src/components/workout/Figure.tsx`. Gym lifts keep their free-exercise-db photos.
 - Yoga moves use their proper Sanskrit and English names.
 - A guided player runs countdowns for holds and rests and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
@@ -48,6 +50,7 @@ All data lives in the browser's localStorage.
   - Training: beginner and home workouts, workout frequency, cardio and steps, abs, plateaus, results, motivation, warm-ups, yoga, women's training, sleep and workout timing.
   - Food nutrition lookup from the 7,000+ food database, and BMI with Indian cut-offs.
 - **Builds plans** (`src/lib/fitso-plans.ts`):
+  - **Body-part days** like "chest and triceps workout" or "leg day", with an **Add to my routine** button, and body-part splits ("5 day bro split").
   - **Workout plans**, gym or home, 2–6 days a week. It reads the goal (fat loss, muscle, strength), level, focus area (glutes, arms, abs and so on) and minutes per session from the message, e.g. "4-day gym plan for muscle gain" or "3-day home plan for glutes, 30 minutes".
   - Gym plans save straight into **Train** as your routine. Home plans have **Start Day 1/2/3** buttons that open the guided player.
   - **Meal plans** built from the app's recipes to your calorie and protein targets, with a **Use as today's plan** button. Ask for another plan to get a different combination.

@@ -42,7 +42,7 @@ const rot = (x: number, y: number, cx: number, cy: number, deg: number) => {
 
 export function FaceFigure({ spec, className, still, frame, label }: { spec: Extract<FigureSpec, { kind: "face" }>; className: string; still: boolean; frame?: number; label: string }) {
   const reduce = useReducedMotion();
-  const live = useFaceFrame(spec.frames, spec.move ?? 1, spec.hold ?? 0.6, still || !!reduce || frame != null);
+  const live = useFaceFrame(spec.frames, Math.max(1.1, (spec.move ?? 1) * 1.4), Math.max(0.7, (spec.hold ?? 0.6) * 1.4), still || !!reduce || frame != null);
   const f = frame != null ? spec.frames[Math.min(frame, spec.frames.length - 1)] : live;
   return (
     <svg viewBox="0 0 240 160" className={`block bg-[var(--fig-bg)] ${className}`} role="img" aria-label={label} aria-hidden>
@@ -51,7 +51,7 @@ export function FaceFigure({ spec, className, still, frame, label }: { spec: Ext
   );
 }
 
-const C = { skin: "var(--fig)", dark: "var(--fig-ink)", hair: "var(--fig-hair)", bg: "var(--fig-bg)", hand: "var(--fig-far)", accent: "var(--fig-accent)" };
+const C = { skin: "var(--fig-skin)", shirt: "var(--fig-shirt)", dark: "var(--fig-ink)", hair: "var(--fig-hair)", bg: "var(--fig-bg)", hand: "var(--fig-skin-far)", accent: "var(--fig-accent)" };
 
 function Front({ f }: { f: FaceFrame }) {
   const roll = f.roll ?? 0;
@@ -67,8 +67,8 @@ function Front({ f }: { f: FaceFrame }) {
   return (
     <g>
       {/* shoulders + neck */}
-      <path d="M34 160 C 44 130, 78 121, 120 119 C 162 121, 196 130, 206 160 Z" fill={C.skin} />
-      <rect x="105" y="90" width="30" height="34" rx="10" fill={C.skin} />
+      <path d="M34 160 C 44 130, 78 121, 120 119 C 162 121, 196 130, 206 160 Z" fill={C.shirt} />
+
       {f.hands === "headSide" && (
         <path d={`M182 132 L ${elbow.x} ${elbow.y} L ${handOnHead.x} ${handOnHead.y}`} fill="none" stroke={C.hand} strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" />
       )}
@@ -79,6 +79,7 @@ function Front({ f }: { f: FaceFrame }) {
         </>
       )}
       <g transform={`rotate(${roll} ${pivot.x} ${pivot.y})`}>
+        <rect x="106" y="88" width="28" height="40" rx="10" fill={C.skin} />
         {/* cheek puffs sit behind the head outline so they read as bulges */}
         {(f.puffL ?? 0) > 0.02 && <circle cx={120 - 25} cy={83} r={6 + 8 * (f.puffL ?? 0)} fill={C.skin} />}
         {(f.puffR ?? 0) > 0.02 && <circle cx={120 + 25} cy={83} r={6 + 8 * (f.puffR ?? 0)} fill={C.skin} />}
@@ -120,6 +121,8 @@ function Front({ f }: { f: FaceFrame }) {
           [-1, 1].map((s) => <ellipse key={s} cx={120 + s * 25} cy={76 - (f.lift ?? 0) * 3} rx="7" ry="11" fill={C.hand} stroke={C.bg} strokeWidth="2" />)}
         {f.hands === "headSide" && <ellipse cx="102" cy="34" rx="12" ry="8" fill={C.hand} stroke={C.bg} strokeWidth="2" />}
       </g>
+      <path d="M34 160 C 44 130, 78 121, 120 119 C 162 121, 196 130, 206 160 Z" fill={C.shirt} />
+      <path d="M106 121 Q 120 131 134 121" fill="none" stroke={C.skin} strokeWidth="3" strokeLinecap="round" opacity="0.9" />
       {f.hands === "forehead" && (
         <>
           <line x1="62" y1="134" x2="94" y2="42" stroke={C.hand} strokeWidth="11" strokeLinecap="round" />
@@ -146,10 +149,10 @@ function Profile({ f }: { f: FaceFrame }) {
   const handPt = rot(90 + tuck, 52, px, py, -pitch);
   return (
     <g>
-      <path d="M58 160 C 66 132, 92 122, 120 122 C 150 122, 172 134, 180 160 Z" fill={C.skin} />
+      <path d="M58 160 C 66 132, 92 122, 120 122 C 150 122, 172 134, 180 160 Z" fill={C.shirt} />
       <line x1="120" y1="128" x2={px} y2={py} stroke={C.skin} strokeWidth="27" strokeLinecap="round" />
       {f.hands === "behind" && (() => {
-        const elbow = rot(174 + tuck, 60, px, py, -pitch * 0.8);
+        const elbow = rot(84 + tuck, 96, px, py, -pitch * 0.8);
         return <path d={`M108 132 L ${elbow.x} ${elbow.y} L ${handPt.x} ${handPt.y}`} fill="none" stroke={C.hand} strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />;
       })()}
       <g transform={`translate(${tuck} 0) rotate(${-pitch} 126 104)`}>

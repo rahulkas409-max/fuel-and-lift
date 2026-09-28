@@ -29,7 +29,7 @@ export interface FaceFrame {
 }
 
 export type FigureSpec =
-  | { kind: "body"; frames: Pose[]; anchor?: Anchor; move?: number; hold?: number; props?: Prop[] }
+  | { kind: "body"; frames: Pose[]; anchor?: Anchor; /** keep the anchor's height fixed too (hands on a chair) */ anchorY?: boolean; move?: number; hold?: number; props?: Prop[] }
   | { kind: "face"; view: "front" | "profile"; frames: FaceFrame[]; move?: number; hold?: number };
 
 // ── Building blocks ──
@@ -107,16 +107,10 @@ export const FIGURES: Record<string, FigureSpec> = {
   ),
 
   // ───── Glutes, thighs & legs ─────
-  "glute-bridge": body([HOOK(), HOOK({ torso: 231, lN: [112, 28, 90], lF: [110, 30, 90] })], { anchor: "anN", hold: 0.7 }),
-  "single-leg-bridge": body([HOOK({ lN: [138, 138, 180] }), HOOK({ torso: 231, lN: [112, 112, 180], lF: [110, 30, 90] })], { anchor: "anF", hold: 0.7 }),
+  "glute-bridge": body([HOOK(), HOOK({ torso: 290, lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", hold: 0.7 }),
+  "single-leg-bridge": body([HOOK({ lN: [138, 138, 180] }), HOOK({ torso: 290, lN: [110, 110, 180], lF: [106, 24, 90] })], { anchor: "anF", hold: 0.7 }),
   "donkey-kick": body([FOURS(), FOURS({ lN: [268, 178, 180] })], { anchor: "haN" }),
-  "fire-hydrant": body(
-    [
-      F({ torso: 180, aN: [357, 0], aF: [3, 0], lN: [0, 0, 0], lF: [0, 0, 0], len: { torso: 0.55, shN: 0.14, shF: 0.14 } }),
-      F({ torso: 180, aN: [357, 0], aF: [3, 0], lN: [0, 0, 0], lF: [72, 72, 0], len: { torso: 0.55, shN: 0.14, shF: 0.14 } }),
-    ],
-    { anchor: "haN" },
-  ),
+  "fire-hydrant": body([FOURS(), FOURS({ lN: [338, 268, 270], len: { thN: 0.42 } })], { anchor: "haN" }),
   "side-leg-raise": body(
     [
       P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [92, 92, 90] }),
@@ -158,12 +152,13 @@ export const FIGURES: Record<string, FigureSpec> = {
   "push-up": body([PLANK(), PUSH_DOWN()], { anchor: "toN" }),
   "wide-push-up": body([PLANK({ aN: [10, 10], aF: [12, 12] }), PUSH_DOWN({ aN: [300, 20], aF: [302, 22] })], { anchor: "toN" }),
   "pike-push-up": body([P({ torso: 40, head: 32, aN: [30, 30], aF: [32, 32], lN: [322, 322, 70], lF: [324, 324, 70] }), P({ torso: 22, head: 10, aN: [300, 25], aF: [302, 27], lN: [328, 328, 70], lF: [330, 330, 70] })], { anchor: "anN" }),
-  "chair-dip": body([P({ aN: [345, 345], aF: [347, 347], lN: [78, 0, 90], lF: [80, 2, 90] }), P({ aN: [285, 358], aF: [287, 0], lN: [58, 5, 90], lF: [60, 7, 90] })], {
+  "chair-dip": body([P({ aN: [345, 345], aF: [347, 347], lN: [80, 2, 90], lF: [82, 4, 90] }), P({ aN: [283, 0], aF: [285, 2], lN: [100, 28, 90], lF: [102, 30, 90] })], {
     anchor: "haN",
-    props: [{ type: "box", at: "haN", w: 36, gap: 5, dx: -8 }],
+    anchorY: true,
+    props: [{ type: "box", at: "haN", w: 34, gap: 4, dx: -6 }],
   }),
   "arm-circles": body([F({ aN: [262, 262], aF: [98, 98] }), F({ aN: [245, 245], aF: [115, 115] }), F({ aN: [262, 262], aF: [98, 98] }), F({ aN: [282, 282], aF: [78, 78] })], { anchor: "feet", move: 0.3, hold: 0 }),
-  "towel-tricep": body([P({ aN: [182, 182], aF: [178, 178] }), P({ aN: [172, 345], aF: [170, 343] })], { anchor: "anN", props: [{ type: "towel" }] }),
+  "towel-tricep": body([F({ aN: [192, 175], aF: [168, 185] }), F({ aN: [205, 45], aF: [155, 315] })], { anchor: "feet", props: [{ type: "towel" }] }),
   "shoulder-taps": body([PLANK(), PLANK({ aN: [35, 225] })], { anchor: "toN", move: 0.5, hold: 0.2 }),
   "ytw-raise": body([F({ aN: [215, 215], aF: [145, 145] }), F({ aN: [270, 270], aF: [90, 90] }), F({ aN: [315, 200], aF: [45, 160] })], { anchor: "feet", move: 0.7, hold: 0.5 }),
   "wall-angel": body([F({ aN: [275, 182], aF: [85, 178] }), F({ aN: [215, 195], aF: [145, 165] })], { anchor: "feet", move: 1.1 }),
@@ -202,7 +197,7 @@ export const FIGURES: Record<string, FigureSpec> = {
     { anchor: "hip", move: 1, hold: 1.2 },
   ),
   "leg-raise-yoga": body([SUPINE(), SUPINE({ lN: [138, 138, 225], lF: [136, 136, 225] })], { anchor: "hip", move: 1.2, hold: 1.2 }),
-  "bridge-pose": body([HOOK(), HOOK({ torso: 231, lN: [112, 28, 90], lF: [110, 30, 90] })], { anchor: "anN", move: 1.2, hold: 1.2 }),
+  "bridge-pose": body([HOOK(), HOOK({ torso: 290, lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", move: 1.2, hold: 1.2 }),
   "plank-yoga": body([PLANK(), PLANK({ torso: 118, lN: [298, 298, 20], lF: [298, 298, 20] })], { anchor: "toN", move: 1.6, hold: 1 }),
   "side-plank-yoga": body(
     [P({ noFace: true, torso: 245, head: 242, aN: [0, 0], aF: [40, 15], lN: [65, 65, 90], lF: [67, 67, 90] }), P({ noFace: true, torso: 245, head: 242, aN: [0, 0], aF: [180, 180], lN: [65, 65, 90], lF: [67, 67, 90] })],

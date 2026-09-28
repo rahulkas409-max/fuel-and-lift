@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, Reorder, motion, useDragControls } from "framer-motion";
-import { ChevronDown, ChevronUp, GripVertical, Minus, Plus, Search, Trash2, Wand2, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, GripVertical, LayoutList, Minus, Plus, Search, Trash2, Wand2, X } from "lucide-react";
 import { useState } from "react";
 import {
   EXERCISES,
@@ -13,6 +13,7 @@ import {
   type Routine,
   type WorkoutDay,
 } from "@/data/workouts";
+import { BODY_PART_SPLITS, BODY_PARTS, buildBodyPartDay, partsLabel, type BodyPart, type Equipment } from "@/lib/bodypart";
 import { burst } from "@/lib/confetti";
 import { currentRoutine, useStore } from "@/lib/store";
 import { usePaywall } from "../paywall/PaywallProvider";
@@ -22,7 +23,7 @@ import { Emoji } from "../ui/Emoji";
 
 const CUSTOM_ID = "custom";
 const uid = () => Math.random().toString(36).slice(2, 8);
-const MUSCLES: Muscle[] = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Quads", "Hamstrings", "Glutes", "Calves", "Core"];
+const MUSCLES: Muscle[] = ["Chest", "Back", "Shoulders", "Biceps", "Triceps", "Forearms", "Quads", "Hamstrings", "Glutes", "Calves", "Core"];
 
 function startingDraft(): Routine {
   const s = useStore.getState();
@@ -47,6 +48,7 @@ export function CustomRoutineModal({ open, onClose }: { open: boolean; onClose: 
 function Builder({ onDone }: { onDone: () => void }) {
   const [draft, setDraft] = useState<Routine>(startingDraft);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [partsOpen, setPartsOpen] = useState(false);
   const saveCustomRoutine = useStore((s) => s.saveCustomRoutine);
   const { requirePass } = usePaywall();
 
@@ -95,7 +97,14 @@ function Builder({ onDone }: { onDone: () => void }) {
         ))}
       </Reorder.Group>
 
-      <div className="grid grid-cols-2 gap-2 mt-3">
+      <button
+        onClick={() => setPartsOpen(true)}
+        disabled={draft.days.length >= 7}
+        className="mt-3 w-full h-14 rounded-2xl bg-fit-blue-soft text-fit-blue font-medium flex items-center justify-center gap-2 disabled:opacity-40"
+      >
+        <LayoutList size={18} /> Add body-part day (Chest, Back, Legs…)
+      </button>
+      <div className="grid grid-cols-2 gap-2 mt-2">
         <button
           onClick={() => setDays([...draft.days, { id: `c-${uid()}`, name: `Day ${draft.days.length + 1}`, focus: "Custom day", intensity: "moderate", exercises: [] }])}
           disabled={draft.days.length >= 7}
@@ -121,6 +130,19 @@ function Builder({ onDone }: { onDone: () => void }) {
           Save Custom Workout
         </button>
       </div>
+
+      <PartDaySheet
+        open={partsOpen}
+        onClose={() => setPartsOpen(false)}
+        onAddDay={(day) => {
+          setDays([...draft.days, day].slice(0, 7));
+          setPartsOpen(false);
+        }}
+        onReplaceWeek={(days) => {
+          setDays(days);
+          setPartsOpen(false);
+        }}
+      />
 
       <ExercisePicker
         open={pickerFor != null}
@@ -246,6 +268,114 @@ function DayEditor({
         )}
       </AnimatePresence>
     </Reorder.Item>
+  );
+}
+
+/** Build a day from body parts ("Chest + Triceps"), or a whole body-part split week. */
+function PartDaySheet({
+  open,
+  onClose,
+  onAddDay,
+  onReplaceWeek,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onAddDay: (d: WorkoutDay) => void;
+  onReplaceWeek: (d: WorkoutDay[]) => void;
+}) {
+  const [parts, setParts] = useState<BodyPart[]>(["Chest", "Triceps"]);
+  const [equipment, setEquipment] = useState<Equipment>("gym");
+  const [level, setLevel] = useState<"beginner" | "intermediate">("beginner");
+  const [variant, setVariant] = useState(0);
+  const exercises = parts.length ? buildBodyPartDay(parts, { equipment, level, variant }) : [];
+  const toggle = (p: BodyPart) => setParts((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : cur.length >= 3 ? cur : BODY_PARTS.filter((x) => x === p || cur.includes(x))));
+  const makeDay = (ps: BodyPart[], v = 0): WorkoutDay => {
+    const ex = buildBodyPartDay(ps, { equipment, level, variant: v });
+    return { id: `c-${uid()}`, name: partsLabel(ps), focus: ps.join(" · "), intensity: inferIntensity(ex), exercises: ex };
+  };
+  const chip = (on: boolean) => `h-10 px-4 rounded-full text-sm border ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`;
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Body-part day" wide>
+      <p className="text-sm text-ink-2">Pick up to 3 body parts. We&apos;ll choose proven exercises: heavy compound lifts first, then isolation work.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {BODY_PARTS.map((p) => (
+          <button key={p} onClick={() => toggle(p)} aria-pressed={parts.includes(p)} className={`${chip(parts.includes(p))} inline-flex items-center gap-1.5`}>
+            {parts.includes(p) && <Check size={14} />} {p}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-xs text-ink-3 mb-1.5">Equipment</p>
+          <div className="flex gap-2">
+            <button onClick={() => setEquipment("gym")} className={chip(equipment === "gym")}>Full gym</button>
+            <button onClick={() => setEquipment("dumbbells")} className={chip(equipment === "dumbbells")}>Dumbbells</button>
+          </div>
+        </div>
+        <div>
+          <p className="text-xs text-ink-3 mb-1.5">Level</p>
+          <div className="flex gap-2">
+            <button onClick={() => setLevel("beginner")} className={chip(level === "beginner")}>Beginner</button>
+            <button onClick={() => setLevel("intermediate")} className={chip(level === "intermediate")}>Experienced</button>
+          </div>
+        </div>
+      </div>
+
+      {parts.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-line overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-card-2">
+            <p className="font-medium text-ink">{partsLabel(parts)} day</p>
+            <button onClick={() => setVariant((v) => v + 1)} className="text-sm text-fit-blue font-medium inline-flex items-center gap-1">
+              <Wand2 size={14} /> Shuffle
+            </button>
+          </div>
+          <ul className="divide-y divide-line">
+            {exercises.map((e) => {
+              const ex = exerciseById(e.exerciseId)!;
+              return (
+                <li key={e.exerciseId} className="flex items-center gap-3 px-3 py-2">
+                  <ExerciseAnimation id={e.exerciseId} className="w-16 h-11 rounded-lg shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-ink truncate">{ex.name}</span>
+                    <span className="block text-[11px] text-ink-3">{ex.muscles.join(" · ")}</span>
+                  </span>
+                  <span className="font-mono text-xs text-fit-yellow shrink-0">
+                    {e.sets}×{e.reps}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+      <button
+        onClick={() => onAddDay(makeDay(parts, variant))}
+        disabled={!parts.length}
+        className="mt-4 w-full h-12 rounded-full bg-fit-blue text-white font-medium disabled:opacity-40"
+      >
+        Add {parts.length ? partsLabel(parts) : ""} day
+      </button>
+
+      <div className="mt-6 rounded-2xl bg-card-2 p-4">
+        <p className="font-medium text-ink">Or build a full body-part week</p>
+        <p className="text-xs text-ink-3 mt-1">Replaces the days above with a classic split for the days you can train.</p>
+        <div className="mt-3 grid grid-cols-5 gap-2">
+          {[2, 3, 4, 5, 6].map((n) => (
+            <button
+              key={n}
+              onClick={() => onReplaceWeek(BODY_PART_SPLITS[n].map((ps, i) => makeDay(ps, BODY_PART_SPLITS[n].slice(0, i).some((x) => x.join() === ps.join()) ? 1 : 0)))}
+              className="h-12 rounded-xl border border-line bg-card text-sm text-ink font-medium"
+            >
+              {n} days
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-ink-3 mt-2">
+          3 days: Chest & Triceps · Back & Biceps · Legs & Shoulders. 5 days: Chest · Back · Shoulders · Legs · Arms.
+        </p>
+      </div>
+    </Sheet>
   );
 }
 

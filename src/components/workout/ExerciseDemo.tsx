@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { EXERCISE_MEDIA } from "@/data/exercise-media";
+import { MEDIA as EXERCISE_MEDIA } from "@/data/media";
 import { exerciseById } from "@/data/workouts";
 import { Sheet } from "../ui/Sheet";
 

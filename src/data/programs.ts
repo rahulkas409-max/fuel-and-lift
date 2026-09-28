@@ -1,7 +1,8 @@
 // Body-part workout library: popular gym splits, no-equipment home workouts and yoga.
 // Home, yoga and face moves are shown with animated illustrations (src/data/figures.ts);
 // gym moves use free-exercise-db photos (src/data/exercise-media.ts).
-import { EXERCISE_MEDIA } from "./exercise-media";
+import { MEDIA as EXERCISE_MEDIA } from "./media";
+import { buildBodyPartDay, type BodyPart, type PartOptions } from "@/lib/bodypart";
 import { exerciseById } from "./workouts";
 
 export type Area = "face" | "neck" | "shoulders" | "arms" | "chest" | "back" | "abs" | "waist" | "thighs" | "legs" | "glutes" | "full";
@@ -208,10 +209,10 @@ export const PROGRAMS: Program[] = [
     moves: [{ move: "back-squat", sets: 4, reps: "6-8" }, { move: "rdl", sets: 3, reps: "8-10" }, { move: "leg-press", sets: 3, reps: "10-12" }, { move: "walking-lunge", sets: 3, reps: "10 each leg" }, { move: "leg-curl", sets: 3, reps: "12" }, { move: "calf-raise", sets: 4, reps: "15" }] },
   { id: "gym-glutes", title: "Glutes & Thighs (Gym)", kind: "gym", women: true, areas: ["glutes", "thighs", "legs"], level: "Intermediate", popular: true, rounds: 1, rest: 75,
     blurb: "The most popular women's gym day: hip thrusts, split squats and RDLs for shape and strength.",
-    moves: [{ move: "hip-thrust", sets: 4, reps: "10-12" }, { move: "bulgarian-split-squat", sets: 3, reps: "10 each leg" }, { move: "rdl", sets: 3, reps: "10" }, { move: "goblet-squat", sets: 3, reps: "12" }, { move: "leg-curl", sets: 3, reps: "12" }, { move: "sumo-squat", sets: 2, reps: "15" }] },
+    moves: [{ move: "hip-thrust", sets: 4, reps: "10-12" }, { move: "bulgarian-split-squat", sets: 3, reps: "10 each leg" }, { move: "rdl", sets: 3, reps: "10" }, { move: "goblet-squat", sets: 3, reps: "12" }, { move: "leg-curl", sets: 3, reps: "12" }, { move: "db-sumo-squat", sets: 2, reps: "15" }] },
   { id: "gym-abs", title: "Gym Abs Finisher", kind: "gym", areas: ["abs", "waist"], level: "Intermediate", rounds: 1, rest: 45,
     blurb: "Ten minutes after any workout: hanging raises, cable crunches and planks.",
-    moves: [{ move: "hanging-leg-raise", sets: 3, reps: "10-15" }, { move: "cable-crunch", sets: 3, reps: "15" }, { move: "russian-twist", sets: 3, reps: "20" }, { move: "plank", sets: 2, secs: 45 }] },
+    moves: [{ move: "hanging-leg-raise", sets: 3, reps: "10-15" }, { move: "cable-crunch", sets: 3, reps: "15" }, { move: "cable-woodchop", sets: 3, reps: "12 each side" }, { move: "plank", sets: 2, secs: 45 }] },
   { id: "gym-women-full", title: "Women's Full-Body Toning (Gym)", kind: "gym", women: true, areas: ["full", "arms", "glutes"], level: "Beginner", rounds: 1, rest: 60,
     blurb: "A friendly first gym plan: machines and dumbbells, every major muscle, 45 minutes.",
     moves: [{ move: "goblet-squat", sets: 3, reps: "12" }, { move: "lat-pulldown", sets: 3, reps: "12" }, { move: "db-bench", sets: 3, reps: "10" }, { move: "hip-thrust", sets: 3, reps: "12" }, { move: "lateral-raise", sets: 3, reps: "12" }, { move: "plank", sets: 2, secs: 30 }] },
@@ -283,14 +284,60 @@ export const PROGRAMS: Program[] = [
   { id: "yoga-hips", title: "Yoga for Thighs & Hips", kind: "yoga", women: true, areas: ["thighs", "glutes", "legs"], level: "Intermediate", rounds: 1, rest: 5,
     blurb: "Chair pose, warriors and hip openers to tone thighs and loosen tight hips.",
     moves: [{ move: "chair-pose", secs: 40 }, { move: "warrior-2", secs: 60 }, { move: "tree-pose", secs: 60 }, { move: "low-lunge", secs: 60 }, { move: "bridge-pose", secs: 40 }, { move: "butterfly", secs: 60 }, { move: "pigeon-pose", secs: 60 }, { move: "shavasana", secs: 60 }] },
-  { id: "yoga-face", title: "Face Yoga", kind: "yoga", women: true, areas: ["face", "neck"], level: "Beginner", rounds: 2, rest: 5,
-    blurb: "Popular face yoga routine for cheeks, jawline and neck. 6 minutes.",
-    tip: "Face yoga tones facial muscles and relaxes tension. Face fat itself reduces with overall weight loss.",
-    moves: [{ move: "cheek-lift", reps: "5 (10 sec hold)" }, { move: "kiss-ceiling", reps: "8 (5 sec hold)" }, { move: "lion-pose", reps: "5" }, { move: "fish-face", reps: "8 (5 sec hold)" }, { move: "cheek-puff", secs: 30 }, { move: "jaw-jut", reps: "8 (5 sec hold)" }] },
   { id: "yoga-bedtime", women: true, title: "Bedtime Relaxing Yoga", kind: "yoga", areas: ["back", "full"], level: "Beginner", rounds: 1, rest: 5,
     blurb: "Calm down before sleep. Better sleep means better recovery and fewer cravings.",
     moves: [{ move: "childs-pose", secs: 60 }, { move: "cat-cow", secs: 45 }, { move: "seated-forward-bend", secs: 60 }, { move: "butterfly", secs: 45 }, { move: "supine-twist", secs: 60 }, { move: "knees-to-chest", secs: 45 }, { move: "shavasana", secs: 120 }] },
 ];
+
+// More gym workouts per body part, built from the exercise library (best-known lifts first).
+const gymPart = (id: string, title: string, parts: BodyPart[], areas: Area[], blurb: string, extra: Partial<Program> = {}, opts: PartOptions = {}): Program => ({
+  id,
+  title,
+  kind: "gym",
+  areas,
+  level: opts.level === "beginner" ? "Beginner" : "Intermediate",
+  rounds: 1,
+  rest: 75,
+  blurb,
+  moves: buildBodyPartDay(parts, opts).map((e) => ({ move: e.exerciseId, sets: e.sets, reps: e.reps })),
+  ...extra,
+});
+
+PROGRAMS.push(
+  gymPart("gym-chest-tri", "Chest & Triceps", ["Chest", "Triceps"], ["chest", "arms"], "Classic push day: presses, flyes and triceps finishers.", { popular: true }),
+  gymPart("gym-back-bi", "Back & Biceps", ["Back", "Biceps"], ["back", "arms"], "Classic pull day: pulldowns, rows and curls.", { popular: true }),
+  gymPart("gym-biceps", "Biceps Builder", ["Biceps"], ["arms"], "Five curl variations hitting the long and short heads plus the brachialis."),
+  gymPart("gym-triceps", "Triceps Builder", ["Triceps"], ["arms"], "Presses, pushdowns and overhead extensions for all three triceps heads."),
+  gymPart("gym-forearms", "Forearms & Grip", ["Forearms"], ["arms"], "Wrist curls and reverse curls for stronger grip and fuller forearms."),
+  gymPart("gym-quads", "Quad-Focused Leg Day", ["Legs", "Calves"], ["legs", "thighs"], "Squats, leg press, lunges and extensions for strong, defined quads."),
+  gymPart("gym-hams-glutes", "Hamstrings & Glutes", ["Glutes", "Hamstrings"], ["glutes", "thighs", "legs"], "Hinges, hip thrusts and curls for the back of your legs.", { women: true, popular: true }),
+  gymPart("gym-calves", "Calves", ["Calves", "Abs"], ["legs", "abs"], "Standing and seated calf work, finished with core."),
+  gymPart("gym-core", "Core Strength (Gym)", ["Abs"], ["abs", "waist"], "Leg raises, cable crunches, planks and anti-rotation work.", { rest: 45 }),
+  gymPart("gym-db-upper", "Dumbbell-Only Upper Body", ["Chest", "Back", "Shoulders"], ["chest", "back", "shoulders"], "Just a pair of dumbbells and a bench. Great for home gyms.", { women: true }, { equipment: "dumbbells" }),
+  gymPart("gym-db-lower", "Dumbbell-Only Lower Body", ["Legs", "Glutes", "Hamstrings"], ["legs", "glutes", "thighs"], "Squats, lunges and RDLs with dumbbells only.", { women: true }, { equipment: "dumbbells" }),
+  gymPart("gym-db-arms", "Dumbbell-Only Arms", ["Biceps", "Triceps"], ["arms"], "Biceps and triceps with a pair of dumbbells.", { women: true }, { equipment: "dumbbells" }),
+  gymPart("gym-shoulders-beginner", "Beginner Shoulders", ["Shoulders"], ["shoulders"], "Machine and dumbbell presses and raises, easy on the joints.", { women: true }, { level: "beginner" }),
+  {
+    id: "gym-machines",
+    title: "Machine-Only Beginner Full Body",
+    kind: "gym",
+    women: true,
+    areas: ["full"],
+    level: "Beginner",
+    rounds: 1,
+    rest: 60,
+    blurb: "Your first weeks in the gym: guided machines only, safe and simple.",
+    moves: [
+      { move: "leg-press", sets: 3, reps: "12" },
+      { move: "machine-chest-press", sets: 3, reps: "12" },
+      { move: "lat-pulldown", sets: 3, reps: "12" },
+      { move: "machine-shoulder-press", sets: 3, reps: "12" },
+      { move: "seated-leg-curl", sets: 3, reps: "12" },
+      { move: "seated-row", sets: 3, reps: "12" },
+      { move: "ab-crunch-machine", sets: 3, reps: "15" },
+    ],
+  },
+);
 
 export const programById = (id: string) => PROGRAMS.find((p) => p.id === id);
 
