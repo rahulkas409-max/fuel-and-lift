@@ -7,7 +7,10 @@ All data lives in the browser's localStorage.
 
 **Train**
 - Built-in routines: 3-Day Full Body, 4-Day Upper/Lower, 6-Day Push/Pull/Legs, plus body-part splits: 3-Day (Chest & Triceps / Back & Biceps / Legs & Shoulders), 4-Day, 5-Day Bro Split and a 4-Day Glute-Focused split.
-- **Men's plans / Women's plans** toggle (starts on your own; both are one tap away). Women's gym plans: 3-Day Toned Full Body, 4-Day Glute-Focused Split, 5-Day Women's Body-Part Split and 6-Day Glute & Tone Split.
+- **Men's plans / Women's plans** toggle (starts on your own; both are one tap away). 26 plans for 2–6 days a week:
+  - Men: 2-Day Full Body, 3-Day Full Body, 5×5 Strength, 3-Day PPL, 3-Day Dumbbell-Only, Beginner Machines, 3/4/5-Day Body-Part Splits, Upper/Lower, PHUL, Powerbuilding, Calisthenics, 6-Day PPL and the Arnold Split.
+  - Women: 2-Day Full Body Toning, 3-Day Toned Full Body, Lower/Upper/Lower, Strength for Women, Dumbbell Toning (home), Beginner Machines, 4-Day Glute Focus, Upper/Lower Toning, 5-Day Split, Booty & Abs and the 6-Day Glute & Tone Split.
+- Picking a number of days filters the plan list to plans of that length.
 - A "How many days a week can you train?" card suggests the right routine for 3, 4, 5 or 6 days, separately for men and women, and explains why.
 - Set-by-set logging of kg and reps, with checkboxes. Your last weight for each lift is pre-filled.
 - A floating rest timer (60/90/120 s) with a progress ring, a chime and vibration.
@@ -33,12 +36,12 @@ All data lives in the browser's localStorage.
 - Pick a serving or enter grams, then log the food to today's totals.
 
 **Body-part workouts** (Train → Body-part workouts)
-- 44 guided workouts in three groups:
+- 99 guided workouts (gym, home and yoga, beginner to advanced) in a **Men's** and a **Women's** library. Every body part has at least 7 workouts in each, including advanced ones. Groups:
   - Popular gym days: chest & triceps, back & biceps, shoulders, biceps, triceps, forearms, quads, hamstrings & glutes, calves, core, dumbbell-only and machine-only beginner days.
   - No-equipment home workouts: belly fat, waist, thighs, glutes, toned arms, shoulders and posture, double chin and jawline, neck, full-body HIIT.
   - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, bedtime.
-- Filter by 12 body areas, by Gym, Home or Yoga, and by "For women". "For women" is on by default for women.
-- **Real photos or 3D demos, no drawings.** 47 home and yoga moves use real start and finish photos from the public-domain free-exercise-db. Each pair was checked by eye against the move (`scripts/fetch-move-photos.mjs`). The other 32 moves (Warrior II, Tree, Downward Dog, Surya Namaskar and others) use a smooth 3D model demo, plus Start/Finish or Step pictures. The demos are rendered from pose keyframes (`src/data/figures.ts`) with three.js in headless Chromium and saved as animated WebP (`scripts/moves3d/`). Gym lifts keep their free-exercise-db photos.
+- Filter by 12 body areas, by Gym, Home or Yoga, and by level. The library opens on your own (men's or women's).
+- **Real photos or 3D demos, no drawings.** 47 home and yoga moves use real start and finish photos from the public-domain free-exercise-db. Each pair was checked by eye against the move (`scripts/fetch-move-photos.mjs`). Moves without a true photo (Warrior II, Tree, Downward Dog, Surya Namaskar and others) use a smooth 3D model demo. The women's library shows every home and yoga move on a **female 3D model**, and "Watch real video demos" opens YouTube demos by women, plus Start/Finish or Step pictures. The demos (male and female models) are rendered from pose keyframes (`src/data/figures.ts`) with three.js in headless Chromium and saved as animated WebP (`scripts/moves3d/`). Gym lifts keep their free-exercise-db photos.
 - Yoga moves use their proper Sanskrit and English names.
 - A guided player runs countdowns for holds and rests and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.

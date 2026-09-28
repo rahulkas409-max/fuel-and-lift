@@ -3,17 +3,20 @@
 import { motion } from "framer-motion";
 import { Check, Clock, Dumbbell, Flower2, House, Info, LayoutGrid, Play, Repeat } from "lucide-react";
 import { useMemo, useState } from "react";
-import { AREAS, KINDS, PROGRAMS, moveInfo, programMinutes, type Area, type Program, type ProgramKind, type ProgramMove } from "@/data/programs";
+import { MOVES_3D_W } from "@/data/moves-3d";
+import { AREAS, KINDS, moveInfo, programMinutes, programsFor, type Area, type LibraryAudience, type Program, type ProgramKind, type ProgramMove } from "@/data/programs";
 import { useToday } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
 import { Sheet } from "../ui/Sheet";
-import { MoveHowTo, MoveVisual, doseLabel, hasVisual } from "./MoveVisual";
+import { MoveAudience, MoveHowTo, MoveVisual, doseLabel, hasVisual } from "./MoveVisual";
 import { ProgramPlayer } from "./ProgramPlayer";
 
 const KIND_ICON = { all: LayoutGrid, gym: Dumbbell, home: House, yoga: Flower2 } as const;
 
-/** The move that best represents a workout, for its card picture. */
-const heroMove = (p: Program) => (p.moves.find((m) => hasVisual(m.move)) ?? p.moves[0]).move;
+/** The move that best represents a workout, for its card picture (a female-model demo in the women's library). */
+const heroMove = (p: Program, aud: LibraryAudience = "men") =>
+  ((aud === "women" && p.moves.find((m) => m.move in MOVES_3D_W)) || p.moves.find((m) => hasVisual(m.move)) || p.moves[0]).move;
+const LEVELS = ["Beginner", "Intermediate", "Advanced"] as const;
 
 const KIND_STYLE: Record<ProgramKind, { badge: string }> = {
   gym: { badge: "bg-fit-blue-soft text-fit-blue" },
@@ -27,32 +30,55 @@ export function ProgramLibrary() {
   const today = useToday();
   const [kind, setKind] = useState<ProgramKind | "all">("all");
   const [area, setArea] = useState<Area | null>(null);
-  const [women, setWomen] = useState(sex === "female");
+  const [aud, setAud] = useState<LibraryAudience>(sex === "female" ? "women" : "men");
+  const [level, setLevel] = useState<Program["level"] | null>(null);
   const [open, setOpen] = useState<Program | null>(null);
   const [playing, setPlaying] = useState<Program | null>(null);
 
   const list = useMemo(
     () =>
-      PROGRAMS.filter((p) => (kind === "all" || p.kind === kind) && (!area || p.areas.includes(area)) && (!women || p.women)).sort(
-        (a, b) => Number(!!b.popular) - Number(!!a.popular) || (area ? a.areas.indexOf(area) - b.areas.indexOf(area) : 0),
-      ),
-    [kind, area, women],
+      programsFor(aud)
+        .filter((p) => (kind === "all" || p.kind === kind) && (!area || p.areas.includes(area)) && (!level || p.level === level))
+        .sort(
+          (a, b) =>
+            Number(!!b.popular) - Number(!!a.popular) ||
+            (area ? a.areas.indexOf(area) - b.areas.indexOf(area) : 0) ||
+            LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level),
+        ),
+    [kind, area, aud, level],
   );
 
   const counts = useMemo(() => {
     const c: Partial<Record<Area, number>> = {};
-    for (const p of PROGRAMS) if ((kind === "all" || p.kind === kind) && (!women || p.women)) for (const a of p.areas) c[a] = (c[a] ?? 0) + 1;
+    for (const p of programsFor(aud)) if ((kind === "all" || p.kind === kind) && (!level || p.level === level)) for (const a of p.areas) c[a] = (c[a] ?? 0) + 1;
     return c;
-  }, [kind, women]);
+  }, [kind, aud, level]);
 
   return (
+    <MoveAudience.Provider value={aud}>
     <div className="space-y-5">
-      <section className="rounded-[28px] bg-fit-green-soft p-5">
-        <p className="text-xs font-medium text-fit-green">Workout library</p>
+      <section className={`rounded-[28px] p-5 ${aud === "women" ? "bg-fit-red-soft" : "bg-fit-green-soft"}`}>
+        <p className={`text-xs font-medium ${aud === "women" ? "text-fit-red" : "text-fit-green"}`}>Workout library</p>
         <h2 className="text-2xl font-medium text-ink leading-tight mt-1">Train by body part</h2>
         <p className="text-sm text-ink-2 mt-1.5">
-          {PROGRAMS.length} guided workouts: popular gym days, no-equipment home workouts and yoga. Pick a body part and press play.
+          {programsFor(aud).length} {aud === "women" ? "women's" : "men's"} workouts: gym, home and yoga, from beginner to advanced. Pick a body part and press play.
         </p>
+        <div role="tablist" aria-label="Workouts for" className="mt-4 grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card">
+          {(["men", "women"] as const).map((a) => (
+            <button
+              key={a}
+              role="tab"
+              aria-selected={aud === a}
+              onClick={() => {
+                setAud(a);
+                setArea(null);
+              }}
+              className={`h-11 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}
+            >
+              {a === "men" ? "Men's workouts" : "Women's workouts"}
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* Gym / Home / Yoga + women */}
@@ -72,14 +98,19 @@ export function ProgramLibrary() {
             </button>
           );
         })}
-        <span className="w-px bg-line shrink-0 my-1" />
-        <button
-          onClick={() => setWomen((w) => !w)}
-          aria-pressed={women}
-          className={`shrink-0 h-10 px-4 rounded-full border text-sm inline-flex items-center gap-1.5 ${women ? "bg-fit-red-soft text-fit-red border-fit-red/40 font-medium" : "bg-card border-line text-ink-2"}`}
-        >
-          {women && <Check size={15} />} For women
-        </button>
+      </div>
+      {/* Level */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 -mt-2">
+        {[null, ...LEVELS].map((l) => (
+          <button
+            key={l ?? "any"}
+            onClick={() => setLevel(l)}
+            aria-pressed={level === l}
+            className={`shrink-0 h-9 px-3.5 rounded-full border text-[13px] ${level === l ? "bg-ink text-page border-ink font-medium" : "bg-card border-line text-ink-2"}`}
+          >
+            {l ?? "All levels"}
+          </button>
+        ))}
       </div>
 
       {/* Body parts */}
@@ -105,7 +136,7 @@ export function ProgramLibrary() {
                 aria-pressed={on}
                 className={`rounded-2xl border overflow-hidden text-left disabled:opacity-40 ${on ? "border-fit-blue ring-2 ring-fit-blue/30" : "border-line bg-card"}`}
               >
-                <MoveVisual id={a.figure} still className="w-full aspect-[3/2]" />
+                <MoveVisual id={a.figure} still prefer3d className="w-full aspect-[3/2]" />
                 <span className={`block px-2.5 pt-1.5 text-[13px] leading-tight ${on ? "text-fit-blue font-medium" : "text-ink"}`}>{a.label}</span>
                 <span className="block px-2.5 pb-2 text-[11px] text-ink-3">
                   {n} workout{n === 1 ? "" : "s"}
@@ -128,7 +159,7 @@ export function ProgramLibrary() {
           <ul className="grid grid-cols-1 sm:grid-cols-[repeat(2,minmax(0,1fr))] gap-3">
             {list.map((p) => (
               <li key={p.id} className="min-w-0">
-                <ProgramCard p={p} done={completed[today] === p.title} onOpen={() => setOpen(p)} />
+                <ProgramCard p={p} aud={aud} done={completed[today] === p.title} onOpen={() => setOpen(p)} />
               </li>
             ))}
           </ul>
@@ -136,6 +167,7 @@ export function ProgramLibrary() {
       </section>
 
       <ProgramDetail
+        aud={aud}
         program={open}
         onClose={() => setOpen(null)}
         onStart={(p) => {
@@ -145,20 +177,21 @@ export function ProgramLibrary() {
       />
       {playing && <ProgramPlayer key={playing.id} program={playing} onClose={() => setPlaying(null)} />}
     </div>
+    </MoveAudience.Provider>
   );
 }
 
-function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: () => void }) {
+function ProgramCard({ p, aud, done, onOpen }: { p: Program; aud: LibraryAudience; done: boolean; onOpen: () => void }) {
   const st = KIND_STYLE[p.kind];
   return (
     <motion.button whileTap={{ scale: 0.98 }} onClick={onOpen} className="w-full h-full text-left rounded-3xl bg-card border border-line overflow-hidden flex flex-col">
-      <MoveVisual id={heroMove(p)} still className="w-full h-32" />
+      <MoveVisual id={heroMove(p, aud)} still className="w-full h-36" />
       <div className="px-4 pt-3 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1">
             <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${st.badge}`}>{KINDS.find((k) => k.id === p.kind)!.label}</span>
             {p.popular && <span className="text-[10px] font-medium rounded-full px-2 py-0.5 bg-fit-red-soft text-fit-red">Popular</span>}
-            {p.women && <span className="text-[10px] font-medium rounded-full px-2 py-0.5 bg-card-2 text-ink-2">Women</span>}
+            <span className={`text-[10px] font-medium rounded-full px-2 py-0.5 ${p.level === "Advanced" ? "bg-ink text-page" : "bg-card-2 text-ink-2"}`}>{p.level}</span>
             {done && (
               <span className="text-[10px] font-medium rounded-full px-2 py-0.5 bg-fit-green-soft text-fit-green inline-flex items-center gap-0.5">
                 <Check size={10} /> Done today
@@ -174,7 +207,6 @@ function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: (
           <span className="inline-flex items-center gap-1">
             <Clock size={12} /> {programMinutes(p)} min
           </span>
-          <span>{p.level}</span>
           <span>{p.moves.length} moves</span>
           <span className="ml-auto inline-flex items-center gap-1 text-fit-blue font-medium">
             <Play size={12} /> Start
@@ -185,7 +217,7 @@ function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: (
   );
 }
 
-function ProgramDetail({ program: p, onClose, onStart }: { program: Program | null; onClose: () => void; onStart: (p: Program) => void }) {
+function ProgramDetail({ aud, program: p, onClose, onStart }: { aud: LibraryAudience; program: Program | null; onClose: () => void; onStart: (p: Program) => void }) {
   const [howTo, setHowTo] = useState<string | null>(null);
   // Surya Namaskar repeats the same move; show it once with a count.
   const rows = useMemo(() => {
@@ -204,7 +236,7 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
       <Sheet open={!!p} onClose={onClose} title="Workout" wide>
         {p && (
           <div className="pb-2">
-            <MoveVisual id={heroMove(p)} className="w-full aspect-[5/2] rounded-3xl overflow-hidden" />
+            <MoveVisual id={heroMove(p, aud)} className="w-full aspect-[2/1] rounded-3xl overflow-hidden" />
             <div className="mt-4">
               <div className="min-w-0">
                 <h2 className="text-2xl font-medium text-ink leading-tight">{p.title}</h2>
@@ -236,7 +268,10 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
             )}
             {p.rounds > 1 && (
               <p className="mt-4 text-sm text-ink-2 flex items-center gap-2">
-                <Repeat size={16} className="text-fit-green" /> Repeat the circuit <b className="font-medium text-ink">{p.rounds} times</b> · {p.rest}s rest between moves
+                <Repeat size={16} className="text-fit-green shrink-0" />
+                <span>
+                  Repeat the circuit <b className="font-medium text-ink">{p.rounds} times</b> · {p.rest}s rest between moves
+                </span>
               </p>
             )}
             {p.rounds === 1 && p.kind === "gym" && <p className="mt-4 text-sm text-ink-2">Rest {p.rest}s between sets. Pick a weight where the last 2 reps feel hard.</p>}

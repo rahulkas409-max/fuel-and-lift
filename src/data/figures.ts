@@ -10,7 +10,7 @@ export type Prop =
   | { type: "rope" };
 
 export type FigureSpec =
-  { kind: "body"; frames: Pose[]; anchor?: Anchor; /** keep the anchor's height fixed too (hands on a chair) */ anchorY?: boolean; move?: number; hold?: number; props?: Prop[] };
+  { kind: "body"; frames: Pose[]; /** "upper" frames the camera on the upper body (neck moves) */ focus?: "upper"; anchor?: Anchor; /** keep the anchor's height fixed too (hands on a chair) */ anchorY?: boolean; move?: number; hold?: number; props?: Prop[] };
 
 // ── Building blocks ──
 const P = (o: Partial<Pose>): Pose => ({ view: "side", torso: 180, aN: [0, 0], aF: [0, 0], lN: [0, 0, 90], lF: [0, 0, 90], ...o });
@@ -45,7 +45,7 @@ const body = (frames: Pose[], extra: Omit<Extract<FigureSpec, { kind: "body" }>,
 
 export const FIGURES: Record<string, FigureSpec> = {
   // ───── Abs & waist ─────
-  crunch: body([HOOK({ aN: [205, 300], aF: [207, 302] }), HOOK({ torso: 242, head: 236, face: 150, aN: [178, 272], aF: [180, 274] })], { anchor: "hip" }),
+  crunch: body([HOOK({ aN: [96, 92], aF: [98, 94] }), HOOK({ torso: 242, head: 236, face: 150, aN: [112, 108], aF: [114, 110] })], { anchor: "hip" }),
   "bicycle-crunch": body(
     [
       HOOK({ torso: 245, head: 238, face: 152, aN: [178, 272], aF: [180, 274], lN: [165, 70, 90], lF: [110, 110, 150] }),
@@ -86,18 +86,12 @@ export const FIGURES: Record<string, FigureSpec> = {
   ),
 
   // ───── Glutes, thighs & legs ─────
-  "glute-bridge": body([HOOK(), HOOK({ torso: 290, lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", hold: 0.7 }),
-  "single-leg-bridge": body([HOOK({ lN: [138, 138, 180] }), HOOK({ torso: 290, lN: [110, 110, 180], lF: [106, 24, 90] })], { anchor: "anF", hold: 0.7 }),
+  "glute-bridge": body([HOOK(), HOOK({ torso: 290, aN: [80, 86], aF: [82, 88], lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", hold: 0.7 }),
+  "single-leg-bridge": body([HOOK({ lN: [138, 138, 180] }), HOOK({ torso: 290, aN: [80, 86], aF: [82, 88], lN: [110, 110, 180], lF: [106, 24, 90] })], { anchor: "anF", hold: 0.7 }),
   "donkey-kick": body([FOURS(), FOURS({ lN: [268, 178, 180] })], { anchor: "haN" }),
   "fire-hydrant": body([FOURS(), FOURS({ lN: [338, 268, 270], len: { thN: 0.42 } })], { anchor: "haN" }),
-  "side-leg-raise": body(
-    [
-      P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [92, 92, 90] }),
-      P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [132, 132, 132] }),
-    ],
-    { anchor: "hip" },
-  ),
-  "rear-leg-raise": body([P({ aN: [55, 60], aF: [57, 62] }), P({ torso: 168, aN: [65, 70], aF: [67, 72], lN: [318, 318, 20] })], { anchor: "anF", props: [{ type: "box", at: "haN", w: 12, gap: 5 }] }),
+  "side-leg-raise": body([F({ aN: [330, 20], aF: [30, 340] }), F({ torso: 174, head: 176, aN: [330, 20], aF: [30, 340], lN: [44, 44, 30] })], { anchor: "anF", move: 1.2, hold: 0.8 }),
+  "rear-leg-raise": body([FOURS(), FOURS({ lN: [274, 272, 0] })], { anchor: "haN", move: 1.2, hold: 0.8 }),
   "bw-squat": body([P({ aN: [80, 90], aF: [82, 92] }), P({ torso: 148, head: 160, aN: [95, 95], aF: [97, 97], lN: [78, 342, 90], lF: [80, 342, 90] })], { anchor: "anN" }),
   "jump-squat": body(
     [P({ torso: 148, head: 160, aN: [330, 330], aF: [332, 332], lN: [78, 342, 90], lF: [80, 342, 90] }), P({ aN: [180, 180], aF: [182, 182], lN: [0, 0, 30], lF: [2, 2, 30], air: 26 })],
@@ -169,7 +163,7 @@ export const FIGURES: Record<string, FigureSpec> = {
     { anchor: "hip", move: 1, hold: 1.2 },
   ),
   "leg-raise-yoga": body([SUPINE(), SUPINE({ lN: [138, 138, 225], lF: [136, 136, 225] })], { anchor: "hip", move: 1.2, hold: 1.2 }),
-  "bridge-pose": body([HOOK(), HOOK({ torso: 290, lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", move: 1.2, hold: 1.2 }),
+  "bridge-pose": body([HOOK(), HOOK({ torso: 290, aN: [80, 86], aF: [82, 88], lN: [108, 22, 90], lF: [106, 24, 90] })], { anchor: "anN", move: 1.2, hold: 1.2 }),
   "plank-yoga": body([PLANK(), PLANK({ torso: 118, lN: [298, 298, 20], lF: [298, 298, 20] })], { anchor: "toN", move: 1.6, hold: 1 }),
   "side-plank-yoga": body(
     [P({ noFace: true, torso: 245, head: 242, aN: [0, 0], aF: [40, 15], lN: [65, 65, 90], lF: [67, 67, 90] }), P({ noFace: true, torso: 245, head: 242, aN: [0, 0], aF: [180, 180], lN: [65, 65, 90], lF: [67, 67, 90] })],
@@ -183,10 +177,10 @@ export const FIGURES: Record<string, FigureSpec> = {
     [F({ aN: [350, 20], aF: [10, 340], lN: [300, 80, 90], lF: [60, 280, 270] }), F({ aN: [350, 20], aF: [10, 340], lN: [285, 95, 90], lF: [75, 265, 270] })],
     { anchor: "hip", move: 0.6, hold: 0.1 },
   ),
-  "supine-twist": body([SUPINE({ aN: [180, 180], aF: [182, 182] }), SUPINE({ aN: [180, 180], aF: [182, 182], face: 200, lN: [140, 20, 90] })], { anchor: "hip", move: 1.2, hold: 1.2 }),
+  "supine-twist": body([SUPINE({ aN: [266, 270], aF: [268, 272] }), SUPINE({ aN: [266, 270], aF: [268, 272], face: 200, lN: [140, 20, 90] })], { anchor: "hip", move: 1.2, hold: 1.2 }),
   "knees-to-chest": body([HOOK(), SUPINE({ aN: [150, 215], aF: [152, 217], lN: [205, 110, 150], lF: [203, 112, 150] })], { anchor: "hip", move: 1.1, hold: 1 }),
   "pigeon-pose": body(
-    [P({ torso: 180, aN: [15, 15], aF: [17, 17], lN: [80, 270, 270], lF: [272, 272, 272] }), P({ torso: 82, head: 80, face: 0, aN: [88, 90], aF: [90, 92], lN: [80, 270, 270], lF: [272, 272, 272] })],
+    [P({ torso: 180, aN: [15, 15], aF: [17, 17], lN: [80, 270, 270], lF: [272, 272, 272] }), P({ torso: 128, head: 122, face: 40, aN: [42, 70], aF: [44, 72], lN: [80, 270, 270], lF: [272, 272, 272] })],
     { anchor: "hip", move: 1.3, hold: 1.2 },
   ),
   "surya-namaskar": body([PRAYER(), ARMS_UP(), FOLD(), SURYA_LUNGE, PLANK(), ASHTANGA, COBRA(), DOG(), SURYA_LUNGE, FOLD(), ARMS_UP(), PRAYER()], { anchor: "anF", move: 0.8, hold: 0.55 }),
@@ -194,8 +188,8 @@ export const FIGURES: Record<string, FigureSpec> = {
   shavasana: body([SUPINE({ aN: [100, 100], aF: [102, 102], lN: [92, 92, 150], lF: [94, 94, 150] })]),
   "worlds-greatest": body([LUNGE_LOW({ torso: 110, head: 100, face: 20, aN: [5, 0], aF: [7, 2], lF: [318, 318, 20] }), LUNGE_LOW({ torso: 118, head: 120, aN: [180, 180], aF: [7, 2], lF: [318, 318, 20] })], { anchor: "anN" }),
   // ───── Neck (standing, seen from the side / front) ─────
-  "chin-tuck": body([P({ head: 170, face: 96 }), P({ head: 187, face: 84 })], { anchor: "feet", move: 1, hold: 1.1 }),
-  "kiss-ceiling": body([P({}), P({ head: 197, face: 140 })], { anchor: "feet", move: 1.2, hold: 1.3 }),
-  "jaw-jut": body([P({ head: 188, face: 112 }), P({ head: 196, face: 132 })], { anchor: "feet", move: 1, hold: 1.3 }),
-  "neck-roll": body([F({ head: 154 }), F({ head: 180 }), F({ head: 206 }), F({ head: 180 })], { anchor: "feet", move: 1.2, hold: 0.3 }),
+  "chin-tuck": body([P({ head: 170, face: 96 }), P({ head: 187, face: 84 })], { focus: "upper", anchor: "feet", move: 1, hold: 1.1 }),
+  "kiss-ceiling": body([P({}), P({ head: 197, face: 140 })], { focus: "upper", anchor: "feet", move: 1.2, hold: 1.3 }),
+  "jaw-jut": body([P({ head: 188, face: 112 }), P({ head: 196, face: 132 })], { focus: "upper", anchor: "feet", move: 1, hold: 1.3 }),
+  "neck-roll": body([F({ head: 154 }), F({ head: 180 }), F({ head: 206 }), F({ head: 180 })], { focus: "upper", anchor: "feet", move: 1.2, hold: 0.3 }),
 };

@@ -1,16 +1,16 @@
-// Body-part workout library: popular gym splits, no-equipment home workouts and yoga.
-// Home, yoga and face moves are shown with animated illustrations (src/data/figures.ts);
-// gym moves use free-exercise-db photos (src/data/exercise-media.ts).
+// Body-part workout library: popular gym splits, no-equipment home workouts and yoga, for men and women.
+// Moves show real free-exercise-db photos or a 3D demo (male or female model, see scripts/moves3d).
 import { MEDIA as EXERCISE_MEDIA } from "./media";
 import { buildBodyPartDay, type BodyPart, type PartOptions } from "@/lib/bodypart";
 import { exerciseById } from "./workouts";
+import { EXTRA_PROGRAMS } from "./programs-extra";
 
 export type Area = "face" | "neck" | "shoulders" | "arms" | "chest" | "back" | "abs" | "waist" | "thighs" | "legs" | "glutes" | "full";
 export type ProgramKind = "gym" | "home" | "yoga";
 
 export const AREAS: { id: Area; label: string; figure: string }[] = [
   { id: "face", label: "Double chin & jaw", figure: "kiss-ceiling" },
-  { id: "neck", label: "Neck", figure: "neck-side-stretch" },
+  { id: "neck", label: "Neck", figure: "neck-roll" },
   { id: "shoulders", label: "Shoulders", figure: "ytw-raise" },
   { id: "arms", label: "Arms", figure: "chair-dip" },
   { id: "chest", label: "Chest", figure: "push-up" },
@@ -38,7 +38,7 @@ interface Move {
 // Home, yoga and face moves. Gym moves come from EXERCISES in workouts.ts.
 const MOVES: Record<string, Move> = {
   // ── Abs & waist ──
-  crunch: { name: "Crunches", emoji: "🔥", how: ["Lie on your back, knees bent, feet flat, fingertips behind your ears.", "Breathe out and curl your shoulders off the floor, squeezing your belly.", "Lower slowly. Don't pull on your neck."] },
+  crunch: { name: "Crunches", emoji: "🔥", how: ["Lie on your back, knees bent, feet flat, arms by your sides.", "Breathe out and curl your head and shoulders off the floor, reaching your hands towards your knees.", "Lower slowly without resting your head. Keep your lower back pressed down."] },
   "bicycle-crunch": { name: "Bicycle Crunches", emoji: "🚲", how: ["Lie on your back, hands behind your head, legs lifted.", "Bring your right elbow towards your left knee as the right leg straightens.", "Switch sides in a slow pedalling motion. Each side = 1 rep."] },
   "reverse-crunch": { name: "Reverse Crunches", emoji: "🔄", how: ["Lie on your back, knees bent at 90°, arms by your sides.", "Curl your hips off the floor, bringing knees towards your chest.", "Lower slowly without letting your feet drop."] },
   "leg-raise": { name: "Lying Leg Raises", emoji: "🦵", how: ["Lie flat, hands under your hips, legs straight.", "Raise both legs to 90° keeping your lower back pressed down.", "Lower slowly, stopping just above the floor."] },
@@ -168,6 +168,8 @@ export interface Program {
   kind: ProgramKind;
   /** Popular with / designed for women */
   women?: boolean;
+  /** Only shown in the men's or the women's library (unset = both) */
+  audience?: "men" | "women";
   areas: Area[];
   level: "Beginner" | "Intermediate" | "Advanced";
   blurb: string;
@@ -331,6 +333,20 @@ PROGRAMS.push(
     ],
   },
 );
+
+PROGRAMS.push(...EXTRA_PROGRAMS);
+
+// Which library (men's / women's) each original workout belongs in; the rest appear in both.
+const AUDIENCE: Record<string, "men" | "women"> = {
+  "gym-chest": "men", "gym-shoulders": "men", "gym-arms": "men", "gym-chest-tri": "men", "gym-back-bi": "men", "gym-biceps": "men",
+  "gym-triceps": "men", "gym-forearms": "men", "home-chest": "men",
+  "gym-glutes": "women", "gym-women-full": "women", "home-waist": "women", "home-thighs": "women", "home-glutes": "women", "home-arms": "women",
+};
+for (const p of PROGRAMS) if (!p.audience && AUDIENCE[p.id]) p.audience = AUDIENCE[p.id];
+
+export type LibraryAudience = "men" | "women";
+/** Workouts shown in the men's or women's library. */
+export const programsFor = (a: LibraryAudience) => PROGRAMS.filter((p) => !p.audience || p.audience === a);
 
 export const programById = (id: string) => PROGRAMS.find((p) => p.id === id);
 

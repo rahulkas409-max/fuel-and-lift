@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import type { DietPref } from "@/data/meals";
-import { INTENSITY_META, ROUTINES } from "@/data/workouts";
+import { ALL_ROUTINES, INTENSITY_META } from "@/data/workouts";
 import { celebrate } from "@/lib/confetti";
 import { useToday } from "@/lib/hooks";
 import { dayTargets, syncPlan, type Sex } from "@/lib/nutrition";
@@ -50,7 +50,9 @@ export function Onboarding() {
     play("tick");
   };
 
-  const routine = level ? ROUTINES.find((r) => r.id === LEVELS[level].routineId)! : null;
+  // Women start on the women's version of the same schedule (3-Day Toned Full Body / 6-Day Glute & Tone).
+  const routineId = level ? (sex === "female" ? { light: "w3", heavy: "w6" }[level] : LEVELS[level].routineId) : null;
+  const routine = routineId ? ALL_ROUTINES.find((r) => r.id === routineId)! : null;
   const firstDay = routine?.days[0];
   const profile = { weightKg: weight, goal: existing.goal ?? "maintain", sex: sex ?? "male" } as const;
   const targets = firstDay ? dayTargets(profile, firstDay.intensity) : null;
@@ -176,7 +178,7 @@ export function Onboarding() {
                       }}
                       emoji={k === "light" ? "🌿" : sex === "female" ? "🏋️‍♀️" : "🏋️‍♂️"}
                       title={LEVELS[k].title}
-                      sub={LEVELS[k].sub}
+                      sub={sex === "female" ? { light: "3 days a week · toned full body · great for beginners", heavy: "6 days a week · glute & tone split · for serious lifters" }[k] : LEVELS[k].sub}
                     />
                   ))}
                 </div>

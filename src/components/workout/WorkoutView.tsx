@@ -71,16 +71,22 @@ function RoutineView() {
   }, [pct, logKey, day, today, markCompleted]);
 
   // Men's / women's plans: both are always one tap away; start on the member's own.
-  const [aud, setAud] = useState<Audience>(routine.audience ?? (state.profile.sex === "female" ? "women" : "men"));
-  const shown = routinesFor(aud);
+  const [aud, setAud] = useState<Audience>(state.profile.sex === "female" ? "women" : "men");
+  const [days, setDays] = useState<number | null>(null);
+  // Picking "N days" also narrows the plan list below to N-day plans.
+  const shown = routinesFor(aud).filter((r) => !days || r.days.length === days);
   const routines = state.customRoutine ? [...shown, state.customRoutine] : shown;
 
   return (
     <div className="space-y-6">
-      <ScheduleAdvice aud={aud} setAud={setAud} current={routine.id} onPick={(id) => state.setRoutine(id)} />
+      <ScheduleAdvice aud={aud} setAud={setAud} days={days} setDays={setDays} current={routine.id} onPick={(id) => state.setRoutine(id)} />
 
       {/* Routine picker */}
       <section>
+        <p className="text-sm text-ink-2 mb-2">
+          {shown.length} {aud === "women" ? "women's" : "men's"} plan{shown.length === 1 ? "" : "s"}
+          {days ? ` for ${days} days a week` : ""} · swipe to see all
+        </p>
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 snap-x">
           {routines.map((r) => {
             const on = r.id === routine.id;
@@ -186,8 +192,21 @@ function RoutineView() {
 }
 
 /** "How many days can you train?" → the schedules that fit. */
-function ScheduleAdvice({ aud, setAud, current, onPick }: { aud: Audience; setAud: (a: Audience) => void; current: string; onPick: (id: string) => void }) {
-  const [days, setDays] = useState<number | null>(null);
+function ScheduleAdvice({
+  aud,
+  setAud,
+  days,
+  setDays,
+  current,
+  onPick,
+}: {
+  aud: Audience;
+  setAud: (a: Audience) => void;
+  days: number | null;
+  setDays: (n: number | null) => void;
+  current: string;
+  onPick: (id: string) => void;
+}) {
   const advice = days ? SCHEDULE_ADVICE[aud][days] : null;
   return (
     <section className="rounded-3xl bg-card border border-line p-4">
@@ -205,8 +224,8 @@ function ScheduleAdvice({ aud, setAud, current, onPick }: { aud: Audience; setAu
         ))}
       </div>
       <p className="font-medium text-ink">How many days a week can you train?</p>
-      <div className="mt-2.5 grid grid-cols-4 gap-2">
-        {[3, 4, 5, 6].map((n) => (
+      <div className="mt-2.5 grid grid-cols-5 gap-2">
+        {[2, 3, 4, 5, 6].map((n) => (
           <button
             key={n}
             onClick={() => setDays(days === n ? null : n)}

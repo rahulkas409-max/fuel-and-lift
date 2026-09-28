@@ -677,10 +677,11 @@ export function FitsoLauncher({
       animate={{ scale: 1, opacity: 1 }}
       whileTap={{ scale: 0.94 }}
       onClick={onOpen}
-      className={`fixed z-40 ${left ? "left-4" : "right-4"} bottom-[calc(6rem+env(safe-area-inset-bottom))] h-14 pl-4 pr-5 rounded-2xl bg-fit-blue text-white shadow-lg inline-flex items-center gap-2 font-medium`}
+      className={`fixed z-40 ${left ? "left-4" : "right-4"} bottom-[calc(6rem+env(safe-area-inset-bottom))] size-14 sm:w-auto sm:pl-4 sm:pr-5 rounded-full sm:rounded-2xl bg-fit-blue text-white shadow-lg inline-flex items-center justify-center gap-2 font-medium`}
       aria-label="Ask Fitso, your AI fitness coach"
     >
-      <MessageCircle size={20} /> Ask Fitso
+      {/* Icon only on phones so it doesn't cover content; full label on larger screens. */}
+      <MessageCircle size={22} /> <span className="hidden sm:inline">Ask Fitso</span>
     </motion.button>
   );
 }

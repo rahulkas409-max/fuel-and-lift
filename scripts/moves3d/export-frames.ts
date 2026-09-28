@@ -53,7 +53,7 @@ for (const [id, spec] of Object.entries(FIGURES)) {
     const s = frameAt(spec.frames, lay, i, 0);
     return { ...pick(s), props: props(spec, s) };
   });
-  result[id] = { fps, frames, stills, towel: spec.props?.some((p) => p.type === "towel"), rope: spec.props?.some((p) => p.type === "rope") };
+  result[id] = { fps, frames, stills, focus: spec.focus, towel: spec.props?.some((p) => p.type === "towel"), rope: spec.props?.some((p) => p.type === "rope") };
 }
 fs.writeFileSync(out, JSON.stringify(result));
 console.log(Object.keys(result).length, "moves");

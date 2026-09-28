@@ -19,6 +19,7 @@ try {
 }
 
 const [framesPath, outDir = "public/moves3d"] = process.argv.slice(2);
+const STYLE = process.env.STYLE ?? "male";
 const data = JSON.parse(fs.readFileSync(framesPath, "utf8"));
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -40,13 +41,13 @@ const port = server.address().port;
 const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
 const page = await browser.newPage({ viewport: { width: 720, height: 480 } });
 page.on("pageerror", (e) => console.error("page error:", e.message));
-await page.goto(`http://localhost:${port}/`);
+await page.goto(`http://localhost:${port}/?style=${STYLE}`);
 await page.waitForFunction(() => window.ready === true);
 
 const png = (d) => Buffer.from(d.split(",")[1], "base64");
 let bytes = 0;
 for (const [id, m] of Object.entries(data)) {
-  await page.evaluate(([frames, view]) => window.frameMove(frames, view), [m.frames, m.frames[0].view]);
+  await page.evaluate(([frames, view, focus]) => window.frameMove(frames, view, focus), [m.frames, m.frames[0].view, m.focus]);
   // Stills: one per keyframe, used for thumbnails and the Start/Finish (or Step) pictures.
   for (const [n, s] of m.stills.entries()) {
     const buf = await sharp(png(await page.evaluate((f) => window.renderPose(f), s))).webp({ quality: 82 }).toBuffer();
@@ -66,4 +67,3 @@ for (const [id, m] of Object.entries(data)) {
 console.log("total", Math.round(bytes / 1024), "KB");
 await browser.close();
 server.close();
-if (outDir === "public/moves3d") console.log("manifest:", (await import("./manifest.mjs")).writeManifest(), "moves");

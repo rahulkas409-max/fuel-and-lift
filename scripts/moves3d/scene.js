@@ -28,14 +28,16 @@ const fill = new THREE.DirectionalLight(0xdfe8ff, 0.7);
 fill.position.set(-160, 90, -80);
 scene.add(fill);
 
+// ?style=female renders the women's model: ponytail, tank top & leggings, slimmer shoulders, wider hips.
+const FEMALE = new URLSearchParams(location.search).get("style") === "female";
 const mat = (color, rough = 0.6) => new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0 });
 const M = {
-  skin: mat("#c98b62", 0.55),
-  shirt: mat("#1a73e8", 0.7),
-  pants: mat("#2b3446", 0.75),
+  skin: mat(FEMALE ? "#c68660" : "#c98b62", 0.55),
+  shirt: mat(FEMALE ? "#e0457b" : "#1a73e8", 0.7),
+  pants: mat(FEMALE ? "#2e2940" : "#2b3446", 0.75),
   shoe: mat("#f3f4f6", 0.5),
   sole: mat("#4a5568", 0.6),
-  hair: mat("#2b1f1a", 0.8),
+  hair: mat(FEMALE ? "#231613" : "#2b1f1a", 0.8),
   eye: mat("#1b1b1b", 0.4),
   prop: mat("#cbd3df", 0.8),
   towel: mat("#f28b82", 0.9),
@@ -89,20 +91,24 @@ function ball(r, material, segs = 28) {
 
 // ── Body parts ──
 const P = {};
+// Body proportions (rig units) for each model.
+const B = FEMALE
+  ? { sleeve: [4.4, 4.2], ua: [3.7, 3.0], fa: [3.0, 2.4], hand: 2.9, shB: 4.8, th: [7.0, 4.6], kn: 4.6, sh: [4.5, 2.9], hpB: 7.2, shZ: 10, hpZ: 7.2, chest: [11.4, 8.4], waist: [9.2, 7], pelvis: [12, 8.4], sleeveLen: 0.12 }
+  : { sleeve: [5.3, 4.8], ua: [4.1, 3.4], fa: [3.3, 2.6], hand: 3.2, shB: 5.6, th: [6.8, 4.9], kn: 4.9, sh: [4.8, 3.2], hpB: 6.8, shZ: 11, hpZ: 6.5, chest: [12.6, 8.6], waist: [10.4, 7.4], pelvis: [11.2, 8], sleeveLen: 0.45 };
 for (const h of ["N", "F"]) {
-  P[`sleeve${h}`] = seg(5.3, 4.8, M.shirt);
-  P[`ua${h}`] = seg(4.1, 3.4, M.skin);
-  P[`el${h}`] = ball(3.4, M.skin);
-  P[`fa${h}`] = seg(3.3, 2.6, M.skin);
-  P[`hand${h}`] = ball(3.2, M.skin);
-  P[`shB${h}`] = ball(5.6, M.shirt);
-  P[`th${h}`] = seg(6.8, 4.9, M.pants);
-  P[`kn${h}`] = ball(4.9, M.pants);
-  P[`sh${h}`] = seg(4.8, 3.2, M.pants);
+  P[`sleeve${h}`] = seg(...B.sleeve, M.shirt);
+  P[`ua${h}`] = seg(...B.ua, M.skin);
+  P[`el${h}`] = ball(B.ua[1], M.skin);
+  P[`fa${h}`] = seg(...B.fa, M.skin);
+  P[`hand${h}`] = ball(B.hand, M.skin);
+  P[`shB${h}`] = ball(B.shB, FEMALE ? M.skin : M.shirt);
+  P[`th${h}`] = seg(...B.th, M.pants);
+  P[`kn${h}`] = ball(B.kn, M.pants);
+  P[`sh${h}`] = seg(...B.sh, M.pants);
   P[`ank${h}`] = ball(3.2, M.shoe);
   P[`foot${h}`] = seg(3.3, 2.8, M.shoe);
   P[`toe${h}`] = ball(2.8, M.shoe);
-  P[`hpB${h}`] = ball(6.8, M.pants);
+  P[`hpB${h}`] = ball(B.hpB, M.pants);
 }
 P.pelvis = ball(1, M.pants);
 P.waist = seg(1, 1, M.shirt);
@@ -112,6 +118,10 @@ P.head = ball(9.3, M.skin, 40);
 const hairGeo = new THREE.SphereGeometry(9.9, 40, 24, 0, Math.PI * 2, 0, Math.PI * 0.56);
 P.hair = add(new THREE.Mesh(hairGeo, M.hair));
 P.nose = ball(1.7, M.skin, 16);
+// Ponytail (women's model only)
+P.bun = ball(3.6, M.hair, 20);
+P.tail = seg(3.1, 1.4, M.hair);
+P.bun.mesh.visible = P.tail.mesh.visible = FEMALE;
 P.eyeL = ball(0.95, M.eye, 12);
 P.eyeR = ball(0.95, M.eye, 12);
 const towel = seg(1.8, 1.8, M.towel);
@@ -124,7 +134,7 @@ const clearProps = () => {
 function place(fr) {
   const side = fr.view === "side";
   // Side view: the rig is flat, so push near limbs towards the camera and far limbs away.
-  const zOf = (k) => (!side ? 0 : k.endsWith("N") ? (/^(sh|el|ha)/.test(k) ? 11 : 6.5) : k.endsWith("F") ? (/^(sh|el|ha)/.test(k) ? -11 : -6.5) : 0);
+  const zOf = (k) => (!side ? 0 : k.endsWith("N") ? (/^(sh|el|ha)/.test(k) ? B.shZ : B.hpZ) : k.endsWith("F") ? (/^(sh|el|ha)/.test(k) ? -B.shZ : -B.hpZ) : 0);
   const J = {};
   for (const k of ["hip", "neck", "head", "shN", "shF", "elN", "elF", "haN", "haF", "hpN", "hpF", "knN", "knF", "anN", "anF", "toN", "toF"]) J[k] = V(fr[k][0], fr[k][1], zOf(k));
 
@@ -139,19 +149,19 @@ function place(fr) {
   // lateral / depth scale for the torso's elliptical cross-section
   const lat = (w, d) => (side ? [d, w] : [w, d]);
   const q = new THREE.Quaternion().setFromUnitVectors(UP, u);
-  const [px, pz] = lat(11.2, 8);
+  const [px, pz] = lat(...B.pelvis);
   P.pelvis.set(hip.clone().addScaledVector(u, 3), [px, 10, pz], q);
-  const [wx, wz] = lat(10.4, 7.4);
+  const [wx, wz] = lat(...B.waist);
   P.waist.set(hip.clone().addScaledVector(u, 6), mid.clone().addScaledVector(mid.clone().sub(hip).normalize(), 4), wx, wz);
   const cu = neck.clone().sub(mid).normalize();
   const cq = new THREE.Quaternion().setFromUnitVectors(UP, cu);
-  const [cx, cz] = lat(12.6, 8.6);
+  const [cx, cz] = lat(...B.chest);
   P.chest.set(mid.clone().addScaledVector(cu, tl * 0.26), [cx, tl * 0.36, cz], cq);
   for (const h of ["N", "F"]) {
     const sh = side ? shMid.clone().setZ(J[`sh${h}`].z) : J[`sh${h}`];
     const el = J[`el${h}`], ha = J[`ha${h}`];
     P[`shB${h}`].set(sh);
-    P[`sleeve${h}`].set(sh, sh.clone().lerp(el, 0.45));
+    P[`sleeve${h}`].set(sh, sh.clone().lerp(el, B.sleeveLen));
     P[`ua${h}`].set(sh, el);
     P[`el${h}`].set(el);
     P[`fa${h}`].set(el, ha);
@@ -186,6 +196,13 @@ function place(fr) {
   const hairUp = hu.clone().multiplyScalar(0.75).addScaledVector(face, -0.66).normalize();
   P.hair.position.copy(head).addScaledVector(face, -0.4);
   P.hair.quaternion.setFromUnitVectors(UP, hairUp);
+  if (FEMALE) {
+    // Ponytail: tied at the back of the crown, hanging back and down under gravity.
+    const base = head.clone().addScaledVector(face, -8.6).addScaledVector(hu, 3.2);
+    const hang = face.clone().multiplyScalar(-0.55).add(V(0, -1, 0)).normalize();
+    P.bun.set(base);
+    P.tail.set(base, base.clone().addScaledVector(hang, 15));
+  }
   P.nose.set(head.clone().addScaledVector(face, 9.1).addScaledVector(hu, -1.2));
   const sideV = face.clone().cross(hu).normalize();
   P.eyeL.set(head.clone().addScaledVector(face, 8.2).addScaledVector(hu, 1.6).addScaledVector(sideV, 3.2));
@@ -212,17 +229,21 @@ function place(fr) {
 }
 
 /** Fit the camera once per move, around every frame's joints, so the view doesn't jump. */
-window.frameMove = (frames, view) => {
-  let x0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+window.frameMove = (frames, view, focus) => {
+  // "upper" (neck moves): frame the head and shoulders so small head movements are easy to see.
+  const keys = focus === "upper" ? ["neck", "head", "shN", "shF", "elN", "elF"] : ["hip", "neck", "head", "haN", "haF", "anN", "anF", "toN", "toF", "knN", "knF", "elN", "elF"];
+  let x0 = Infinity, x1 = -Infinity, y0 = focus === "upper" ? Infinity : 0, y1 = -Infinity;
   for (const f of frames)
-    for (const k of ["hip", "neck", "head", "haN", "haF", "anN", "anF", "toN", "toF", "knN", "knF", "elN", "elF"]) {
+    for (const k of keys) {
       x0 = Math.min(x0, f[k][0]); x1 = Math.max(x1, f[k][0]); y1 = Math.max(y1, f[k][1]);
+      if (focus === "upper") y0 = Math.min(y0, f[k][1]);
     }
   x0 -= 14; x1 += 14; y1 += 14;
-  const cx = (x0 + x1) / 2, cy = y1 / 2 - 2;
-  const hw = (x1 - x0) / 2, hh = y1 / 2 + 8;
+  if (focus === "upper") { y0 -= 10; x0 -= 20; x1 += 20; }
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2 - 2;
+  const hw = (x1 - x0) / 2, hh = (y1 - y0) / 2 + 8;
   const t = Math.tan(((camera.fov / 2) * Math.PI) / 180);
-  const D = Math.max(hh / t, hw / (t * camera.aspect), 125) * 1.08 + 20;
+  const D = Math.max(hh / t, hw / (t * camera.aspect), focus === "upper" ? 40 : 125) * 1.08 + 20;
   const yaw = ((view === "side" ? 24 : 16) * Math.PI) / 180, pitch = (13 * Math.PI) / 180;
   camera.position.set(cx + Math.sin(yaw) * D * Math.cos(pitch), cy + Math.sin(pitch) * D, Math.cos(yaw) * D * Math.cos(pitch));
   camera.lookAt(cx, cy, 0);
