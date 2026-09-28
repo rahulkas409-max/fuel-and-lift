@@ -216,7 +216,8 @@ export const useStore = create<State>()(
       clearTodayMeals: (date) =>
         set((s) => {
           const omit = <T,>(o: Record<string, T>) => Object.fromEntries(Object.entries(o).filter(([k]) => k !== date));
-          return { plans: omit(s.plans), scales: omit(s.scales), foodLog: omit(s.foodLog) };
+          // Keep an empty plan so the day isn't auto-filled again.
+          return { plans: { ...s.plans, [date]: {} }, scales: omit(s.scales), foodLog: omit(s.foodLog) };
         }),
       resetTodayWorkout: (date) =>
         set((s) => ({

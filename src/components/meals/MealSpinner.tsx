@@ -16,6 +16,10 @@ const COLORS = ["#d2e3fc", "#ceead6", "#feefc3", "#fad2cf", "#aecbfa", "#a8dab5"
 const SIZE = 300;
 const R = SIZE / 2;
 
+/** Random pick for the spin (called from the click handler only). */
+const pickRandom = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
+const randomJitter = () => Math.random() - 0.5;
+
 function slicePath(i: number, n: number) {
   const a0 = ((i * 360) / n - 90) * (Math.PI / 180);
   const a1 = (((i + 1) * 360) / n - 90) * (Math.PI / 180);
@@ -25,19 +29,22 @@ function slicePath(i: number, n: number) {
   return `M${R},${R} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z`;
 }
 
-export function MealSpinner({ open, slot, onClose, onLand, onViewRecipe }: {
-  open: boolean; slot: Slot; onClose: () => void; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void;
+export function MealSpinner({ open, slot, avoid, onClose, onLand, onViewRecipe }: {
+  open: boolean; slot: Slot; avoid?: Set<string>; onClose: () => void; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void;
 }) {
   return (
     <Sheet open={open} onClose={onClose} title={`${SLOTS.find((s) => s.id === slot)?.label} roulette`}>
-      {open && <Wheel key={slot} slot={slot} onLand={onLand} onViewRecipe={onViewRecipe} />}
+      {open && <Wheel key={slot} slot={slot} avoid={avoid} onLand={onLand} onViewRecipe={onViewRecipe} />}
     </Sheet>
   );
 }
 
-function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void }) {
+function Wheel({ slot, avoid, onLand, onViewRecipe }: { slot: Slot; avoid?: Set<string>; onLand: (m: Meal) => void; onViewRecipe: (m: Meal) => void }) {
   const pref = useStore((s) => s.diet);
   const meals = mealsFor(slot, pref);
+  // Meals already on this week's menu are greyed out and the wheel never lands on them.
+  const eaten = (m: Meal) => !!avoid?.has(m.id);
+  const fresh = meals.map((m, i) => (eaten(m) ? -1 : i)).filter((i) => i >= 0);
   const n = meals.length;
   const seg = 360 / n;
   const icon = n > 7 ? 32 : 40;
@@ -59,10 +66,11 @@ function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) =
     if (spinning) return;
     setSpinning(true);
     setResult(null);
-    const target = Math.floor(Math.random() * n);
+    const pool = (fresh.length ? fresh : meals.map((_, i) => i)).filter((i) => fresh.length < 2 || meals[i].id !== result?.id);
+    const target = pickRandom(pool);
     const current = rotate.get();
     // Land the pointer (at 12 o'clock) on the centre of the target slice, with slight jitter.
-    const jitter = (Math.random() - 0.5) * seg * 0.6;
+    const jitter = randomJitter() * seg * 0.6;
     const desired = (((-(target * seg + seg / 2 + jitter)) % 360) + 360) % 360;
     const delta = (desired - (current % 360) + 360) % 360;
     await animate(rotate, current + 360 * 5 + delta, { duration: 4.2, ease: [0.12, 0.75, 0.12, 1] });
@@ -84,9 +92,9 @@ function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) =
             const mid = i * seg + seg / 2;
             return (
               <g key={m.id}>
-                <path d={slicePath(i, n)} fill={COLORS[i % COLORS.length]} stroke="var(--card)" strokeWidth="2" />
+                <path d={slicePath(i, n)} fill={eaten(m) ? "#e3e6eb" : COLORS[i % COLORS.length]} stroke="var(--card)" strokeWidth="2" />
                 {emojiSrc(m.emoji) ? (
-                  <image href={emojiSrc(m.emoji)!} x={R - icon / 2} y={R - icon / 2} width={icon} height={icon} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.66})`} />
+                  <image href={emojiSrc(m.emoji)!} opacity={eaten(m) ? 0.35 : 1} x={R - icon / 2} y={R - icon / 2} width={icon} height={icon} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.66})`} />
                 ) : (
                   <text x={R} y={R} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.64})`} textAnchor="middle" dominantBaseline="middle" fontSize="34">
                     {m.emoji}
@@ -111,7 +119,7 @@ function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) =
       <div className="w-full mt-6 min-h-[8.5rem]">
         {result ? (
           <motion.div initial={{ opacity: 0, y: 12, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="rounded-2xl bg-fit-blue-soft border border-fit-blue/40 p-4">
-            <p className="text-xs font-medium text-fit-blue">Added to today</p>
+            <p className="text-xs font-medium text-fit-blue">Added to your plan</p>
             <p className="font-display text-2xl mt-1 flex items-center gap-2"><Emoji e={result.emoji} size={32} /> {result.name}</p>
             <div className="flex items-center gap-3 mt-2">
               <MacroPills m={result} />
@@ -123,15 +131,21 @@ function Wheel({ slot, onLand, onViewRecipe }: { slot: Slot; onLand: (m: Meal) =
             </div>
           </motion.div>
         ) : (
-          <ul className="space-y-1.5">
-            {meals.map((m, i) => (
-              <li key={m.id} className="flex items-center gap-3 text-sm text-ink-2">
-                <span className="size-3 rounded-full shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                <Emoji e={m.emoji} size={20} /><span className="truncate">{m.name}</span>
-                <span className="ml-auto font-mono text-xs text-ink-3">{m.kcal} kcal</span>
-              </li>
-            ))}
-          </ul>
+          <>
+            {fresh.length < meals.length && (
+              <p className="text-xs text-ink-3 mb-2">Greyed-out meals are already on this week&apos;s menu, so the wheel skips them.</p>
+            )}
+            <ul className="space-y-1.5">
+              {meals.map((m, i) => (
+                <li key={m.id} className={`flex items-center gap-3 text-sm ${eaten(m) ? "text-ink-3 opacity-60" : "text-ink-2"}`}>
+                  <span className="size-3 rounded-full shrink-0" style={{ background: eaten(m) ? "#e3e6eb" : COLORS[i % COLORS.length] }} />
+                  <Emoji e={m.emoji} size={20} />
+                  <span className="truncate">{m.name}</span>
+                  <span className="ml-auto font-mono text-xs text-ink-3 shrink-0">{eaten(m) ? "this week" : `${m.kcal} kcal`}</span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </div>
     </div>

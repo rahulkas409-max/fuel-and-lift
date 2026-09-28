@@ -66,49 +66,120 @@ export function variedEnough(combo: Meal[]) {
 /** Cost of a planned day in ₹ (portions scaled). */
 export const planCost = (meals: (Meal | undefined)[], scale = 1) => Math.round(meals.reduce((c, m) => c + (m?.cost ?? 0), 0) * scale);
 
+/** Heavy days prefer glycogen-refill meals, rest days recovery meals. */
+function tagBonusFor(m: Meal, intensity: DayIntensity) {
+  let b = 0;
+  if (intensity === "heavy" && m.tags.includes("carb-load")) b -= 0.04;
+  if (intensity === "rest" && m.tags.includes("recovery")) b -= 0.05;
+  if (intensity === "rest" && m.tags.includes("carb-load")) b += 0.04;
+  return b;
+}
+
+/** Meals already planned within `days` days either side of `date`, so nothing repeats within a week. */
+export function weekMealIds(plans: Record<string, Plan>, date: string, days = 6, from = 1): Set<string> {
+  const ids = new Set<string>();
+  const d0 = new Date(`${date}T12:00:00`);
+  for (let i = -days; i <= days; i++) {
+    if (Math.abs(i) < from) continue;
+    const d = new Date(d0);
+    d.setDate(d.getDate() + i);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    for (const id of Object.values(plans[k] ?? {})) if (id) ids.add(id);
+  }
+  return ids;
+}
+
+/** Meals from 7–13 days before `date` (last week's menu). */
+export const lastWeekMealIds = (plans: Record<string, Plan>, date: string) => weekMealIds(plans, date, 13, 7);
+/** Meals eaten exactly one week before `date`. */
+export const sameDayLastWeek = (plans: Record<string, Plan>, date: string) => weekMealIds(plans, date, 7, 7);
+
+/** Recipes for a slot that weren't eaten this week (falls back to all if none are left). */
+export function freshMealsFor(slot: Slot, pref: DietPref, avoid?: Set<string>) {
+  const all = mealsFor(slot, pref);
+  const fresh = avoid ? all.filter((m) => !avoid.has(m.id)) : all;
+  return fresh.length ? fresh : all;
+}
+
 /**
  * Auto-Sync: pick one meal per slot plus a portion multiplier (1–2×) so the day's
  * totals land near the calorie and protein targets. Heavy days prefer glycogen-refill
- * meals and rest days prefer recovery meals. The search is exhaustive (≈2.5k combos).
+ * meals and rest days prefer recovery meals. Meals in `avoid` (eaten earlier or later
+ * this week) are skipped so the week doesn't repeat. The search is exhaustive.
  */
-export function syncPlan(intensity: DayIntensity, targets: Targets, variety = 0, pref: DietPref = "both"): { plan: Plan; scale: number } {
-  const bySlot = SLOTS.map((s) => mealsFor(s.id, pref));
+export function syncPlan(
+  intensity: DayIntensity,
+  targets: Targets,
+  variety = 0,
+  pref: DietPref = "both",
+  avoid?: Set<string>,
+  /** meals from the week before: allowed, but mildly discouraged so weeks don't copy each other */
+  soften?: Set<string>,
+  /** meals eaten on this weekday last week: strongly discouraged, so Mondays don't repeat */
+  sameDay?: Set<string>,
+): { plan: Plan; scale: number } {
+  const bySlot = SLOTS.map((s) => freshMealsFor(s.id, pref, avoid));
+  // Pre-compute per-meal numbers once; the walk keeps running totals (fast even with ~100k combos).
+  const info = new Map(bySlot.flat().map((m) => [m.id, { protein: mainProtein(m), bonus: tagBonusFor(m, intensity) + (soften?.has(m.id) ? 0.03 : 0) + (sameDay?.has(m.id) ? 0.12 : 0) }]));
   const scored: { combo: Meal[]; scale: number; score: number }[] = [];
+  const combo: Meal[] = [];
+  const used: Record<string, number> = {};
+  let kcal = 0, protein = 0, carbs = 0, cost = 0, bonus = 0;
 
-  const walk = (i: number, combo: Meal[]) => {
+  const walk = (i: number) => {
     if (i === bySlot.length) {
-      if (!variedEnough(combo)) return;
-      const base = totals(combo);
-      const cost = combo.reduce((c, m) => c + m.cost, 0);
-      let tagBonus = 0;
-      for (const m of combo) {
-        if (intensity === "heavy" && m.tags.includes("carb-load")) tagBonus -= 0.04;
-        if (intensity === "rest" && m.tags.includes("recovery")) tagBonus -= 0.05;
-        if (intensity === "rest" && m.tags.includes("carb-load")) tagBonus += 0.04;
-      }
+      // Keep only the best portion size for this combo.
+      let best = { scale: 1, score: Infinity };
       for (const scale of SCALES) {
-        const t = scaleMacros(base, scale);
-        let score = Math.abs(t.kcal - targets.kcal) / targets.kcal;
-        score += (1.5 * Math.max(0, targets.protein - t.protein)) / targets.protein;
-        score += (0.5 * Math.abs(t.carbs - targets.carbs)) / Math.max(targets.carbs, 1);
+        let score = Math.abs(kcal * scale - targets.kcal) / targets.kcal;
+        score += (1.5 * Math.max(0, targets.protein - protein * scale)) / targets.protein;
+        score += (0.5 * Math.abs(carbs * scale - targets.carbs)) / Math.max(targets.carbs, 1);
         score += (scale - 1) * 0.02; // prefer real single servings when they fit
         score += (cost * scale) / 6000; // cheaper wins when nutrition is close (₹300/day ≈ +0.05)
-        scored.push({ combo, scale, score: score + tagBonus });
+        if (score < best.score) best = { scale, score };
       }
+      scored.push({ combo: [...combo], scale: best.scale, score: best.score + bonus });
       return;
     }
-    for (const m of bySlot[i]) walk(i + 1, [...combo, m]);
+    for (const m of bySlot[i]) {
+      const { protein: k, bonus: b } = info.get(m.id)!;
+      // A day shouldn't repeat itself: paneer, soya and tofu at most once, other proteins at most twice.
+      if ((used[k] ?? 0) >= (ONCE.has(k) ? 1 : 2)) continue;
+      used[k] = (used[k] ?? 0) + 1;
+      combo.push(m);
+      kcal += m.kcal; protein += m.protein; carbs += m.carbs; cost += m.cost; bonus += b;
+      walk(i + 1);
+      kcal -= m.kcal; protein -= m.protein; carbs -= m.carbs; cost -= m.cost; bonus -= b;
+      combo.pop();
+      used[k]--;
+    }
   };
-  walk(0, []);
+  walk(0);
   scored.sort((a, b) => a.score - b.score);
-  // Variety: step through the best distinct meal combos.
-  const seen = new Set<string>();
-  const distinct = scored.filter((x) => {
-    const k = x.combo.map((m) => m.id).join();
-    return seen.has(k) ? false : (seen.add(k), true);
-  });
-  const best = distinct[Math.min(variety % 5, distinct.length - 1)];
+  // Variety: step through the best combos (each is a distinct set of meals).
+  const best = scored[Math.min(variety % 5, scored.length - 1)];
   return { plan: Object.fromEntries(best.combo.map((m) => [m.slot, m.id])) as Plan, scale: best.scale };
+}
+
+/**
+ * Plans several days in a row with no meal repeated within a week. `days` gives each date and
+ * its training intensity; already-planned days nearby are respected.
+ */
+export function planDays(
+  days: { date: string; intensity: DayIntensity }[],
+  targetsFor: (i: DayIntensity) => Targets,
+  pref: DietPref,
+  plans: Record<string, Plan>,
+): Record<string, { plan: Plan; scale: number }> {
+  const merged = { ...plans };
+  for (const d of days) delete merged[d.date];
+  const out: Record<string, { plan: Plan; scale: number }> = {};
+  for (const d of days) {
+    const r = syncPlan(d.intensity, targetsFor(d.intensity), 0, pref, weekMealIds(merged, d.date), lastWeekMealIds(merged, d.date), sameDayLastWeek(merged, d.date));
+    merged[d.date] = r.plan;
+    out[d.date] = r;
+  }
+  return out;
 }
 
 export const planMeals = (plan: Plan | undefined) => SLOTS.map((s) => (plan?.[s.id] ? mealById(plan[s.id]!) : undefined));

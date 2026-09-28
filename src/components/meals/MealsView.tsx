@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Clock, Dices, RefreshCw, RotateCcw, Search, Sparkles, X, Zap } from "lucide-react";
+import { CalendarDays, Clock, Dices, RefreshCw, RotateCcw, Search, Sparkles, X, Zap } from "lucide-react";
 import { useState } from "react";
-import { MEALS, SLOTS, mealById, mealsFor, type Meal, type Slot } from "@/data/meals";
+import { MEALS, SLOTS, mealById, type Meal, type Slot } from "@/data/meals";
 import { INTENSITY_META, type DayIntensity } from "@/data/workouts";
 import { useToday } from "@/lib/hooks";
-import { dayTargets, planCost, scaleMacros, syncPlan, totals, variedEnough, type Goal } from "@/lib/nutrition";
+import { dayTargets, freshMealsFor, lastWeekMealIds, sameDayLastWeek, planCost, planDays, scaleMacros, syncPlan, totals, variedEnough, weekMealIds, type Goal } from "@/lib/nutrition";
+import { useAutoMealPlan, useDateIntensity, weekDates, weekIntensities } from "@/lib/meal-week";
 import { play } from "@/lib/sound";
 import { currentRoutine, useStore } from "@/lib/store";
 import { useToast } from "@/lib/toast";
@@ -32,14 +33,24 @@ export function MealsView() {
 
   const trainingDay = routine.days.find((d) => d.id === s.dayIdByRoutine[routine.id]) ?? routine.days[0];
   const [override, setOverride] = useState<DayIntensity | null>(null);
-  const intensity = override ?? trainingDay?.intensity ?? "moderate";
+  // Which day of the coming week is being viewed (today by default).
+  const [pickedDate, setDate] = useState<string | null>(null);
+  const week = weekDates(today);
+  const date = pickedDate && week.includes(pickedDate) ? pickedDate : today;
+  const isToday = date === today;
+  const dateIntensity = useDateIntensity(date, today);
+  const intensity = override ?? (isToday ? (trainingDay?.intensity ?? "moderate") : dateIntensity);
   const targets = dayTargets(s.profile, intensity);
+  useAutoMealPlan(date, intensity);
+  const dayLabel = isToday ? "Today" : new Date(`${date}T12:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
-  const plan = s.plans[today] ?? {};
+  const plan = s.plans[date] ?? {};
   const meals = SLOTS.map((slot) => (plan[slot.id] ? mealById(plan[slot.id]!) : undefined));
-  const scale = s.scales[today] ?? 1;
+  const scale = s.scales[date] ?? 1;
   const planned = scaleMacros(totals(meals), scale);
-  const logged = s.foodLog[today] ?? [];
+  const logged = isToday ? (s.foodLog[today] ?? []) : [];
+  // Meals already on this week's other days: skipped by Auto-Sync, the dice and the roulette.
+  const eatenThisWeek = weekMealIds(s.plans, date);
   const t = logged.reduce(
     (acc, f) => ({ kcal: acc.kcal + f.kcal, protein: Math.round(acc.protein + f.protein), carbs: Math.round(acc.carbs + f.carbs), fat: Math.round(acc.fat + f.fat) }),
     planned,
@@ -52,9 +63,9 @@ export function MealsView() {
 
   const autoSync = () =>
     requirePass(() => {
-      const next = syncPlan(intensity, targets, variety, s.diet);
+      const next = syncPlan(intensity, targets, variety, s.diet, eatenThisWeek, lastWeekMealIds(s.plans, date), sameDayLastWeek(s.plans, date));
       setVariety((v) => v + 1);
-      s.setPlan(today, next.plan, next.scale);
+      s.setPlan(date, next.plan, next.scale);
       play("win");
       toast(`Synced to ${INTENSITY_META[intensity].label.toLowerCase()} day: ${targets.kcal} kcal · ${targets.protein} g protein`);
     });
@@ -64,14 +75,27 @@ export function MealsView() {
     // Re-roll until the day is varied (paneer at most once).
     for (let tries = 0; tries < 50; tries++) {
       const picks = SLOTS.map((slot) => {
-        const options = mealsFor(slot.id, s.diet);
+        const options = freshMealsFor(slot.id, s.diet, eatenThisWeek);
         return options[Math.floor(Math.random() * options.length)];
       });
       picks.forEach((m) => (next[m.slot] = m.id));
       if (variedEnough(picks)) break;
     }
-    s.setPlan(today, next, 1);
+    s.setPlan(date, next, 1);
     play("check");
+  };
+
+  // Plan all 7 days at once: every day different, matched to that day's training.
+  const planWeek = () => {
+    const ints = weekIntensities(routine, trainingDay?.id);
+    // Keep today's meals if they're already set; re-plan the rest of the week.
+    const keepToday = Object.keys(s.plans[today] ?? {}).length > 0;
+    const days = week.map((d, i) => ({ date: d, intensity: ints[i] })).filter((d) => !(keepToday && d.date === today));
+    const out = planDays(days, (i) => dayTargets(s.profile, i), s.diet, s.plans);
+    for (const [d, r] of Object.entries(out)) s.setPlan(d, r.plan, r.scale);
+    setVariety(0);
+    play("win");
+    toast("Your week is planned: a different menu every day, no meal repeats");
   };
 
   return (
@@ -80,7 +104,7 @@ export function MealsView() {
       <section className="glass rounded-3xl p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-ink-2">Today&apos;s fuel</p>
+            <p className="text-xs font-medium text-ink-2">{isToday ? "Today's fuel" : `${dayLabel} · planned`}</p>
             <p className="font-display text-4xl leading-none mt-1 tabular whitespace-nowrap">
               {t.kcal}
               <span className="text-xl text-ink-3"> / {targets.kcal} kcal</span>
@@ -180,6 +204,43 @@ export function MealsView() {
         </section>
       )}
 
+      {/* This week: a different menu every day */}
+      <section className="rounded-3xl bg-card border border-line p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="font-medium text-ink">This week&apos;s menu</p>
+            <p className="text-xs text-ink-3 mt-0.5">A different menu every day. No meal repeats within 7 days.</p>
+          </div>
+          <button onClick={planWeek} className="shrink-0 h-10 px-3.5 rounded-full bg-fit-green-soft text-fit-green text-sm font-medium inline-flex items-center gap-1.5">
+            <CalendarDays size={16} /> Plan my week
+          </button>
+        </div>
+        <div className="mt-3 grid grid-cols-7 gap-1.5">
+          {week.map((d, i) => {
+            const dt = new Date(`${d}T12:00:00`);
+            const on = d === date;
+            const planned = Object.keys(s.plans[d] ?? {}).length > 0;
+            return (
+              <button
+                key={d}
+                onClick={() => {
+                  setDate(d);
+                  setOverride(null);
+                  setVariety(0);
+                }}
+                aria-pressed={on}
+                aria-label={`${i === 0 ? "Today" : dt.toLocaleDateString("en-IN", { weekday: "long" })} meals`}
+                className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 border ${on ? "bg-fit-blue text-white border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
+              >
+                <span className="text-[11px] font-medium">{i === 0 ? "Today" : dt.toLocaleDateString("en-IN", { weekday: "short" })}</span>
+                <span className="text-lg font-medium leading-none tabular">{dt.getDate()}</span>
+                <span className={`size-1.5 rounded-full ${planned ? (on ? "bg-white" : "bg-fit-green") : "bg-transparent"}`} />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Actions */}
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <motion.button whileTap={{ scale: 0.97 }} onClick={autoSync} className="h-14 rounded-2xl bg-fit-blue text-white font-semibold flex items-center justify-center gap-2 shadow-lift">
@@ -194,7 +255,7 @@ export function MealsView() {
       {/* Daily deck */}
       <div className="flex items-center justify-between pt-1">
         <p className="font-medium text-ink">
-          Today&apos;s plan
+          {isToday ? "Today's plan" : `${dayLabel}'s plan`}
           {meals.some(Boolean) && (
             <span className="ml-2 text-sm font-normal text-ink-2">
               ≈ <b className="font-medium text-fit-green">₹{planCost(meals, scale)}</b> for the day
@@ -204,19 +265,19 @@ export function MealsView() {
         {(Object.keys(plan).length > 0 || logged.length > 0) && (
           <button
             onClick={() => {
-              s.clearTodayMeals(today);
+              s.clearTodayMeals(date);
               setVariety(0);
-              toast("Today's meals cleared");
+              toast(isToday ? "Today's meals cleared" : "Meals cleared");
             }}
             className="h-9 px-3 -mr-2 rounded-full text-sm text-fit-blue font-medium inline-flex items-center gap-1.5 hover:bg-fit-blue-soft"
           >
-            <RotateCcw size={15} /> Clear today
+            <RotateCcw size={15} /> {isToday ? "Clear today" : "Clear day"}
           </button>
         )}
       </div>
       {scale !== 1 && (
         <p className="text-sm text-fit-yellow bg-fit-yellow-soft border border-fit-yellow/30 rounded-2xl px-4 py-3">
-          Portions scaled <b className="font-mono">×{scale}</b> to hit today&apos;s targets. Macros below are per serving.
+          Portions scaled <b className="font-mono">×{scale}</b> to hit {isToday ? "today's" : "the day's"} targets. Macros below are per serving.
         </p>
       )}
       <section className="space-y-3">
@@ -260,8 +321,9 @@ export function MealsView() {
       <MealSpinner
         open={spinSlot != null}
         slot={spinSlot ?? "breakfast"}
+        avoid={eatenThisWeek}
         onClose={() => setSpinSlot(null)}
-        onLand={(m) => s.setMeal(today, m.slot, m.id)}
+        onLand={(m) => s.setMeal(date, m.slot, m.id)}
         onViewRecipe={(m) => {
           setSpinSlot(null);
           setRecipe(m);

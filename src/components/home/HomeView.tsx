@@ -7,6 +7,7 @@ import { SLOTS, mealById } from "@/data/meals";
 import { INTENSITY_META } from "@/data/workouts";
 import { activeStreak, addDays, dayKey } from "@/lib/date";
 import { useToday } from "@/lib/hooks";
+import { useAutoMealPlan } from "@/lib/meal-week";
 import { todayNutrition, todaySession } from "@/lib/progress";
 import { currentRoutine, useStore } from "@/lib/store";
 import { LeaderboardCard } from "../leaderboard/Leaderboard";
@@ -23,6 +24,8 @@ export function HomeView() {
   const { day, totalSets, doneSets, completed } = todaySession(s, today);
   const { eaten, targets } = todayNutrition(s, today);
   const streak = activeStreak(s.completed, new Date(`${today}T12:00:00`));
+  // A new day gets a fresh menu (no meal from the rest of this week).
+  useAutoMealPlan(today, day?.intensity ?? "moderate");
   const plan = s.plans[today] ?? {};
   const groceryLeft = s.grocery.filter((g) => !g.checked).length;
 

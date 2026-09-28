@@ -23,8 +23,9 @@ All data lives in the browser's localStorage.
 - Set each day's intensity (heavy, moderate, light or rest), or let the app work it out from the exercises.
 
 **Meals**
-- 37 high-protein recipes split into vegetarian (paneer, tofu, soya, dal) and non-veg.
+- 72 high-protein Indian recipes split into vegetarian (paneer, tofu, soya, dal, chana, idli, dosa…) and non-veg. Every meal slot has 8–10 choices per diet.
 - A roulette wheel for each meal slot, plus recipe cards with macros, ingredients and three method steps.
+- **A different menu every day, no repeats in a week.** A 7-day strip lets you view and edit any day this week, and **Plan my week** fills all 7 days at once, matched to each day's training. Each new day is filled automatically. Auto-Sync, the dice and the roulette skip any meal already on another day within 7 days (the roulette greys those out). Last week's menu, and especially the same weekday last week, is avoided too, so weeks don't copy each other (`src/lib/meal-week.ts`, `planDays` in `src/lib/nutrition.ts`).
 
 **Smart Auto-Sync**
 - Daily targets come from your body weight, your goal and the day's intensity. Heavy days get +300 kcal and more carbs; rest days get −200 kcal and a recovery focus.
