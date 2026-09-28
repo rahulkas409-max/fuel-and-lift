@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Pencil, Plus, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { ALL_ROUTINES, INTENSITY_META, SCHEDULE_ADVICE } from "@/data/workouts";
+import { ALL_ROUTINES, INTENSITY_META, SCHEDULE_ADVICE, routinesFor, type Audience } from "@/data/workouts";
 import { celebrate } from "@/lib/confetti";
 import { useToday } from "@/lib/hooks";
 import { play } from "@/lib/sound";
@@ -70,11 +70,14 @@ function RoutineView() {
     prev.current = { key: logKey, done: pct === 1 };
   }, [pct, logKey, day, today, markCompleted]);
 
-  const routines = state.customRoutine ? [...ALL_ROUTINES, state.customRoutine] : ALL_ROUTINES;
+  // Men's / women's plans: both are always one tap away; start on the member's own.
+  const [aud, setAud] = useState<Audience>(routine.audience ?? (state.profile.sex === "female" ? "women" : "men"));
+  const shown = routinesFor(aud);
+  const routines = state.customRoutine ? [...shown, state.customRoutine] : shown;
 
   return (
     <div className="space-y-6">
-      <ScheduleAdvice current={routine.id} onPick={(id) => state.setRoutine(id)} />
+      <ScheduleAdvice aud={aud} setAud={setAud} current={routine.id} onPick={(id) => state.setRoutine(id)} />
 
       {/* Routine picker */}
       <section>
@@ -183,11 +186,24 @@ function RoutineView() {
 }
 
 /** "How many days can you train?" → the schedules that fit. */
-function ScheduleAdvice({ current, onPick }: { current: string; onPick: (id: string) => void }) {
+function ScheduleAdvice({ aud, setAud, current, onPick }: { aud: Audience; setAud: (a: Audience) => void; current: string; onPick: (id: string) => void }) {
   const [days, setDays] = useState<number | null>(null);
-  const advice = days ? SCHEDULE_ADVICE[days] : null;
+  const advice = days ? SCHEDULE_ADVICE[aud][days] : null;
   return (
     <section className="rounded-3xl bg-card border border-line p-4">
+      <div role="tablist" aria-label="Plans for" className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card-2 mb-4">
+        {(["men", "women"] as const).map((a) => (
+          <button
+            key={a}
+            role="tab"
+            aria-selected={aud === a}
+            onClick={() => setAud(a)}
+            className={`h-10 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}
+          >
+            {a === "men" ? "Men's plans" : "Women's plans"}
+          </button>
+        ))}
+      </div>
       <p className="font-medium text-ink">How many days a week can you train?</p>
       <div className="mt-2.5 grid grid-cols-4 gap-2">
         {[3, 4, 5, 6].map((n) => (
@@ -220,6 +236,9 @@ function ScheduleAdvice({ current, onPick }: { current: string; onPick: (id: str
             })}
           </div>
         </div>
+      )}
+      {aud === "women" && (
+        <p className="mt-3 text-xs text-ink-3">No gym? Open <b className="text-ink-2">Body-part workouts</b> for home and yoga plans for women: glutes, thighs, belly and arms.</p>
       )}
     </section>
   );

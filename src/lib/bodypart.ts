@@ -85,7 +85,7 @@ function doseFor(id: string, first: boolean, opts: PartOptions): { sets: number;
 /** Picks one variant from a pattern, honouring equipment, level and the rotation variant. */
 function pickVariant(group: string[], opts: PartOptions, used: Set<string>): string | null {
   let ok = group.filter((id) => exerciseById(id) && !used.has(id) && (opts.equipment !== "dumbbells" || DB_OK.has(exerciseById(id)!.equipment)));
-  if (opts.level === "beginner" && ok.some((id) => !ADVANCED_ONLY.has(id))) ok = ok.filter((id) => !ADVANCED_ONLY.has(id));
+  if (opts.level === "beginner") ok = ok.filter((id) => !ADVANCED_ONLY.has(id));
   if (!ok.length) return null;
   return ok[(opts.variant ?? 0) % ok.length];
 }
@@ -130,4 +130,14 @@ export const BODY_PART_SPLITS: Record<number, BodyPart[][]> = {
   6: [["Chest"], ["Back"], ["Legs"], ["Shoulders"], ["Biceps", "Triceps"], ["Glutes", "Hamstrings", "Abs"]],
 };
 
-export const partsLabel = (parts: BodyPart[]) => (parts.length === 2 && parts.includes("Biceps") && parts.includes("Triceps") ? "Arms" : parts.join(" & "));
+/** Splits for women: glutes and legs twice, lighter upper-body days with core. */
+export const BODY_PART_SPLITS_WOMEN: Record<number, BodyPart[][]> = {
+  2: [["Glutes", "Hamstrings", "Legs"], ["Back", "Shoulders", "Abs"]],
+  3: [["Glutes", "Hamstrings"], ["Back", "Shoulders", "Abs"], ["Legs", "Glutes"]],
+  4: [["Glutes", "Hamstrings"], ["Back", "Shoulders", "Biceps"], ["Legs", "Glutes", "Calves"], ["Chest", "Triceps", "Abs"]],
+  5: [["Glutes", "Hamstrings"], ["Shoulders", "Chest", "Triceps"], ["Legs", "Calves"], ["Back", "Biceps"], ["Glutes", "Abs"]],
+  6: [["Glutes", "Hamstrings"], ["Shoulders", "Chest", "Triceps"], ["Legs", "Calves"], ["Back", "Biceps"], ["Glutes", "Abs"], ["Shoulders", "Abs"]],
+};
+
+export const partsLabel = (parts: BodyPart[]) =>
+  parts.length === 2 && parts.includes("Biceps") && parts.includes("Triceps") ? "Arms" : parts.length > 2 ? `${parts.slice(0, -1).join(", ")} & ${parts.at(-1)}` : parts.join(" & ");

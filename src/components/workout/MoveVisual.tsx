@@ -1,21 +1,36 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
+import { MEDIA } from "@/data/media";
+import { MOVE_PHOTOS } from "@/data/move-photos";
+import { MOVES_3D } from "@/data/moves-3d";
 import { moveInfo, type ProgramMove } from "@/data/programs";
 import { Sheet } from "../ui/Sheet";
 import { ExerciseAnimation } from "./ExerciseDemo";
-import { FIGURES } from "@/data/figures";
-import { Figure, hasFigure } from "./Figure";
+
+/** Real start/finish photos for a move, if we have a true match. */
+const photosFor = (id: string): string[] | undefined => MOVE_PHOTOS[id] ?? MEDIA[id]?.frames;
+/** Keyframe stills of a move's 3D demo (Start, …, Finish). */
+const stills3d = (id: string) => Array.from({ length: MOVES_3D[id] ?? 0 }, (_, n) => `/moves3d/${id}-${n}.webp`);
+export const hasVisual = (id: string) => !!photosFor(id) || id in MOVES_3D;
 
 /**
- * Animated illustration for home / yoga / face moves, start–end photos for gym lifts.
+ * Real photos where a true match exists, otherwise a smooth 3D demo.
  * `still` shows the finished position only (for small thumbnails in lists).
  */
 export function MoveVisual({ id, className = "", still = false }: { id: string; className?: string; still?: boolean }) {
+  const reduce = useReducedMotion();
   const info = moveInfo(id);
-  if (hasFigure(id)) return <Figure id={id} className={className} frame={still ? 99 : undefined} />;
-  if (info.hasPhoto) return <ExerciseAnimation id={id} label={info.name} className={className} />;
-  return <span className={`block bg-[var(--fig-bg)] ${className}`} />;
+  const photos = photosFor(id);
+  // Photos fill the frame; 3D demos fit inside it (their backdrop matches), so wide banners never crop the figure.
+  const img = (src: string, fit: "cover" | "contain") => (
+    // eslint-disable-next-line @next/next/no-img-element -- small pre-optimised WebP files
+    <img src={src} alt={`${info.name} demonstration`} loading="lazy" decoding="async" draggable={false} className={`block bg-[#eef3fa] ${fit === "cover" ? "object-cover" : "object-contain"} ${className}`} />
+  );
+  if (photos) return still ? img(photos[1] ?? photos[0], "cover") : <ExerciseAnimation id={id} frames={photos} label={info.name} className={className} />;
+  if (id in MOVES_3D) return img(still || reduce ? stills3d(id).at(-1)! : `/moves3d/${id}.webp`, "contain");
+  return <span className={`block bg-card-2 ${className}`} />;
 }
 
 /** "8 (5 sec hold)" → "8 reps (5 sec hold)", "10 each leg" → "10 reps each leg" */
@@ -28,31 +43,29 @@ export const doseLabel = (m: Pick<ProgramMove, "sets" | "reps" | "secs">) => {
 
 export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => void }) {
   const info = id ? moveInfo(id) : null;
+  const photos = id ? photosFor(id) : undefined;
+  const steps = id && !photos ? stills3d(id) : [];
+  // Start / Finish pictures (or every step for flows like Surya Namaskar).
+  const pics: [string, string][] = photos
+    ? [["Start", photos[0]], ["Finish", photos[1] ?? photos[0]]]
+    : steps.length > 3
+      ? steps.map((s, n) => [`Step ${n + 1}`, s])
+      : steps.length > 1
+        ? [["Start", steps[0]], ["Finish", steps.at(-1)!]]
+        : [];
   return (
     <Sheet open={!!id} onClose={onClose} title="How to do it">
       {info && (
         <div className="pb-2">
           <MoveVisual id={info.id} className="w-full aspect-[3/2] rounded-3xl overflow-hidden" />
           <h2 className="text-2xl font-medium text-ink mt-4">{info.name}</h2>
-          {hasFigure(info.id) && FIGURES[info.id].frames.length > 3 && (
-            <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {FIGURES[info.id].frames.map((_, n) => (
-                <figure key={n} className="rounded-xl overflow-hidden border border-line">
-                  <Figure id={info.id} frame={n} className="w-full aspect-[3/2]" />
-                  <figcaption className="text-[11px] text-ink-2 text-center py-1 bg-card">Step {n + 1}</figcaption>
-                </figure>
-              ))}
-            </div>
-          )}
-          {hasFigure(info.id) && FIGURES[info.id].frames.length <= 3 && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {[
-                ["Start", 0],
-                ["Finish", 99],
-              ].map(([label, f]) => (
-                <figure key={label as string} className="rounded-2xl overflow-hidden border border-line">
-                  <Figure id={info.id} frame={f as number} className="w-full aspect-[3/2]" />
-                  <figcaption className="text-xs text-ink-2 text-center py-1.5 bg-card">{label}</figcaption>
+          {pics.length > 0 && (
+            <div className={`mt-3 grid gap-2 ${pics.length > 2 ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-2"}`}>
+              {pics.map(([label, src]) => (
+                <figure key={label} className="rounded-2xl overflow-hidden border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt={`${info.name}: ${label}`} loading="lazy" className="block w-full aspect-[3/2] object-cover bg-[#eef3fa]" />
+                  <figcaption className={`${pics.length > 2 ? "text-[11px] py-1" : "text-xs py-1.5"} text-ink-2 text-center bg-card`}>{label}</figcaption>
                 </figure>
               ))}
             </div>
@@ -73,6 +86,7 @@ export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => v
           >
             Watch a video on YouTube <ExternalLink size={16} />
           </a>
+          <p className="text-[11px] text-ink-3 text-center mt-3">{photos ? "Photos: free-exercise-db (public domain)" : "3D demo"}</p>
         </div>
       )}
     </Sheet>

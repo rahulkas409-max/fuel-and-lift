@@ -2,7 +2,7 @@
 import { mealById, SLOTS, type DietPref } from "@/data/meals";
 import { moveInfo, type Program, type ProgramMove } from "@/data/programs";
 import { exerciseById, inferIntensity, type DayIntensity, type Routine, type WorkoutDay, type WorkoutExercise } from "@/data/workouts";
-import { BODY_PART_SPLITS, buildBodyPartDay, partsLabel, type BodyPart } from "./bodypart";
+import { BODY_PART_SPLITS, BODY_PART_SPLITS_WOMEN, buildBodyPartDay, partsLabel, type BodyPart } from "./bodypart";
 import { dayTargets, planCost, planMeals, syncPlan, type Profile } from "./nutrition";
 
 export type PlanGoal = "fat" | "muscle" | "strength" | "general";
@@ -19,6 +19,8 @@ export interface PlanRequest {
   /** "split" = one or two body parts per day (chest day, back day...) */
   style?: "classic" | "split";
   equipment?: "gym" | "dumbbells";
+  /** plan for a woman (glute-first splits, glute focus by default) */
+  women?: boolean;
 }
 
 export type ChatAction =
@@ -65,12 +67,13 @@ export function parsePlanRequest(t: string, profileGoal: "cut" | "maintain" | "b
                 : undefined;
   const mm = t.match(/\b(\d{2,3})\s*(?:min|mins|minute|minutes)\b/) ?? (/\b(an|1|one) hour\b/.test(t) ? ["", "60"] : null);
   const lvl = level ?? base?.level ?? "beginner";
+  const women = /\b(women|woman|female|girls?|ladies|lady|wife|mahila)\b/.test(t) || (/\b(men|man|male|boys?|guys?)\b/.test(t) ? false : base?.women);
   return {
     days: days ?? base?.days ?? (lvl === "beginner" ? 3 : 4),
     place: place ?? base?.place ?? "gym",
     goal: goal ?? base?.goal ?? (profileGoal === "cut" ? "fat" : profileGoal === "bulk" ? "muscle" : "general"),
     level: lvl,
-    focus: focus ?? base?.focus ?? null,
+    focus: focus ?? base?.focus ?? (women ? "glutes" : null),
     minutes: mm ? Number(mm[1]) : (base?.minutes ?? null),
     style: /\b(split|bro split|body ?part|bodypart|muscle ?wise|body ?wise|one muscle|chest day|back day|leg day|arm day)\b/.test(t)
       ? "split"
@@ -78,6 +81,7 @@ export function parsePlanRequest(t: string, profileGoal: "cut" | "maintain" | "b
         ? "classic"
         : (base?.style ?? "classic"),
     equipment: /\b(dumbbell|dumbbells|home gym)\b/.test(t) ? "dumbbells" : (base?.equipment ?? "gym"),
+    women,
   };
 }
 
@@ -178,13 +182,14 @@ function dose(goal: PlanGoal, pattern: Pattern, compound: boolean, level: PlanLe
 }
 
 function buildSplit(req: PlanRequest): { routine: Routine; text: string } {
-  const week = BODY_PART_SPLITS[req.days] ?? BODY_PART_SPLITS[4];
+  const splits = req.women ? BODY_PART_SPLITS_WOMEN : BODY_PART_SPLITS;
+  const week = splits[req.days] ?? splits[4];
   const days: WorkoutDay[] = week.map((parts, di) => {
     const repeat = week.slice(0, di).some((p) => p.join() === parts.join());
     const exercises = buildBodyPartDay(parts, { level: req.level, goal: req.goal, equipment: req.equipment, variant: repeat ? 1 : 0 });
     return { id: `f-${di}-${parts.join("-")}`, name: `Day ${di + 1}: ${partsLabel(parts)}`, focus: parts.join(" · "), intensity: inferIntensity(exercises), exercises };
   });
-  const title = `${req.days}-Day Body-Part Split`;
+  const title = `${req.days}-Day ${req.women ? "Women's " : ""}Body-Part Split`;
   const routine: Routine = { id: "custom", name: `Fitso ${title}`, short: "Fitso split", blurb: `Made by Fitso for ${goalLabel(req.goal)} · ${req.level}`, days };
   const text = `Here's your **${title}** for **${goalLabel(req.goal)}** (${req.level}${req.equipment === "dumbbells" ? ", dumbbells only" : ""}):\n\n${days
     .map((d) => `**${d.name}**\n${d.exercises.map((e) => `- ${exerciseById(e.exerciseId)!.name}: ${e.sets} × ${e.reps}`).join("\n")}`)
@@ -207,7 +212,10 @@ function buildGym(req: PlanRequest): { routine: Routine; text: string } {
   const days: WorkoutDay[] = split.days.map((key, di) => {
     const tpl = DAY_TEMPLATES[key];
     let patterns = [...tpl.patterns];
-    if (req.focus) patterns = [...patterns.slice(0, 3), ...FOCUS_ADD[req.focus], ...patterns.slice(3)];
+    // Add focus work only where it belongs: lower-body focus on leg/full days, upper-body focus on upper/full days.
+    const lowerFocus = req.focus === "glutes" || req.focus === "legs";
+    const fits = req.focus === "abs" || key.startsWith("full") || (lowerFocus ? /lower|legs/.test(key) : /upper|push|pull/.test(key));
+    if (req.focus && fits) patterns = [...patterns.slice(0, 3), ...FOCUS_ADD[req.focus].filter((f) => !patterns.includes(f)), ...patterns.slice(3)];
     patterns = patterns.slice(0, maxEx);
     const used = new Set<string>();
     const exercises: WorkoutExercise[] = [];

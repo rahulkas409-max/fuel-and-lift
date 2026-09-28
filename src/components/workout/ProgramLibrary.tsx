@@ -6,15 +6,14 @@ import { useMemo, useState } from "react";
 import { AREAS, KINDS, PROGRAMS, moveInfo, programMinutes, type Area, type Program, type ProgramKind, type ProgramMove } from "@/data/programs";
 import { useToday } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
-import { hasFigure } from "./Figure";
 import { Sheet } from "../ui/Sheet";
-import { MoveHowTo, MoveVisual, doseLabel } from "./MoveVisual";
+import { MoveHowTo, MoveVisual, doseLabel, hasVisual } from "./MoveVisual";
 import { ProgramPlayer } from "./ProgramPlayer";
 
 const KIND_ICON = { all: LayoutGrid, gym: Dumbbell, home: House, yoga: Flower2 } as const;
 
 /** The move that best represents a workout, for its card picture. */
-const heroMove = (p: Program) => (p.moves.find((m) => hasFigure(m.move)) ?? p.moves[0]).move;
+const heroMove = (p: Program) => (p.moves.find((m) => hasVisual(m.move)) ?? p.moves[0]).move;
 
 const KIND_STYLE: Record<ProgramKind, { badge: string }> = {
   gym: { badge: "bg-fit-blue-soft text-fit-blue" },

@@ -1,4 +1,4 @@
-// Illustrated, animated demos for home, yoga and face moves.
+// Pose keyframes for home and yoga moves. scripts/moves3d renders them as 3D demos for moves without a real photo.
 // Each body move is a list of keyframe poses (see src/lib/figure.ts for the angle convention:
 // 0 = down, 90 = right, 180 = up, 270 = left; side-view figures face right).
 import type { Anchor, Joint, Pose } from "@/lib/figure";
@@ -9,28 +9,8 @@ export type Prop =
   | { type: "towel" }
   | { type: "rope" };
 
-export interface FaceFrame {
-  hands?: "forehead" | "cheeks" | "headSide" | "behind";
-  roll?: number;
-  pitch?: number;
-  tuck?: number;
-  jaw?: number;
-  pucker?: number;
-  chin?: number;
-  mouthW?: number;
-  mouthOpen?: number;
-  smile?: number;
-  tongue?: number;
-  cheekIn?: number;
-  puffL?: number;
-  puffR?: number;
-  eyesUp?: number;
-  lift?: number;
-}
-
 export type FigureSpec =
-  | { kind: "body"; frames: Pose[]; anchor?: Anchor; /** keep the anchor's height fixed too (hands on a chair) */ anchorY?: boolean; move?: number; hold?: number; props?: Prop[] }
-  | { kind: "face"; view: "front" | "profile"; frames: FaceFrame[]; move?: number; hold?: number };
+  { kind: "body"; frames: Pose[]; anchor?: Anchor; /** keep the anchor's height fixed too (hands on a chair) */ anchorY?: boolean; move?: number; hold?: number; props?: Prop[] };
 
 // ── Building blocks ──
 const P = (o: Partial<Pose>): Pose => ({ view: "side", torso: 180, aN: [0, 0], aF: [0, 0], lN: [0, 0, 90], lF: [0, 0, 90], ...o });
@@ -62,7 +42,6 @@ const SURYA_LUNGE = P({ torso: 150, head: 140, aN: [25, 5], aF: [27, 7], lF: [60
 const ASHTANGA = P({ torso: 64, head: 70, face: 0, bend: 4, aN: [140, 350], aF: [142, 352], lN: [330, 272, 270], lF: [332, 272, 270] });
 
 const body = (frames: Pose[], extra: Omit<Extract<FigureSpec, { kind: "body" }>, "kind" | "frames"> = {}): FigureSpec => ({ kind: "body", frames, ...extra });
-const face = (view: "front" | "profile", frames: FaceFrame[], extra: { move?: number; hold?: number } = {}): FigureSpec => ({ kind: "face", view, frames, ...extra });
 
 export const FIGURES: Record<string, FigureSpec> = {
   // ───── Abs & waist ─────
@@ -115,13 +94,6 @@ export const FIGURES: Record<string, FigureSpec> = {
     [
       P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [92, 92, 90] }),
       P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [132, 132, 132] }),
-    ],
-    { anchor: "hip" },
-  ),
-  "inner-thigh-lift": body(
-    [
-      P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [90, 90, 90], lF: [125, 25, 90] }),
-      P({ noFace: true, torso: 270, head: 250, aN: [250, 160], aF: [40, 10], lN: [104, 104, 104], lF: [125, 25, 90] }),
     ],
     { anchor: "hip" },
   ),
@@ -221,18 +193,9 @@ export const FIGURES: Record<string, FigureSpec> = {
   kapalbhati: body([P({ aN: [25, 75], aF: [27, 77], lN: [88, 268, 270], lF: [92, 272, 270] }), P({ torso: 181, bend: -3, aN: [25, 75], aF: [27, 77], lN: [88, 268, 270], lF: [92, 272, 270] })], { anchor: "hip", move: 0.25, hold: 0.35 }),
   shavasana: body([SUPINE({ aN: [100, 100], aF: [102, 102], lN: [92, 92, 150], lF: [94, 94, 150] })]),
   "worlds-greatest": body([LUNGE_LOW({ torso: 110, head: 100, face: 20, aN: [5, 0], aF: [7, 2], lF: [318, 318, 20] }), LUNGE_LOW({ torso: 118, head: 120, aN: [180, 180], aF: [7, 2], lF: [318, 318, 20] })], { anchor: "anN" }),
-  // ───── Face & neck ─────
-  "kiss-ceiling": face("profile", [{}, { pitch: 32, pucker: 1 }], { hold: 1 }),
-  "jaw-jut": face("profile", [{ pitch: 10 }, { pitch: 18, jaw: 1 }], { hold: 1 }),
-  "tongue-press": face("profile", [{}, { chin: 1, jaw: 0.2 }], { hold: 1 }),
-  "chin-tuck": face("profile", [{}, { tuck: 1, pitch: -6 }], { hold: 0.9 }),
-  "chin-to-chest": face("profile", [{ hands: "behind" }, { hands: "behind", pitch: -36 }], { move: 1.4, hold: 1.2 }),
-  "fish-face": face("front", [{}, { cheekIn: 1, pucker: 1, mouthW: 6 }], { hold: 1 }),
-  "cheek-puff": face("front", [{ puffL: 1, pucker: 0.4, mouthW: 6 }, { puffR: 1, pucker: 0.4, mouthW: 6 }], { move: 0.7, hold: 0.5 }),
-  "vowel-o-e": face("front", [{ mouthW: 7, mouthOpen: 9 }, { mouthW: 16, mouthOpen: 3.5, smile: 0.4 }], { move: 0.7, hold: 0.6 }),
-  "neck-roll": face("front", [{ roll: -28 }, { roll: 0, lift: -1 }, { roll: 28 }, { roll: 0, lift: -1 }], { move: 1.2, hold: 0.2 }),
-  "neck-side-stretch": face("front", [{ hands: "headSide", roll: 0 }, { hands: "headSide", roll: 30 }], { move: 1.3, hold: 1.2 }),
-  "neck-isometric": face("front", [{ hands: "forehead" }, { hands: "behind" }], { move: 0.8, hold: 1.2 }),
-  "cheek-lift": face("front", [{ hands: "cheeks" }, { hands: "cheeks", smile: 1, mouthW: 14, lift: 1 }], { hold: 1 }),
-  "lion-pose": face("front", [{}, { mouthOpen: 14, mouthW: 12, tongue: 1, eyesUp: 1 }], { hold: 1 }),
+  // ───── Neck (standing, seen from the side / front) ─────
+  "chin-tuck": body([P({ head: 170, face: 96 }), P({ head: 187, face: 84 })], { anchor: "feet", move: 1, hold: 1.1 }),
+  "kiss-ceiling": body([P({}), P({ head: 197, face: 140 })], { anchor: "feet", move: 1.2, hold: 1.3 }),
+  "jaw-jut": body([P({ head: 188, face: 112 }), P({ head: 196, face: 132 })], { anchor: "feet", move: 1, hold: 1.3 }),
+  "neck-roll": body([F({ head: 154 }), F({ head: 180 }), F({ head: 206 }), F({ head: 180 })], { anchor: "feet", move: 1.2, hold: 0.3 }),
 };

@@ -35,6 +35,8 @@ export interface Routine {
   short: string;
   blurb: string;
   days: WorkoutDay[];
+  /** Who the plan is designed for; unset = everyone */
+  audience?: "men" | "women";
 }
 
 const ex = (e: Exercise) => e;
@@ -127,6 +129,7 @@ export const ROUTINES: Routine[] = [
     name: "6-Day Push / Pull / Legs",
     short: "PPL",
     blurb: "High frequency for experienced lifters chasing volume.",
+    audience: "men",
     days: [
       { id: "ppl-push1", name: "Push — Heavy", focus: "Chest · Shoulders · Triceps", intensity: "heavy", exercises: [w("bench-press"), w("ohp", 3), w("incline-db-press"), w("lateral-raise"), w("tricep-pushdown"), w("overhead-ext")] },
       { id: "ppl-pull1", name: "Pull — Heavy", focus: "Back · Biceps", intensity: "heavy", exercises: [w("deadlift"), w("pull-up"), w("barbell-row"), w("face-pull"), w("barbell-curl"), w("hammer-curl")] },
@@ -146,6 +149,7 @@ export const SPLIT_ROUTINES: Routine[] = [
     name: "3-Day Body-Part Split",
     short: "3-Day Split",
     blurb: "Chest & Triceps · Back & Biceps · Legs & Shoulders. Great for 3 gym days.",
+    audience: "men",
     days: [
       { id: "bp3-ct", name: "Chest & Triceps", focus: "Chest · Triceps", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("pec-deck", 3, "12-15"), w("tricep-dips", 3, "8-12"), w("tricep-pushdown"), w("overhead-ext")] },
       { id: "bp3-bb", name: "Back & Biceps", focus: "Back · Biceps", intensity: "heavy", exercises: [w("lat-pulldown", 4, "8-10"), w("barbell-row"), w("seated-row"), w("face-pull"), w("barbell-curl"), w("hammer-curl")] },
@@ -157,6 +161,7 @@ export const SPLIT_ROUTINES: Routine[] = [
     name: "4-Day Body-Part Split",
     short: "4-Day Split",
     blurb: "Chest & Triceps · Back & Biceps · Legs · Shoulders & Abs.",
+    audience: "men",
     days: [
       { id: "bp4-ct", name: "Chest & Triceps", focus: "Chest · Triceps", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("cable-fly"), w("dips"), w("tricep-pushdown"), w("overhead-ext")] },
       { id: "bp4-bb", name: "Back & Biceps", focus: "Back · Biceps", intensity: "heavy", exercises: [w("lat-pulldown", 4, "8-10"), w("barbell-row"), w("seated-row"), w("straight-arm-pulldown", 3, "12-15"), w("barbell-curl"), w("hammer-curl")] },
@@ -169,6 +174,7 @@ export const SPLIT_ROUTINES: Routine[] = [
     name: "5-Day Bro Split",
     short: "Bro Split",
     blurb: "One muscle group a day: Chest · Back · Shoulders · Legs · Arms.",
+    audience: "men",
     days: [
       { id: "bp5-chest", name: "Chest", focus: "Upper, middle & lower chest", intensity: "heavy", exercises: [w("bench-press", 4, "6-10"), w("incline-db-press"), w("machine-chest-press"), w("pec-deck", 3, "12-15"), w("cable-fly"), w("push-up", 2, "Max")] },
       { id: "bp5-back", name: "Back", focus: "Width · Thickness · Traps", intensity: "heavy", exercises: [w("deadlift", 3, "5"), w("lat-pulldown"), w("barbell-row"), w("seated-row"), w("straight-arm-pulldown", 3, "12-15"), w("barbell-shrug", 3, "12")] },
@@ -177,11 +183,29 @@ export const SPLIT_ROUTINES: Routine[] = [
       { id: "bp5-arms", name: "Arms", focus: "Biceps · Triceps · Forearms", intensity: "moderate", exercises: [w("barbell-curl"), w("close-grip-bench", 3, "8-10"), w("preacher-curl"), w("tricep-pushdown"), w("hammer-curl"), w("overhead-ext")] },
     ],
   },
+];
+
+
+/** Gym plans designed for women: glute-first lower days, lighter-volume upper days, core work. */
+export const WOMEN_ROUTINES: Routine[] = [
+  {
+    id: "w3",
+    name: "3-Day Toned Full Body",
+    short: "Toned 3-Day",
+    blurb: "Every muscle three times a week with a glute focus. Best start for women new to the gym.",
+    audience: "women",
+    days: [
+      { id: "w3-a", name: "Full Body A", focus: "Glutes · Quads · Chest · Shoulders", intensity: "heavy", exercises: [w("goblet-squat", 3, "10-12"), w("hip-thrust", 3, "10-12"), w("machine-chest-press", 3, "10-12"), w("db-shoulder-press", 3, "10-12"), w("seated-leg-curl", 3, "12-15"), w("plank", 3, "30s")] },
+      { id: "w3-b", name: "Full Body B", focus: "Back · Arms · Core", intensity: "moderate", exercises: [w("lat-pulldown", 3, "10-12"), w("seated-row", 3, "10-12"), w("incline-db-press", 3, "10-12"), w("lateral-raise", 3, "12-15"), w("db-curl", 3, "12"), w("tricep-pushdown", 3, "12"), w("cable-crunch", 3, "15")] },
+      { id: "w3-c", name: "Glutes & Legs", focus: "Glutes · Hamstrings · Thighs", intensity: "heavy", exercises: [w("db-rdl", 3, "10-12"), w("bulgarian-split-squat", 3, "10 each"), w("leg-press", 3, "12"), w("cable-kickback", 3, "12-15"), w("hip-abduction", 3, "15-20"), w("hip-adduction", 3, "15"), w("db-calf-raise", 3, "15")] },
+    ],
+  },
   {
     id: "glute4",
     name: "4-Day Glute-Focused Split",
     short: "Glute Focus",
-    blurb: "Popular with women: two lower-body glute days plus two upper-body days.",
+    blurb: "Two glute-building lower days plus two upper-body days. The most popular women's gym plan.",
+    audience: "women",
     days: [
       { id: "g4-gq", name: "Glutes & Quads", focus: "Glutes · Quads", intensity: "heavy", exercises: [w("hip-thrust", 4, "8-12"), w("goblet-squat"), w("bulgarian-split-squat"), w("leg-press"), w("hip-abduction", 3, "15-20"), w("leg-extension")] },
       { id: "g4-upper", name: "Upper Body", focus: "Back · Shoulders · Chest", intensity: "moderate", exercises: [w("lat-pulldown"), w("db-shoulder-press"), w("seated-row"), w("incline-db-press"), w("lateral-raise"), w("tricep-pushdown")] },
@@ -189,17 +213,58 @@ export const SPLIT_ROUTINES: Routine[] = [
       { id: "g4-sa", name: "Shoulders, Arms & Abs", focus: "Shoulders · Arms · Core", intensity: "moderate", exercises: [w("arnold-press"), w("lateral-raise"), w("reverse-pec-deck", 3, "12-15"), w("db-curl"), w("rope-overhead-ext"), w("plank", 3, "45s")] },
     ],
   },
+  {
+    id: "w5",
+    name: "5-Day Women's Body-Part Split",
+    short: "Women 5-Day",
+    blurb: "Glutes twice a week, one day each for push, pull and legs. For women who enjoy the gym most days.",
+    audience: "women",
+    days: [
+      { id: "w5-gh", name: "Glutes & Hamstrings", focus: "Glutes · Hamstrings", intensity: "heavy", exercises: [w("hip-thrust", 4, "8-12"), w("rdl", 3, "8-10"), w("reverse-lunge", 3, "10 each"), w("seated-leg-curl", 3, "12"), w("cable-kickback", 3, "15"), w("hip-abduction", 3, "20")] },
+      { id: "w5-push", name: "Chest, Shoulders & Triceps", focus: "Chest · Shoulders · Triceps", intensity: "moderate", exercises: [w("db-shoulder-press", 3, "10-12"), w("incline-db-press", 3, "10-12"), w("lateral-raise", 4, "12-15"), w("pec-deck", 3, "12-15"), w("rope-overhead-ext", 3, "12"), w("tricep-kickback", 3, "12")] },
+      { id: "w5-quads", name: "Quads & Calves", focus: "Thighs · Calves", intensity: "heavy", exercises: [w("goblet-squat", 4, "8-12"), w("leg-press", 3, "10-12"), w("db-step-up", 3, "10 each"), w("leg-extension", 3, "12-15"), w("hip-adduction", 3, "15"), w("calf-raise", 4, "12-15")] },
+      { id: "w5-pull", name: "Back & Biceps", focus: "Back · Posture · Biceps", intensity: "moderate", exercises: [w("lat-pulldown", 4, "10-12"), w("seated-row", 3, "10-12"), w("db-row", 3, "10 each"), w("face-pull", 3, "15"), w("db-curl", 3, "12"), w("hammer-curl", 3, "12")] },
+      { id: "w5-gc", name: "Glutes & Core", focus: "Glutes · Abs · Waist", intensity: "moderate", exercises: [w("barbell-glute-bridge", 3, "12"), w("cable-pull-through", 3, "15"), w("db-sumo-squat", 3, "12"), w("hanging-leg-raise", 3, "10"), w("cable-woodchop", 3, "12 each"), w("side-bridge", 3, "30s")] },
+    ],
+  },
+  {
+    id: "w6",
+    name: "6-Day Glute & Tone Split",
+    short: "Women 6-Day",
+    blurb: "Three lower-body days and three upper/core days. For experienced women chasing glute growth.",
+    audience: "women",
+    days: [
+      { id: "w6-g1", name: "Glutes — Heavy", focus: "Glutes · Hamstrings", intensity: "heavy", exercises: [w("hip-thrust", 4, "6-10"), w("sumo-deadlift", 3, "6-8"), w("bulgarian-split-squat", 3, "8 each"), w("seated-leg-curl", 3, "12"), w("hip-abduction", 3, "20")] },
+      { id: "w6-push", name: "Push", focus: "Shoulders · Chest · Triceps", intensity: "moderate", exercises: [w("db-shoulder-press", 4, "8-12"), w("incline-db-press", 3, "10"), w("cable-lateral-raise", 3, "15"), w("pec-deck", 3, "15"), w("tricep-pushdown", 3, "12")] },
+      { id: "w6-quads", name: "Legs — Quads", focus: "Thighs · Calves", intensity: "heavy", exercises: [w("hack-squat", 4, "8-10"), w("leg-press", 3, "12"), w("walking-lunge", 3, "12 each"), w("leg-extension", 3, "15"), w("hip-adduction", 3, "15"), w("calf-raise", 4, "15")] },
+      { id: "w6-pull", name: "Pull", focus: "Back · Rear delts · Biceps", intensity: "moderate", exercises: [w("lat-pulldown", 4, "10"), w("chest-supported-row", 3, "10-12"), w("straight-arm-pulldown", 3, "12-15"), w("face-pull", 3, "15"), w("incline-curl", 3, "12")] },
+      { id: "w6-g2", name: "Glutes — Pump", focus: "Glutes · Hips", intensity: "moderate", exercises: [w("barbell-glute-bridge", 4, "12-15"), w("db-rdl", 3, "12"), w("cable-kickback", 3, "15 each"), w("db-step-up", 3, "12 each"), w("hip-abduction", 3, "25"), w("kb-swing", 3, "15")] },
+      { id: "w6-core", name: "Arms & Core", focus: "Arms · Abs · Waist", intensity: "light", exercises: [w("arnold-press", 3, "12"), w("cable-curl", 3, "12"), w("rope-overhead-ext", 3, "12"), w("cable-crunch", 3, "15"), w("pallof-press", 3, "12 each"), w("plank", 3, "45s")] },
+    ],
+  },
 ];
 
-/** Every built-in routine: classic splits plus body-part splits. */
-export const ALL_ROUTINES: Routine[] = [...ROUTINES, ...SPLIT_ROUTINES];
+/** Every built-in routine: classic splits, body-part splits and the women's plans. */
+export const ALL_ROUTINES: Routine[] = [...ROUTINES, ...SPLIT_ROUTINES, ...WOMEN_ROUTINES];
 
-/** Which schedule to pick for how many days you can train. */
-export const SCHEDULE_ADVICE: Record<number, { ids: string[]; why: string }> = {
-  3: { ids: ["full-body", "bp3"], why: "Full Body is best for beginners; the 3-Day Split suits you if you like one-to-two muscles per day." },
-  4: { ids: ["upper-lower", "bp4", "glute4"], why: "Upper/Lower trains everything twice a week; the 4-Day Split is classic gym style; Glute Focus for lower-body goals." },
-  5: { ids: ["bp5", "upper-lower"], why: "The Bro Split gives each muscle its own day with lots of volume." },
-  6: { ids: ["ppl"], why: "Push/Pull/Legs twice a week is great for experienced lifters who recover well." },
+export type Audience = "men" | "women";
+/** Routines shown under each audience tab (shared plans appear in both). */
+export const routinesFor = (a: Audience) => ALL_ROUTINES.filter((r) => !r.audience || r.audience === a);
+
+/** Which schedule to pick for how many days you can train, for men and for women. */
+export const SCHEDULE_ADVICE: Record<Audience, Record<number, { ids: string[]; why: string }>> = {
+  men: {
+    3: { ids: ["full-body", "bp3"], why: "Full Body is best for beginners; the 3-Day Split suits you if you like one-to-two muscles per day." },
+    4: { ids: ["upper-lower", "bp4"], why: "Upper/Lower trains everything twice a week; the 4-Day Split is classic gym style." },
+    5: { ids: ["bp5", "upper-lower"], why: "The Bro Split gives each muscle its own day with lots of volume." },
+    6: { ids: ["ppl"], why: "Push/Pull/Legs twice a week is great for experienced lifters who recover well." },
+  },
+  women: {
+    3: { ids: ["w3", "full-body"], why: "Toned Full Body works every muscle three times a week with extra glute work. Perfect if you're new." },
+    4: { ids: ["glute4", "upper-lower"], why: "Glute Focus gives two lower-body and two upper-body days. Upper/Lower is the balanced option." },
+    5: { ids: ["w5"], why: "Glutes twice a week plus a day each for push, pull and legs." },
+    6: { ids: ["w6"], why: "Three lower-body and three upper/core days for experienced lifters chasing glute growth." },
+  },
 };
 
 export const INTENSITY_META: Record<DayIntensity, { label: string; emoji: string; kcalDelta: number; blurb: string }> = {

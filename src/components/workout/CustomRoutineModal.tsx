@@ -13,7 +13,7 @@ import {
   type Routine,
   type WorkoutDay,
 } from "@/data/workouts";
-import { BODY_PART_SPLITS, BODY_PARTS, buildBodyPartDay, partsLabel, type BodyPart, type Equipment } from "@/lib/bodypart";
+import { BODY_PART_SPLITS, BODY_PART_SPLITS_WOMEN, BODY_PARTS, buildBodyPartDay, partsLabel, type BodyPart, type Equipment } from "@/lib/bodypart";
 import { burst } from "@/lib/confetti";
 import { currentRoutine, useStore } from "@/lib/store";
 import { usePaywall } from "../paywall/PaywallProvider";
@@ -287,6 +287,9 @@ function PartDaySheet({
   const [equipment, setEquipment] = useState<Equipment>("gym");
   const [level, setLevel] = useState<"beginner" | "intermediate">("beginner");
   const [variant, setVariant] = useState(0);
+  const sex = useStore((s) => s.profile.sex);
+  const [forWomen, setForWomen] = useState(sex === "female");
+  const splits = forWomen ? BODY_PART_SPLITS_WOMEN : BODY_PART_SPLITS;
   const exercises = parts.length ? buildBodyPartDay(parts, { equipment, level, variant }) : [];
   const toggle = (p: BodyPart) => setParts((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : cur.length >= 3 ? cur : BODY_PARTS.filter((x) => x === p || cur.includes(x))));
   const makeDay = (ps: BodyPart[], v = 0): WorkoutDay => {
@@ -360,11 +363,18 @@ function PartDaySheet({
       <div className="mt-6 rounded-2xl bg-card-2 p-4">
         <p className="font-medium text-ink">Or build a full body-part week</p>
         <p className="text-xs text-ink-3 mt-1">Replaces the days above with a classic split for the days you can train.</p>
+        <div role="tablist" aria-label="Split for" className="mt-3 grid grid-cols-2 gap-1 p-1 rounded-xl bg-card">
+          {[false, true].map((w) => (
+            <button key={String(w)} role="tab" aria-selected={forWomen === w} onClick={() => setForWomen(w)} className={`h-9 rounded-lg text-sm font-medium ${forWomen === w ? (w ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}>
+              {w ? "Women's split" : "Men's split"}
+            </button>
+          ))}
+        </div>
         <div className="mt-3 grid grid-cols-5 gap-2">
           {[2, 3, 4, 5, 6].map((n) => (
             <button
               key={n}
-              onClick={() => onReplaceWeek(BODY_PART_SPLITS[n].map((ps, i) => makeDay(ps, BODY_PART_SPLITS[n].slice(0, i).some((x) => x.join() === ps.join()) ? 1 : 0)))}
+              onClick={() => onReplaceWeek(splits[n].map((ps, i) => makeDay(ps, splits[n].slice(0, i).some((x) => x.join() === ps.join()) ? 1 : 0)))}
               className="h-12 rounded-xl border border-line bg-card text-sm text-ink font-medium"
             >
               {n} days
@@ -372,7 +382,7 @@ function PartDaySheet({
           ))}
         </div>
         <p className="text-[11px] text-ink-3 mt-2">
-          3 days: Chest & Triceps · Back & Biceps · Legs & Shoulders. 5 days: Chest · Back · Shoulders · Legs · Arms.
+          {[3, 5].map((n) => `${n} days: ${splits[n].map(partsLabel).join(" · ")}.`).join(" ")}
         </p>
       </div>
     </Sheet>
