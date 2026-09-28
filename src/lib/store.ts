@@ -152,6 +152,17 @@ const initialData = (): Data => ({
 const emptySet = (): SetLog => ({ weight: "", reps: "", done: false });
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+/** Adds an amount to a grocery quantity, counting repeats: "1", "1", "½" → "1 × 2 + ½". */
+export function addQty(current: string, add: string): string {
+  const counts = new Map<string, number>();
+  for (const part of current.split(" + ").filter(Boolean)) {
+    const m = part.match(/^(.*) × (\d+)$/);
+    counts.set(m ? m[1] : part, (counts.get(m ? m[1] : part) ?? 0) + (m ? Number(m[2]) : 1));
+  }
+  if (add) counts.set(add, (counts.get(add) ?? 0) + 1);
+  return [...counts].map(([q, n]) => (n > 1 ? `${q} × ${n}` : q)).join(" + ");
+}
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -191,9 +202,8 @@ export const useStore = create<State>()(
           const list = s.grocery.map((g) => ({ ...g }));
           for (const ing of meal.ingredients) {
             const existing = list.find((g) => g.name.toLowerCase() === ing.item.toLowerCase() && !g.checked);
-            if (existing) {
-              if (!existing.qty.split(" + ").includes(ing.qty)) existing.qty = `${existing.qty} + ${ing.qty}`;
-            } else {
+            if (existing) existing.qty = addQty(existing.qty, ing.qty);
+            else {
               list.push({ id: uid(), name: ing.item, qty: ing.qty, section: ing.section, checked: false });
               added++;
             }

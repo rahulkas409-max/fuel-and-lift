@@ -1,10 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Trash2, X } from "lucide-react";
+import { CalendarDays, Plus, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import type { GrocerySection } from "@/data/meals";
+import { mealById, type GrocerySection, type Meal } from "@/data/meals";
+import { useToday } from "@/lib/hooks";
+import { fillWeek, weekDates } from "@/lib/meal-week";
+import { useToast } from "@/lib/toast";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
 import { Emoji } from "../ui/Emoji";
@@ -16,6 +19,30 @@ const SECTIONS: { id: GrocerySection; emoji: string }[] = [
 ];
 
 /** Guess a section for manually typed items. */
+/** "1 × 2" → "2", "120 g × 2" → "240 g", "½ × 3" → "1½" (the list stores repeats as "× n"). */
+const FRAC: Record<string, number> = { "½": 0.5, "¼": 0.25, "¾": 0.75 };
+const fmtNum = (n: number) => {
+  const whole = Math.floor(n),
+    rest = +(n - whole).toFixed(2);
+  const f = Object.entries(FRAC).find(([, v]) => v === rest)?.[0];
+  return rest === 0 ? String(whole) : f ? `${whole || ""}${f}` : String(+n.toFixed(1));
+};
+export function prettyQty(qty: string) {
+  // Sum amounts that share a unit ("1", "1 × 4", "2" → "7"; "120 g × 2" + "60 g" → "300 g"); keep the rest as written.
+  const totals = new Map<string, number>();
+  const other: string[] = [];
+  for (const part of qty.split(" + ")) {
+    const m = part.match(/^(\d+(?:\.\d+)?|½|¼|¾)(\s*[^×]*?)(?: × (\d+))?$/);
+    if (!m) {
+      other.push(part);
+      continue;
+    }
+    const unit = m[2];
+    totals.set(unit, (totals.get(unit) ?? 0) + (FRAC[m[1]] ?? Number(m[1])) * Number(m[3] ?? 1));
+  }
+  return [...[...totals].map(([unit, n]) => `${fmtNum(n)}${unit}`), ...other].join(" + ");
+}
+
 function guessSection(name: string): GrocerySection {
   const n = name.toLowerCase();
   if (/(paneer|tofu|egg|chicken|fish|prawn|milk|curd|yogurt|whey|cheese|feta|mutton|tuna|cream|butter)/.test(n)) return "Protein & Dairy";
@@ -24,8 +51,28 @@ function guessSection(name: string): GrocerySection {
 }
 
 export function GroceryList() {
-  const { grocery, toggleGrocery, removeGrocery, clearCheckedGrocery, addGroceryItem, setTab } = useStore();
+  const { grocery, toggleGrocery, removeGrocery, clearCheckedGrocery, addGroceryItem, setTab, plans, addToGrocery } = useStore();
   const [text, setText] = useState("");
+  const today = useToday();
+  const toast = useToast((t) => t.show);
+  // Every distinct meal on the menu for today and the next 6 days (or just today).
+  const menuMeals = (days: string[]) => [...new Set(days.flatMap((d) => Object.values(plans[d] ?? {}).filter(Boolean) as string[]))].map((id) => mealById(id)!).filter(Boolean);
+  const addWeek = () => {
+    // Plan any empty days first so the list covers the whole week.
+    fillWeek(today);
+    const p = useStore.getState().plans;
+    const ids = new Set(weekDates(today).flatMap((d) => Object.values(p[d] ?? {}).filter(Boolean) as string[]));
+    addMenu([...ids].map((id) => mealById(id)!).filter(Boolean), "this week's menu");
+  };
+  const todayMeals = menuMeals([today]);
+  // Which menus were already added this visit, so a double tap doesn't double the amounts.
+  const [addedMenus, setAddedMenus] = useState<string[]>([]);
+  const addMenu = (meals: Meal[], label: string) => {
+    setAddedMenus((a) => [...a, label]);
+    const added = meals.reduce((n, m) => n + addToGrocery(m), 0);
+    play("check");
+    toast(added ? `Added ${added} items for ${label}` : `Everything for ${label} is already on the list`);
+  };
   const checked = grocery.filter((g) => g.checked).length;
 
   return (
@@ -59,17 +106,41 @@ export function GroceryList() {
         }}
         className="flex gap-2"
       >
-        <input value={text} onChange={(e) => setText(e.target.value)} maxLength={60} placeholder="Add an item, e.g. oats" aria-label="New grocery item" className="flex-1 min-w-0 h-12 rounded-xl bg-card-2 border border-line px-4 outline-none focus:border-fit-blue/60" />
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          maxLength={60}
+          placeholder="Add an item, e.g. oats"
+          aria-label="New grocery item"
+          className="flex-1 min-w-0 h-12 rounded-xl bg-card-2 border border-line px-4 outline-none focus:border-fit-blue/60"
+        />
         <button className="size-12 rounded-xl bg-fit-blue text-white grid place-items-center" aria-label="Add item">
           <Plus />
         </button>
       </form>
 
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={addWeek}
+          disabled={addedMenus.length > 0}
+          className="h-12 rounded-xl bg-fit-green-soft text-fit-green text-sm font-medium inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
+        >
+          <CalendarDays size={16} /> {addedMenus.includes("this week's menu") ? "Week added ✓" : "Add this week's meals"}
+        </button>
+        <button
+          onClick={() => addMenu(todayMeals, "today's meals")}
+          disabled={!todayMeals.length || addedMenus.length > 0}
+          className="h-12 rounded-xl bg-card-2 text-ink-2 text-sm font-medium disabled:opacity-40"
+        >
+          {addedMenus.includes("today's meals") ? "Today added ✓" : "Today's meals only"}
+        </button>
+      </div>
+
       {grocery.length === 0 ? (
         <div className="glass rounded-3xl p-8 text-center">
           <Image src="/illustrations/groceries.svg" alt="" width={180} height={140} className="mx-auto h-32 w-auto" />
           <p className="font-display text-2xl mt-3">Nothing here yet</p>
-          <p className="text-ink-2 text-sm mt-1">Open any recipe and tap “Add to Grocery List”.</p>
+          <p className="text-ink-2 text-sm mt-1">Tap “Add this week&apos;s meals” above, or open any recipe and tap “Add to Grocery List”.</p>
           <button onClick={() => setTab("meals")} className="mt-5 h-12 px-5 rounded-xl bg-fit-blue-soft text-fit-blue font-medium">
             Browse meals
           </button>
@@ -81,7 +152,8 @@ export function GroceryList() {
           return (
             <section key={sec.id}>
               <h2 className="text-xs font-medium text-ink-2 mb-2">
-                <Emoji e={sec.emoji} size={18} className="mr-1.5 -mt-0.5 align-middle" />{sec.id} <span className="text-ink-3">· {items.length}</span>
+                <Emoji e={sec.emoji} size={18} className="mr-1.5 -mt-0.5 align-middle" />
+                {sec.id} <span className="text-ink-3">· {items.length}</span>
               </h2>
               <ul className="glass rounded-3xl divide-y divide-line overflow-hidden">
                 <AnimatePresence initial={false}>
@@ -99,13 +171,17 @@ export function GroceryList() {
                           animate={g.checked ? { scale: [1, 1.3, 1] } : { scale: 1 }}
                           className={`size-6 shrink-0 rounded-full border-2 grid place-items-center ${g.checked ? "bg-fit-green-bright border-fit-green-bright" : "border-line-strong"}`}
                         >
-                          {g.checked && <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="#fff" strokeWidth={3.5}><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                          {g.checked && (
+                            <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="#fff" strokeWidth={3.5}>
+                              <path d="M5 12.5l4.5 4.5L19 7.5" />
+                            </svg>
+                          )}
                         </motion.span>
                         <span className="relative min-w-0">
                           <span className={`block truncate transition-colors ${g.checked ? "text-ink-3" : "text-ink"}`}>{g.name}</span>
                           <motion.span className="absolute left-0 top-1/2 h-px bg-ink-3 origin-left" initial={false} animate={{ scaleX: g.checked ? 1 : 0 }} style={{ width: "100%" }} />
                         </span>
-                        {g.qty && <span className="ml-auto pl-2 text-xs font-mono text-ink-3 shrink-0 max-w-[40%] truncate">{g.qty}</span>}
+                        {g.qty && <span className="ml-auto pl-2 text-xs font-mono text-ink-3 shrink-0 max-w-[40%] truncate">{prettyQty(g.qty)}</span>}
                       </button>
                       <button onClick={() => removeGrocery(g.id)} className="size-12 grid place-items-center text-ink-3 hover:text-fit-red" aria-label={`Remove ${g.name}`}>
                         <X size={16} />

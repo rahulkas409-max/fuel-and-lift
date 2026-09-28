@@ -88,10 +88,11 @@ All data lives in the browser's localStorage.
 - Indian fitness headlines, grouped into Top stories, Competitions, Influencers, Diet & nutrition and Athletes.
 - Tap an Indian fitness creator to see news about them.
 - Tap a story to open a readable view with a "Read full story" link to the publisher.
-- Headlines come from Google News RSS (India edition), cached for 30 minutes (`/api/news`). For a commercial launch, switch to a licensed news API.
+- Headlines come from Google News RSS (India edition), with Bing News RSS as an automatic backup if Google refuses or is slow; cached for 30 minutes (`/api/news`). For a commercial launch, switch to a licensed news API.
 
 **Grocery**
 - "Add to Grocery List" pulls a recipe's ingredients into a checklist sorted into Produce, Protein & Dairy and Pantry.
+- **Add this week's meals** fills any unplanned days, then adds everything for the week in one tap, with amounts totalled (e.g. "Onion 7", "Paneer 300 g"). "Today's meals only" does the same for today.
 - Tap an item to cross it off.
 
 **Arcade**

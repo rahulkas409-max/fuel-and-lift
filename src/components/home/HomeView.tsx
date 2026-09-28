@@ -84,11 +84,11 @@ export function HomeView() {
           <Rings outer={totalSets ? doneSets / totalSets : 0} inner={eaten.protein / targets.protein} />
           <div className="flex-1 space-y-3">
             <Stat color="bg-fit-blue" value={`${doneSets}`} target={`/${totalSets}`} label="Sets today" />
-            <Stat color="bg-fit-green-bright" value={`${eaten.protein}`} target={`/${targets.protein} g`} label="Protein" />
+            <Stat color="bg-fit-green-bright" value={`${eaten.protein}`} target={`/${targets.protein} g`} label="Protein planned" />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-line text-center">
-          <Mini icon={<Emoji e="🔥" size={20} />} value={`${eaten.kcal}`} label={`of ${targets.kcal} kcal`} />
+          <Mini icon={<Emoji e="🔥" size={20} />} value={`${eaten.kcal}`} label={`of ${targets.kcal} kcal planned`} />
           <Mini icon={<Flame size={20} className="text-fit-yellow" />} value={`${streak}`} label="session streak" />
           <Mini icon={<Emoji e="📅" size={20} />} value={`${weekDone}/7`} label="days this week" />
         </div>

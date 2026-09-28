@@ -122,7 +122,13 @@ export function AppShell() {
             // Grocery lives under Meals, Arcade under Home
             const on = tab === id || (id === "meals" && tab === "grocery") || (id === "home" && tab === "arcade");
             return (
-              <button key={id} onClick={() => setTab(id)} className="h-20 flex flex-col items-center justify-center gap-1" aria-current={on ? "page" : undefined}>
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className="h-20 flex flex-col items-center justify-center gap-1"
+                aria-current={on ? "page" : undefined}
+                aria-label={id === "meals" && hydrated && groceryLeft > 0 ? `${label}, ${groceryLeft} grocery items to buy` : label}
+              >
                 <span className="relative h-8 w-16 grid place-items-center">
                   {on && <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-fit-blue-soft" transition={{ type: "spring", damping: 26, stiffness: 380 }} />}
                   <Icon size={22} strokeWidth={on ? 2.4 : 2} className={`relative ${on ? "text-fit-blue" : "text-ink-2"}`} />

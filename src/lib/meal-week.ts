@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import type { DayIntensity, Routine } from "@/data/workouts";
 import { addDays, dayKey } from "./date";
 import { useHydrated } from "./hooks";
-import { dayTargets, lastWeekMealIds, sameDayLastWeek, syncPlan, weekMealIds } from "./nutrition";
+import { dayTargets, lastWeekMealIds, planDays, sameDayLastWeek, syncPlan, weekMealIds } from "./nutrition";
 import { currentRoutine, useStore } from "./store";
 
 /** Today plus the next six days, as date keys. */
@@ -45,4 +45,17 @@ export function useAutoMealPlan(date: string, intensity: DayIntensity) {
     const { plan, scale } = syncPlan(intensity, dayTargets(s.profile, intensity), 0, s.diet, weekMealIds(s.plans, date), lastWeekMealIds(s.plans, date), sameDayLastWeek(s.plans, date));
     s.setPlan(date, plan, scale);
   }, [hydrated, onboarded, has, date, intensity]);
+}
+
+/** Plans any day this week that has no menu yet (never touches days already planned). */
+export function fillWeek(today: string) {
+  const s = useStore.getState();
+  const routine = currentRoutine(s);
+  const ints = weekIntensities(routine, s.dayIdByRoutine[routine.id] ?? routine.days[0]?.id);
+  const missing = weekDates(today)
+    .map((date, i) => ({ date, intensity: ints[i] }))
+    .filter((d) => !(d.date in s.plans));
+  if (!missing.length) return;
+  const out = planDays(missing, (i) => dayTargets(s.profile, i), s.diet, s.plans);
+  for (const [d, r] of Object.entries(out)) s.setPlan(d, r.plan, r.scale);
 }
