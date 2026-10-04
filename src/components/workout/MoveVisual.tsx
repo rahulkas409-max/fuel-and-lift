@@ -1,16 +1,17 @@
 "use client";
 
-import { ExternalLink, Play } from "lucide-react";
-import { createContext, useContext, useState } from "react";
+import { ExternalLink } from "lucide-react";
+import { createContext, useContext } from "react";
 import { MEDIA } from "@/data/media";
 import { MOVE_PHOTOS } from "@/data/move-photos";
-import { MOVE_VIDEOS, ytEmbed, ytThumb } from "@/data/move-videos";
+import { MOVE_VIDEOS, MOVE_VIDEOS_W } from "@/data/move-videos";
 import { moveInfo, type LibraryAudience, type ProgramMove } from "@/data/programs";
 import { useStore } from "@/lib/store";
 import { Sheet } from "../ui/Sheet";
 import { ExerciseAnimation } from "./ExerciseDemo";
+import { VideoCover, VideoPlayer } from "./VideoDemo";
 
-/** Which library is open (women's or men's); decides the YouTube search for more demos. */
+/** Which library is open (women's or men's): the women's shows demos by women trainers. */
 export const MoveAudience = createContext<LibraryAudience | null>(null);
 function useAudience(): LibraryAudience {
   const ctx = useContext(MoveAudience);
@@ -21,69 +22,33 @@ function useAudience(): LibraryAudience {
 /** Real start/finish photos for a move, if we have a true match. */
 const photosFor = (id: string): string[] | undefined => MOVE_PHOTOS[id] ?? MEDIA[id]?.frames;
 
-/** Hides a video cover that fails to load, leaving the dark tile and play badge. */
-const hide = (e: React.SyntheticEvent<HTMLImageElement>) => (e.currentTarget.style.display = "none");
-
 type Demo = { kind: "photo"; frames: string[] } | { kind: "video"; yt: string } | null;
-/** Real photos first; otherwise a real demo video. */
-function demoFor(id: string): Demo {
+/** Women's library: a woman trainer's video first. Otherwise real photos, then a real demo video. */
+function demoFor(id: string, aud: LibraryAudience = "men"): Demo {
+  if (aud === "women" && MOVE_VIDEOS_W[id]) return { kind: "video", yt: MOVE_VIDEOS_W[id] };
   const photos = photosFor(id);
   if (photos) return { kind: "photo", frames: photos };
   if (MOVE_VIDEOS[id]) return { kind: "video", yt: MOVE_VIDEOS[id] };
   return null;
 }
 export const hasVisual = (id: string) => !!demoFor(id);
-export const hasPhoto = (id: string) => !!photosFor(id);
+/** Best picture for a card: a woman trainer's video in the women's library, a real photo otherwise. */
+export const hasCardPicture = (id: string, aud: LibraryAudience) => (aud === "women" ? !!MOVE_VIDEOS_W[id] : !!photosFor(id));
 
-/** Real photos (start and finish, gently cross-faded) or a real video's cover with a play badge. `still` shows one photo. */
-export function MoveVisual({ id, className = "", still = false }: { id: string; className?: string; still?: boolean }) {
+/**
+ * Real photos (start and finish, gently cross-faded) or a real video. `still` shows one photo; a video
+ * shows its cover with a play badge unless `playable` (never inside another button).
+ */
+export function MoveVisual({ id, className = "", still = false, playable = false }: { id: string; className?: string; still?: boolean; playable?: boolean }) {
   const info = moveInfo(id);
-  const demo = demoFor(id);
+  const demo = demoFor(id, useAudience());
   if (!demo) return <span className={`block bg-card-2 ${className}`} />;
-  if (demo.kind === "video")
-    return (
-      <span className={`relative block bg-black overflow-hidden ${className}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- YouTube's own cover image for the video */}
-        <img src={ytThumb(demo.yt)} alt="" loading="lazy" decoding="async" draggable={false} onError={hide} className="absolute inset-0 size-full object-cover" />
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="size-11 rounded-full bg-black/60 grid place-items-center">
-            <Play size={20} className="text-white fill-white ml-0.5" />
-          </span>
-        </span>
-      </span>
-    );
+  if (demo.kind === "video" && playable) return <VideoPlayer key={demo.yt} yt={demo.yt} name={info.name} className={className} />;
+  if (demo.kind === "video") return <VideoCover yt={demo.yt} className={className} />;
   if (still)
     // eslint-disable-next-line @next/next/no-img-element -- small pre-optimised WebP files
     return <img src={demo.frames[1] ?? demo.frames[0]} alt={`${info.name} demonstration`} loading="lazy" decoding="async" draggable={false} className={`block bg-card-2 object-cover ${className}`} />;
   return <ExerciseAnimation id={id} frames={demo.frames} label={info.name} className={className} />;
-}
-
-/** Tap-to-play YouTube player (youtube-nocookie), so nothing loads from YouTube until it's tapped. */
-function VideoPlayer({ yt, name }: { yt: string; name: string }) {
-  const [play, setPlay] = useState(false);
-  return (
-    <div className="relative w-full aspect-video rounded-3xl overflow-hidden bg-black">
-      {play ? (
-        <iframe
-          src={ytEmbed(yt)}
-          title={`${name} video demo`}
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 size-full border-0"
-        />
-      ) : (
-        <button onClick={() => setPlay(true)} className="absolute inset-0 size-full" aria-label={`Play ${name} video`}>
-          {/* eslint-disable-next-line @next/next/no-img-element -- YouTube's own cover image */}
-          <img src={ytThumb(yt)} alt="" onError={hide} className="absolute inset-0 size-full object-cover" />
-          <span className="absolute inset-0 grid place-items-center bg-black/25">
-            <span className="h-14 px-6 rounded-full bg-fit-red text-white font-medium inline-flex items-center gap-2">
-              <Play size={20} className="fill-white" /> Play video
-            </span>
-          </span>
-        </button>
-      )}
-    </div>
-  );
 }
 
 /** "8 (5 sec hold)" → "8 reps (5 sec hold)", "10 each leg" → "10 reps each leg" */
@@ -97,7 +62,7 @@ export const doseLabel = (m: Pick<ProgramMove, "sets" | "reps" | "secs">) => {
 export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => void }) {
   const aud = useAudience();
   const info = id ? moveInfo(id) : null;
-  const demo = id ? demoFor(id) : null;
+  const demo = id ? demoFor(id, aud) : null;
   const pics: [string, string][] = demo?.kind === "photo" ? [["Start", demo.frames[0]], ["Finish", demo.frames[1] ?? demo.frames[0]]] : [];
   // Real video demos: YouTube search, showing women demonstrating the move in the women's library.
   const video = info ? `https://www.youtube.com/results?search_query=${encodeURIComponent(aud === "women" ? `${info.name} exercise women tutorial` : `how to do ${info.name} proper form`)}` : "#";

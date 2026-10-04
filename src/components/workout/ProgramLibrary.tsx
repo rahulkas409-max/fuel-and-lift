@@ -8,13 +8,16 @@ import { useToday } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
 import { PhotoHero } from "../ui/PhotoHero";
 import { Sheet } from "../ui/Sheet";
-import { MoveAudience, MoveHowTo, MoveVisual, doseLabel, hasPhoto, hasVisual } from "./MoveVisual";
+import { MoveAudience, MoveHowTo, MoveVisual, doseLabel, hasCardPicture, hasVisual } from "./MoveVisual";
 import { ProgramPlayer } from "./ProgramPlayer";
 
 const KIND_ICON = { all: LayoutGrid, gym: Dumbbell, home: House, yoga: Flower2 } as const;
 
-/** The move that best represents a workout, for its card picture (a real photo when one exists, else a video cover). */
-const heroMove = (p: Program) => (p.moves.find((m) => hasPhoto(m.move)) || p.moves.find((m) => hasVisual(m.move)) || p.moves[0]).move;
+/** The move that best represents a workout, for its card picture (a woman trainer's video in the women's library, a real photo otherwise). */
+const heroMove = (p: Program, aud: LibraryAudience) =>
+  (p.moves.find((m) => hasCardPicture(m.move, aud)) || p.moves.find((m) => hasVisual(m.move)) || p.moves[0]).move;
+/** Body-part tiles in the women's library use moves we have a woman trainer's video for. */
+const WOMEN_FIGURE: Partial<Record<Area, string>> = { face: "kiss-ceiling", neck: "chin-tuck", back: "cat-cow", shoulders: "lateral-raise" };
 const LEVELS = ["Beginner", "Intermediate", "Advanced"] as const;
 
 const KIND_STYLE: Record<ProgramKind, { badge: string }> = {
@@ -133,7 +136,7 @@ export function ProgramLibrary() {
                 aria-pressed={on}
                 className={`rounded-2xl border overflow-hidden text-left disabled:opacity-40 ${on ? "border-fit-blue ring-2 ring-fit-blue/30" : "border-line bg-card"}`}
               >
-                <MoveVisual id={a.figure} still className="w-full aspect-[3/2]" />
+                <MoveVisual id={aud === "women" ? (WOMEN_FIGURE[a.id] ?? a.figure) : a.figure} still className="w-full aspect-[3/2]" />
                 <span className={`block px-2.5 pt-1.5 text-[13px] leading-tight ${on ? "text-fit-blue font-medium" : "text-ink"}`}>{a.label}</span>
                 <span className="block px-2.5 pb-2 text-[11px] text-ink-3">
                   {n} workout{n === 1 ? "" : "s"}
@@ -156,7 +159,7 @@ export function ProgramLibrary() {
           <ul className="grid grid-cols-1 sm:grid-cols-[repeat(2,minmax(0,1fr))] gap-3">
             {list.map((p) => (
               <li key={p.id} className="min-w-0">
-                <ProgramCard p={p} done={completed[today] === p.title} onOpen={() => setOpen(p)} />
+                <ProgramCard p={p} aud={aud} done={completed[today] === p.title} onOpen={() => setOpen(p)} />
               </li>
             ))}
           </ul>
@@ -164,6 +167,7 @@ export function ProgramLibrary() {
       </section>
 
       <ProgramDetail
+        aud={aud}
         program={open}
         onClose={() => setOpen(null)}
         onStart={(p) => {
@@ -177,11 +181,11 @@ export function ProgramLibrary() {
   );
 }
 
-function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: () => void }) {
+function ProgramCard({ p, aud, done, onOpen }: { p: Program; aud: LibraryAudience; done: boolean; onOpen: () => void }) {
   const st = KIND_STYLE[p.kind];
   return (
     <motion.button whileTap={{ scale: 0.98 }} onClick={onOpen} className="w-full h-full text-left rounded-3xl bg-card border border-line overflow-hidden flex flex-col">
-      <MoveVisual id={heroMove(p)} still className="w-full h-36" />
+      <MoveVisual id={heroMove(p, aud)} still className="w-full h-36" />
       <div className="px-4 pt-3 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap gap-1">
@@ -213,7 +217,7 @@ function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: (
   );
 }
 
-function ProgramDetail({ program: p, onClose, onStart }: { program: Program | null; onClose: () => void; onStart: (p: Program) => void }) {
+function ProgramDetail({ aud, program: p, onClose, onStart }: { aud: LibraryAudience; program: Program | null; onClose: () => void; onStart: (p: Program) => void }) {
   const [howTo, setHowTo] = useState<string | null>(null);
   // Sun Salutation repeats the same move; show it once with a count.
   const rows = useMemo(() => {
@@ -232,7 +236,7 @@ function ProgramDetail({ program: p, onClose, onStart }: { program: Program | nu
       <Sheet open={!!p} onClose={onClose} title="Workout" wide>
         {p && (
           <div className="pb-2">
-            <MoveVisual id={heroMove(p)} className="w-full aspect-[2/1] rounded-3xl overflow-hidden" />
+            <MoveVisual id={heroMove(p, aud)} playable className="w-full aspect-[2/1] rounded-3xl overflow-hidden" />
             <div className="mt-4">
               <div className="min-w-0">
                 <h2 className="text-2xl font-medium text-ink leading-tight">{p.title}</h2>

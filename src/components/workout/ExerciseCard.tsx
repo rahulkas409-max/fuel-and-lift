@@ -8,7 +8,7 @@ import { exerciseById, type WorkoutExercise } from "@/data/workouts";
 import { play } from "@/lib/sound";
 import { useStore, type SetLog } from "@/lib/store";
 import { Checkbox } from "../ui/Checkbox";
-import { ExerciseAnimation, ExerciseHowTo } from "./ExerciseDemo";
+import { ExerciseHowTo, ExerciseThumb } from "./ExerciseDemo";
 import { useRestTimer } from "./RestTimer";
 
 export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExercise; index: number; logKey: string; sets: SetLog[] }) {
@@ -39,7 +39,7 @@ export function ExerciseCard({ item, index, logKey, sets }: { item: WorkoutExerc
       <header className="flex items-start gap-3">
         {hasMedia && (
           <button onClick={() => setHowTo(true)} className="relative shrink-0 rounded-2xl overflow-hidden active:scale-95 transition" aria-label={`How to do ${ex.name}`}>
-            <ExerciseAnimation id={item.exerciseId} className="w-24 h-16 sm:w-28 sm:h-[74px]" />
+            <ExerciseThumb id={item.exerciseId} className="w-24 h-16 sm:w-28 sm:h-[74px]" />
             <span className="absolute bottom-1 left-1 rounded-full bg-black/60 text-white text-[10px] font-medium pl-1 pr-1.5 py-0.5 flex items-center gap-0.5">
               <PlayCircle size={11} /> How to
             </span>

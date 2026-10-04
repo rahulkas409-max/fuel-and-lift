@@ -2,8 +2,17 @@
 
 import { ExternalLink } from "lucide-react";
 import { MEDIA as EXERCISE_MEDIA } from "@/data/media";
+import { MOVE_VIDEOS_W } from "@/data/move-videos";
 import { exerciseById } from "@/data/workouts";
+import { useStore } from "@/lib/store";
 import { Sheet } from "../ui/Sheet";
+import { VideoCover, VideoPlayer } from "./VideoDemo";
+
+/** A woman trainer's demo video for this exercise, when the user is a woman and we have one. */
+function useWomenVideo(id: string | null | undefined) {
+  const female = useStore((s) => s.profile.sex === "female");
+  return female && id ? MOVE_VIDEOS_W[id] : undefined;
+}
 
 /** Start/end photos alternating like a GIF. Falls back to nothing if we have no media. */
 export function ExerciseAnimation({ id, className = "", label, frames }: { id: string; className?: string; label?: string; frames?: string[] }) {
@@ -26,12 +35,13 @@ export function ExerciseAnimation({ id, className = "", label, frames }: { id: s
 export function ExerciseHowTo({ id, onClose }: { id: string | null; onClose: () => void }) {
   const ex = id ? exerciseById(id) : undefined;
   const media = id ? EXERCISE_MEDIA[id] : undefined;
-  const search = ex ? `https://www.youtube.com/results?search_query=${encodeURIComponent(`how to do ${ex.name} proper form`)}` : "#";
+  const women = useWomenVideo(id);
+  const search = ex ? `https://www.youtube.com/results?search_query=${encodeURIComponent(women ? `${ex.name} exercise women tutorial` : `how to do ${ex.name} proper form`)}` : "#";
   return (
     <Sheet open={!!id} onClose={onClose} title="How to do it">
       {ex && (
         <div className="pb-2">
-          <ExerciseAnimation id={ex.id} className="w-full aspect-[3/2] rounded-3xl" />
+          {women ? <VideoPlayer key={women} yt={women} name={ex.name} /> : <ExerciseAnimation id={ex.id} className="w-full aspect-[3/2] rounded-3xl" />}
           <h2 className="text-2xl font-medium text-ink mt-4">{ex.name}</h2>
           <div className="flex flex-wrap gap-1.5 mt-2">
             {ex.muscles.map((m) => (
@@ -53,11 +63,19 @@ export function ExerciseHowTo({ id, onClose }: { id: string | null; onClose: () 
             </ol>
           ) : null}
           <a href={search} target="_blank" rel="noreferrer" className="mt-6 h-12 rounded-full border border-line text-sm text-ink-2 flex items-center justify-center gap-2">
-            Watch a video on YouTube <ExternalLink size={16} />
+            {women ? "More videos by women on YouTube" : "Watch a video on YouTube"} <ExternalLink size={16} />
           </a>
-          <p className="text-[11px] text-ink-3 text-center mt-3">Photos and steps: free-exercise-db (public domain)</p>
+          <p className="text-[11px] text-ink-3 text-center mt-3">
+            {women ? "Video plays on YouTube's own player and belongs to its creator. Steps: free-exercise-db." : "Photos and steps: free-exercise-db (public domain)"}
+          </p>
         </div>
       )}
     </Sheet>
   );
+}
+
+/** Card thumbnail: a woman trainer's video cover for women, otherwise the start/end photos. */
+export function ExerciseThumb({ id, className = "" }: { id: string; className?: string }) {
+  const women = useWomenVideo(id);
+  return women ? <VideoCover yt={women} className={className} /> : <ExerciseAnimation id={id} className={className} />;
 }
