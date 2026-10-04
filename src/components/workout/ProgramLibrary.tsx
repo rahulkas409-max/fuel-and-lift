@@ -215,7 +215,7 @@ function ProgramCard({ p, done, onOpen }: { p: Program; done: boolean; onOpen: (
 
 function ProgramDetail({ program: p, onClose, onStart }: { program: Program | null; onClose: () => void; onStart: (p: Program) => void }) {
   const [howTo, setHowTo] = useState<string | null>(null);
-  // Surya Namaskar repeats the same move; show it once with a count.
+  // Sun Salutation repeats the same move; show it once with a count.
   const rows = useMemo(() => {
     if (!p) return [];
     const out: (ProgramMove & { times: number })[] = [];

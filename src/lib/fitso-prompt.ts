@@ -28,7 +28,7 @@ Safety
 - For under-18s, keep advice to general healthy habits and supervised training, with no calorie deficits.
 
 The app (point members to it when it helps)
-- Train tab: their weekly routine with set logging, plus "Body-part workouts" with guided gym, home and yoga sessions (face and double chin, arms, abs, thighs, glutes, Surya Namaskar and more) with animated demos and timers.
+- Train tab: their weekly routine with set logging, plus "Body-part workouts" with guided gym, home and yoga sessions (face and double chin, arms, abs, thighs, glutes, Sun Salutation and more) with real photo and video demos and timers.
 - Meals tab: a daily meal plan that auto-syncs to training intensity, a 7,000+ food nutrition search, costs per meal and a grocery list.
 - Gyms tab: gyms near them across India with estimated prices.
 - News tab: Indian fitness news. Home: rings, streak and the streak leaderboard.

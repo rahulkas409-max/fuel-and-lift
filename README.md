@@ -40,10 +40,10 @@ All data lives in the browser's localStorage.
 - 99 guided workouts (gym, home and yoga, beginner to advanced) in a **Men's** and a **Women's** library. Every body part has at least 7 workouts in each, including advanced ones. Groups:
   - Popular gym days: chest & triceps, back & biceps, shoulders, biceps, triceps, forearms, quads, hamstrings & glutes, calves, core, dumbbell-only and machine-only beginner days.
   - No-equipment home workouts: belly fat, waist, thighs, glutes, toned arms, shoulders and posture, double chin and jawline, neck, full-body HIIT.
-  - Yoga: abs, Surya Namaskar, flexibility, back pain, hips and thighs, bedtime.
+  - Yoga: abs, Sun Salutation, flexibility, back pain, hips and thighs, bedtime.
 - Filter by 12 body areas, by Gym, Home or Yoga, and by level. The library opens on your own (men's or women's).
-- **Real photos and real videos, no cartoons.** 55 home and yoga moves use real start and finish photos from the public-domain free-exercise-db. Each pair was checked by eye against the move (`scripts/fetch-move-photos.mjs`). Moves with no free photo (Warrior II, Tree, Downward Dog, Surya Namaskar, neck and face moves and others) show a real YouTube demo video (`src/data/move-videos.ts`). It plays in YouTube's own privacy-friendly embedded player (youtube-nocookie) only when tapped. "Watch real video demos" opens more YouTube demos (by women in the women's library). Gym lifts keep their free-exercise-db photos.
-- Yoga moves use their proper Sanskrit and English names.
+- **Real photos and real videos, no cartoons.** 55 home and yoga moves use real start and finish photos from the public-domain free-exercise-db. Each pair was checked by eye against the move (`scripts/fetch-move-photos.mjs`). Moves with no free photo (Warrior II, Tree, Downward Dog, Sun Salutation, neck and face moves and others) show a real YouTube demo video (`src/data/move-videos.ts`). It plays in YouTube's own privacy-friendly embedded player (youtube-nocookie) only when tapped. "Watch real video demos" opens more YouTube demos (by women in the women's library). Gym lifts keep their free-exercise-db photos.
+- Moves use clean, standard gym and yoga names in English (Downward Dog, Warrior II, Child's Pose).
 - A guided player runs countdowns for holds and rests and has a Done button for rep moves. It keeps the screen awake and logs the finished workout to your streak.
 - Plans that target one spot (belly, thighs, arms, face) explain that fat loss comes from your whole body, not one area.
 - Data lives in `src/data/programs.ts`. Photos come from free-exercise-db via `scripts/fetch-exercise-media.mjs`.

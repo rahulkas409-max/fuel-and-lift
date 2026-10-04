@@ -613,10 +613,10 @@ const TOPICS: Topic[] = [
   },
   {
     id: "yoga",
-    score: (t) => (has(t, "yoga", "surya", "namaskar", "asana", "pranayama", "meditation", "kapalbhati") ? 5 : 0),
+    score: (t) => (has(t, "yoga", "surya", "namaskar", "sun salutation", "asana", "pranayama", "meditation", "kapalbhati") ? 5 : 0),
     reply: () => ({
-      text: "Yoga is brilliant for flexibility, posture, stress and core strength, and it pairs perfectly with weights. In the app (**Train → Body-part workouts → Yoga**):\n\n- **Surya Namaskar for Weight Loss:** 12 rounds, about 15 min, best in the morning\n- **Yoga for Abs & Belly:** Naukasana, Kapalbhati, plank holds\n- **Morning Flexibility Flow** and **Yoga for Back Pain** for mobility\n- **Bedtime Relaxing Yoga** for better sleep\n\nEach pose has an animated demo and the proper Sanskrit name. Do yoga on an empty stomach or 2–3 hours after a meal.",
-      chips: ["Surya Namaskar benefits", "Home workout options"],
+      text: "Yoga is brilliant for flexibility, posture, stress and core strength, and it pairs perfectly with weights. In the app (**Train → Body-part workouts → Yoga**):\n\n- **Sun Salutation Fat Burn:** 12 rounds, about 15 min, best in the morning\n- **Yoga for Abs & Belly:** boat hold, power breathing, plank holds\n- **Morning Flexibility Flow** and **Yoga for Back Pain** for mobility\n- **Bedtime Relaxing Yoga** for better sleep\n\nEach pose has a real photo or video demo. Do yoga on an empty stomach or 2–3 hours after a meal.",
+      chips: ["Sun Salutation benefits", "Home workout options"],
       topic: "yoga",
     }),
   },
