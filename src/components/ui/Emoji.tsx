@@ -30,9 +30,3 @@ export function EmojiRow({ text, size = 24, className = "" }: { text: string; si
     </span>
   );
 }
-
-/** URL of the artwork for an emoji, or null (for use inside <svg><image/>). */
-export const emojiSrc = (e: string) => {
-  const slug = EMOJI_SLUGS[e.replace(/️/g, "")];
-  return slug ? `/emoji/${slug}.svg` : null;
-};

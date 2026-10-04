@@ -7,7 +7,7 @@ import { SLOTS, mealsFor, type Meal, type Slot } from "@/data/meals";
 import { burst } from "@/lib/confetti";
 import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
-import { Emoji, emojiSrc } from "../ui/Emoji";
+import { Emoji } from "../ui/Emoji";
 import { MacroPills } from "../ui/MacroPills";
 import { Sheet } from "../ui/Sheet";
 
@@ -87,24 +87,25 @@ function Wheel({ slot, avoid, onLand, onViewRecipe }: { slot: Slot; avoid?: Set<
       <div className="relative mt-2" style={{ width: SIZE, height: SIZE }}>
         {/* pointer */}
         <div className="absolute left-1/2 -top-3 -translate-x-1/2 z-10 w-0 h-0 border-x-[14px] border-x-transparent border-t-[24px] border-t-fit-blue" />
-        <motion.svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="size-full" style={{ rotate }}>
-          {meals.map((m, i) => {
-            const mid = i * seg + seg / 2;
-            return (
-              <g key={m.id}>
-                <path d={slicePath(i, n)} fill={eaten(m) ? "#e3e6eb" : COLORS[i % COLORS.length]} stroke="var(--card)" strokeWidth="2" />
-                {emojiSrc(m.emoji) ? (
-                  <image href={emojiSrc(m.emoji)!} opacity={eaten(m) ? 0.35 : 1} x={R - icon / 2} y={R - icon / 2} width={icon} height={icon} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.66})`} />
-                ) : (
-                  <text x={R} y={R} transform={`rotate(${mid} ${R} ${R}) translate(0 ${-R * 0.64})`} textAnchor="middle" dominantBaseline="middle" fontSize="34">
-                    {m.emoji}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-          <circle cx={R} cy={R} r={R - 1} fill="none" stroke="rgb(248 250 252 / 0.15)" strokeWidth="2" />
-        </motion.svg>
+        {/* The wheel and its food icons turn together. Icons are plain <img>s on top of the SVG:
+            iPad Safari sometimes leaves SVG <image> elements blank inside a rotating SVG. */}
+        <motion.div className="absolute inset-0" style={{ rotate }}>
+          <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="size-full">
+            {meals.map((m, i) => (
+              <path key={m.id} d={slicePath(i, n)} fill={eaten(m) ? "#e3e6eb" : COLORS[i % COLORS.length]} stroke="var(--card)" strokeWidth="2" />
+            ))}
+            <circle cx={R} cy={R} r={R - 1} fill="none" stroke="rgb(248 250 252 / 0.15)" strokeWidth="2" />
+          </svg>
+          {meals.map((m, i) => (
+            <span
+              key={m.id}
+              className="absolute left-1/2 top-1/2 grid place-items-center"
+              style={{ width: icon, height: icon, margin: -icon / 2, transform: `rotate(${i * seg + seg / 2}deg) translateY(${-R * 0.66}px)`, opacity: eaten(m) ? 0.35 : 1 }}
+            >
+              <Emoji e={m.emoji} size={icon} />
+            </span>
+          ))}
+        </motion.div>
         <button
           onClick={spin}
           disabled={spinning}
