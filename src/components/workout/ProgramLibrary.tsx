@@ -7,6 +7,7 @@ import { MOVES_3D_W } from "@/data/moves-3d";
 import { AREAS, KINDS, moveInfo, programMinutes, programsFor, type Area, type LibraryAudience, type Program, type ProgramKind, type ProgramMove } from "@/data/programs";
 import { useToday } from "@/lib/hooks";
 import { useStore } from "@/lib/store";
+import { PhotoHero } from "../ui/PhotoHero";
 import { Sheet } from "../ui/Sheet";
 import { MoveAudience, MoveHowTo, MoveVisual, doseLabel, hasVisual } from "./MoveVisual";
 import { ProgramPlayer } from "./ProgramPlayer";
@@ -57,13 +58,11 @@ export function ProgramLibrary() {
   return (
     <MoveAudience.Provider value={aud}>
     <div className="space-y-5">
-      <section className={`rounded-[28px] p-5 ${aud === "women" ? "bg-fit-red-soft" : "bg-fit-green-soft"}`}>
-        <p className={`text-xs font-medium ${aud === "women" ? "text-fit-red" : "text-fit-green"}`}>Workout library</p>
-        <h2 className="text-2xl font-medium text-ink leading-tight mt-1">Train by body part</h2>
-        <p className="text-sm text-ink-2 mt-1.5">
-          {programsFor(aud).length} {aud === "women" ? "women's" : "men's"} workouts: gym, home and yoga, from beginner to advanced. Pick a body part and press play.
+      <PhotoHero photo={aud === "women" ? "women" : "strength"} eyebrow="Workout library" title="Train by body part" position={aud === "women" ? "60% 30%" : "center 35%"}>
+        <p className="text-sm text-white/80 mt-2">
+          {programsFor(aud).length} {aud === "women" ? "women's" : "men's"} workouts: gym, home and yoga, from beginner to advanced.
         </p>
-        <div role="tablist" aria-label="Workouts for" className="mt-4 grid grid-cols-2 gap-1 p-1 rounded-2xl bg-card">
+        <div role="tablist" aria-label="Workouts for" className="mt-4 grid grid-cols-2 gap-1 p-1 rounded-2xl bg-black/55 backdrop-blur">
           {(["men", "women"] as const).map((a) => (
             <button
               key={a}
@@ -73,13 +72,13 @@ export function ProgramLibrary() {
                 setAud(a);
                 setArea(null);
               }}
-              className={`h-11 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}
+              className={`h-11 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-on-accent") : "text-white/80"}`}
             >
               {a === "men" ? "Men's workouts" : "Women's workouts"}
             </button>
           ))}
         </div>
-      </section>
+      </PhotoHero>
 
       {/* Gym / Home / Yoga + women */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4">
@@ -91,7 +90,7 @@ export function ProgramLibrary() {
               key={k.id}
               onClick={() => setKind(k.id)}
               aria-pressed={on}
-              className={`shrink-0 h-10 pl-3 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
+              className={`shrink-0 h-10 pl-3 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-on-accent border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
             >
               <Icon size={17} />
               {k.label}
@@ -298,7 +297,7 @@ function ProgramDetail({ aud, program: p, onClose, onStart }: { aud: LibraryAudi
             </ol>
 
             <div className="sticky bottom-0 -mx-5 sm:-mx-7 px-5 sm:px-7 pt-3 pb-1 bg-card">
-              <button onClick={() => onStart(p)} className="w-full h-14 rounded-full bg-fit-blue text-white text-base font-medium inline-flex items-center justify-center gap-2">
+              <button onClick={() => onStart(p)} className="w-full h-14 rounded-full bg-fit-blue text-on-accent text-base font-medium inline-flex items-center justify-center gap-2">
                 <Play size={20} fill="currentColor" /> Start workout
               </button>
             </div>

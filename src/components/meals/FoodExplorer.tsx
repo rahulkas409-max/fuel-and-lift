@@ -223,7 +223,7 @@ function FoodDetail({ food, onBack, onDone }: { food: Food; onBack: () => void; 
         <p className="text-xs text-ink-2 mb-2">Amount</p>
         <div className="flex flex-wrap gap-2">
           {presets.map((p) => (
-            <button key={p.label} onClick={() => setGrams(p.g)} className={`h-10 px-3.5 rounded-xl text-sm ${grams === p.g ? "bg-fit-blue text-white font-semibold" : "bg-card-2 text-ink-2"}`}>
+            <button key={p.label} onClick={() => setGrams(p.g)} className={`h-10 px-3.5 rounded-xl text-sm ${grams === p.g ? "bg-fit-blue text-on-accent font-semibold" : "bg-card-2 text-ink-2"}`}>
               {p.label}
               {p.label !== `${p.g} g` && <span className="opacity-70"> · {p.g} g</span>}
             </button>
@@ -272,7 +272,7 @@ function FoodDetail({ food, onBack, onDone }: { food: Food; onBack: () => void; 
           toast(`Logged ${g} g ${food.n}`);
           onDone();
         }}
-        className="mt-6 w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-40"
+        className="mt-6 w-full h-14 rounded-2xl bg-fit-blue text-on-accent font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-40"
       >
         <Plus size={20} /> Add to today&apos;s fuel
       </button>

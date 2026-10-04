@@ -56,7 +56,7 @@ export function RecipeCard({ meal, onClose }: { meal: Meal | null; onClose: () =
               play("check");
               toast(n ? `Added ${n} item${n > 1 ? "s" : ""} to your grocery list` : "Already on your grocery list: quantities updated");
             }}
-            className="mt-6 w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
+            className="mt-6 w-full h-14 rounded-2xl bg-fit-blue text-on-accent font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition"
           >
             <ShoppingBasket size={20} /> Add to Grocery List
           </button>

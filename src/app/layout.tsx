@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Google_Sans } from "next/font/google";
+import "@fontsource-variable/oswald";
 import "./globals.css";
 
 const googleSans = Google_Sans({ variable: "--font-google-sans", subsets: ["latin", "devanagari"], weight: "variable", display: "swap" });
@@ -7,14 +8,11 @@ const googleSans = Google_Sans({ variable: "--font-google-sans", subsets: ["lati
 export const metadata: Metadata = {
   title: "Fuel & Lift — gym tracker & meal planner",
   description: "Log your lifts, plan high-protein Indian meals, search 7,000+ foods and play macro mini-games. Free, no sign-up.",
-  appleWebApp: { capable: true, title: "Fuel & Lift", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Fuel & Lift", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8fafd" },
-    { media: "(prefers-color-scheme: dark)", color: "#111316" },
-  ],
+  themeColor: "#0a0b0d",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

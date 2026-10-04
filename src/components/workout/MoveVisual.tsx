@@ -47,7 +47,7 @@ export function MoveVisual({ id, className = "", still = false, prefer3d = false
   // Photos fill the frame; 3D demos fit inside it (their backdrop matches), so wide banners never crop the figure.
   const img = (src: string, fit: "cover" | "contain") => (
     // eslint-disable-next-line @next/next/no-img-element -- small pre-optimised WebP files
-    <img src={src} alt={`${info.name} demonstration`} loading="lazy" decoding="async" draggable={false} className={`block bg-[#eef3fa] ${fit === "cover" ? "object-cover" : "object-contain"} ${className}`} />
+    <img src={src} alt={`${info.name} demonstration`} loading="lazy" decoding="async" draggable={false} className={`block bg-[#17191d] ${fit === "cover" ? "object-cover" : "object-contain"} ${className}`} />
   );
   if (!demo) return <span className={`block bg-card-2 ${className}`} />;
   if (demo.kind === "photo") return still ? img(demo.frames[1] ?? demo.frames[0], "cover") : <ExerciseAnimation id={id} frames={demo.frames} label={info.name} className={className} />;
@@ -88,7 +88,7 @@ export function MoveHowTo({ id, onClose }: { id: string | null; onClose: () => v
               {pics.map(([label, src]) => (
                 <figure key={label} className="rounded-2xl overflow-hidden border border-line">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt={`${info.name}: ${label}`} loading="lazy" className={`block w-full aspect-[3/2] bg-[#eef3fa] ${demo?.kind === "photo" ? "object-cover" : "object-contain"}`} />
+                  <img src={src} alt={`${info.name}: ${label}`} loading="lazy" className={`block w-full aspect-[3/2] bg-[#17191d] ${demo?.kind === "photo" ? "object-cover" : "object-contain"}`} />
                   <figcaption className={`${pics.length > 2 ? "text-[11px] py-1" : "text-xs py-1.5"} text-ink-2 text-center bg-card`}>{label}</figcaption>
                 </figure>
               ))}

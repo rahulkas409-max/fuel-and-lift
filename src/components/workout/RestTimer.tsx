@@ -80,7 +80,7 @@ export function RestTimer() {
         onClick={() => setOpen(!open)}
         whileTap={{ scale: 0.92 }}
         className={`fixed right-4 z-40 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] h-14 rounded-full px-4 flex items-center gap-2 font-mono tabular text-sm shadow-lg ${
-          active ? "bg-fit-blue text-white shadow-lift" : "glass text-ink"
+          active ? "bg-fit-blue text-on-accent shadow-lift" : "glass text-ink"
         }`}
         aria-label={active ? `Rest timer, ${label} left` : "Open rest timer"}
       >

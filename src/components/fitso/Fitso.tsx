@@ -407,7 +407,7 @@ export function FitsoChat({
                   chat.map((m, i) =>
                     m.role === "user" ? (
                       <div key={i} className="flex justify-end">
-                        <p className="max-w-[85%] rounded-3xl rounded-tr-lg bg-fit-blue text-white px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                        <p className="max-w-[85%] rounded-3xl rounded-tr-lg bg-fit-blue text-on-accent px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                           {m.content}
                         </p>
                       </div>
@@ -516,7 +516,7 @@ export function FitsoChat({
                     <button
                       type="submit"
                       disabled={!input.trim()}
-                      className="size-12 shrink-0 rounded-full bg-fit-blue text-white grid place-items-center disabled:opacity-40"
+                      className="size-12 shrink-0 rounded-full bg-fit-blue text-on-accent grid place-items-center disabled:opacity-40"
                       aria-label="Send"
                     >
                       <ArrowUp size={22} />
@@ -565,7 +565,7 @@ function PlanActions({
             setDone(true);
           }}
           disabled={done}
-          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-on-accent"}`}
         >
           {done ? <Check size={16} /> : <Dumbbell size={16} />}{" "}
           {done ? "Saved to Train" : "Save as my routine"}
@@ -604,7 +604,7 @@ function PlanActions({
             setDone(true);
           }}
           disabled={done}
-          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+          className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-on-accent"}`}
         >
           {done ? <Check size={16} /> : <Dumbbell size={16} />} {done ? "Added to Train" : "Add to my routine"}
         </button>
@@ -628,7 +628,7 @@ function PlanActions({
           <button
             key={p.id}
             onClick={() => onStart(p)}
-            className={`${btn} bg-fit-blue text-white`}
+            className={`${btn} bg-fit-blue text-on-accent`}
           >
             <Play size={14} fill="currentColor" /> Start {p.title.split(":")[0]}
           </button>
@@ -643,7 +643,7 @@ function PlanActions({
           setDone(true);
         }}
         disabled={done}
-        className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-white"}`}
+        className={`${btn} ${done ? "bg-fit-green-soft text-fit-green" : "bg-fit-blue text-on-accent"}`}
       >
         {done ? <Check size={16} /> : <UtensilsCrossed size={16} />}{" "}
         {done ? "Added to today" : "Use as today's plan"}
@@ -677,7 +677,7 @@ export function FitsoLauncher({
       animate={{ scale: 1, opacity: 1 }}
       whileTap={{ scale: 0.94 }}
       onClick={onOpen}
-      className={`fixed z-40 ${left ? "left-4" : "right-4"} bottom-[calc(6rem+env(safe-area-inset-bottom))] size-14 sm:w-auto sm:pl-4 sm:pr-5 rounded-full sm:rounded-2xl bg-fit-blue text-white shadow-lg inline-flex items-center justify-center gap-2 font-medium`}
+      className={`fixed z-40 ${left ? "left-4" : "right-4"} bottom-[calc(6rem+env(safe-area-inset-bottom))] size-14 sm:w-auto sm:pl-4 sm:pr-5 rounded-full sm:rounded-2xl bg-fit-blue text-on-accent shadow-lg inline-flex items-center justify-center gap-2 font-medium`}
       aria-label="Ask Fitso, your AI fitness coach"
     >
       {/* Icon only on phones so it doesn't cover content; full label on larger screens. */}

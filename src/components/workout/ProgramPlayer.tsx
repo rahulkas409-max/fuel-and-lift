@@ -100,7 +100,7 @@ export function ProgramPlayer({ program, onClose }: { program: Program; onClose:
           <p className="text-ink-2 mt-2">
             {program.title} · about {programMinutes(program)} min. It&apos;s saved to today&apos;s streak.
           </p>
-          <button onClick={onClose} className="mt-8 h-14 w-full rounded-full bg-fit-blue text-white font-medium">
+          <button onClick={onClose} className="mt-8 h-14 w-full rounded-full bg-fit-blue text-on-accent font-medium">
             Done
           </button>
         </div>
@@ -159,12 +159,12 @@ export function ProgramPlayer({ program, onClose }: { program: Program; onClose:
                 </button>
               </div>
             ) : step.secs ? (
-              <button onClick={() => setPaused((p) => !p)} className="h-14 rounded-full bg-fit-blue text-white font-medium inline-flex items-center justify-center gap-2">
+              <button onClick={() => setPaused((p) => !p)} className="h-14 rounded-full bg-fit-blue text-on-accent font-medium inline-flex items-center justify-center gap-2">
                 {paused ? <Play size={20} fill="currentColor" /> : <Pause size={20} fill="currentColor" />}
                 {paused ? "Resume" : "Pause"}
               </button>
             ) : (
-              <button onClick={() => go(i + 1)} className="h-14 rounded-full bg-fit-blue text-white font-medium inline-flex items-center justify-center gap-2">
+              <button onClick={() => go(i + 1)} className="h-14 rounded-full bg-fit-blue text-on-accent font-medium inline-flex items-center justify-center gap-2">
                 <Check size={20} /> Done
               </button>
             )}

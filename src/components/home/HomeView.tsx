@@ -12,6 +12,7 @@ import { todayNutrition, todaySession } from "@/lib/progress";
 import { currentRoutine, useStore } from "@/lib/store";
 import { LeaderboardCard } from "../leaderboard/Leaderboard";
 import { Emoji } from "../ui/Emoji";
+import { PhotoHero, photoForDay } from "../ui/PhotoHero";
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -43,7 +44,7 @@ export function HomeView() {
   return (
     <div className="space-y-4">
       <div className="pt-1">
-        <p className="text-2xl font-medium text-ink">{greeting()}</p>
+        <p className="headline text-[34px] text-ink">{greeting()}</p>
         <div className="flex flex-wrap gap-1.5 mt-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-line px-3 py-1 text-xs text-ink-2">
             <Emoji e={s.routineId === "full-body" ? "🌿" : "🔥"} size={14} /> {currentRoutine(s).name}
@@ -55,28 +56,31 @@ export function HomeView() {
         </div>
       </div>
 
-      {/* Hero */}
-      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden rounded-[28px] bg-fit-blue-soft p-5 pr-2 min-h-44 flex">
-        <div className="relative z-10 flex-1 min-w-0 pr-2">
-          <p className="text-xs font-medium text-fit-blue flex items-center gap-1.5">
-            <Emoji e={INTENSITY_META[day?.intensity ?? "moderate"].emoji} size={16} /> {INTENSITY_META[day?.intensity ?? "moderate"].label} day
-          </p>
-          <h2 className="text-[26px] leading-tight font-medium text-ink mt-1.5">{day?.name ?? "Rest day"}</h2>
-          <p className="text-sm text-ink-2 mt-1">
-            {day?.exercises.length ? `${day.exercises.length} exercises · ~${minutes} min` : "Recover and refuel"}
-          </p>
+      {/* Hero: real photo of the day's training */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <PhotoHero
+          priority
+          photo={photoForDay(day, s.profile.sex === "female")}
+          eyebrow={
+            <span className="inline-flex items-center gap-1.5">
+              <Emoji e={INTENSITY_META[day?.intensity ?? "moderate"].emoji} size={14} /> {INTENSITY_META[day?.intensity ?? "moderate"].label} day
+            </span>
+          }
+          title={day?.name ?? "Rest day"}
+          className="min-h-72"
+        >
+          <p className="text-sm text-white/80 mt-2">{day?.exercises.length ? `${day.exercises.length} exercises · ~${minutes} min` : "Recover and refuel"}</p>
           <button
             onClick={() => s.setTab("train")}
-            className={`mt-4 h-11 px-5 rounded-full text-sm font-medium whitespace-nowrap inline-flex items-center gap-2 active:scale-[0.97] transition ${
-              completed ? "bg-fit-green-bright text-white" : "bg-fit-blue text-white"
+            className={`mt-4 h-12 px-6 rounded-full text-sm font-bold uppercase tracking-wide whitespace-nowrap inline-flex items-center gap-2 active:scale-[0.97] transition ${
+              completed ? "bg-fit-green-bright text-on-accent" : "bg-fit-blue text-on-accent"
             }`}
           >
             {completed ? <Check size={16} /> : <Dumbbell size={16} />}
             {completed ? "Session done" : doneSets ? "Continue" : "Start workout"}
           </button>
-        </div>
-        <Image src="/illustrations/personal-trainer.svg" alt="" width={170} height={150} priority className="relative self-end w-[42%] max-w-[190px] h-auto -mb-1" />
-      </motion.section>
+        </PhotoHero>
+      </motion.div>
 
       {/* Fit-style rings */}
       <section className="glass rounded-[28px] p-5">

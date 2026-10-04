@@ -2,11 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Crosshair, Loader2, MapPin, RefreshCw, Search, X } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { inIndia, nearestCity, type Audience, type Gym, type Place } from "@/lib/gyms";
 import { useStore } from "@/lib/store";
 import { loadTowns, nearestTown, stateName, type Town } from "@/lib/towns";
+import { PhotoHero } from "../ui/PhotoHero";
 import { Sheet } from "../ui/Sheet";
 import { GymCard } from "./GymCard";
 
@@ -178,19 +178,12 @@ export function GymsView() {
   return (
     <div className="space-y-4">
       {/* Location header */}
-      <section className="relative overflow-hidden rounded-[28px] bg-fit-green-soft p-5 flex gap-3">
-        <div className="relative z-10 flex-1 min-w-0">
-          <p className="text-xs font-medium text-fit-green">
-            Gym finder · India
-          </p>
-          <h2 className="text-2xl font-medium text-ink leading-tight mt-1">
-            Gyms near you
-          </h2>
+      <PhotoHero photo="gym-floor" eyebrow="Gym finder · India" title="Gyms near you" position="center 40%">
           <button
             onClick={() => setPickerOpen(true)}
-            className="mt-2 inline-flex items-center gap-1.5 text-sm text-ink-2 max-w-full"
+            className="mt-2 inline-flex items-center gap-1.5 text-sm text-white/85 max-w-full"
           >
-            <MapPin size={16} className="text-fit-green shrink-0" />
+            <MapPin size={16} className="text-fit-blue shrink-0" />
             <span className="truncate">
               {place ? place.label : "Finding your city…"}
             </span>
@@ -200,7 +193,7 @@ export function GymsView() {
             <button
               onClick={locate}
               disabled={status === "locating"}
-              className="h-10 px-4 rounded-full bg-fit-blue text-white text-sm font-medium inline-flex items-center gap-2 disabled:opacity-70"
+              className="h-10 px-4 rounded-full bg-fit-blue text-on-accent text-sm font-medium inline-flex items-center gap-2 disabled:opacity-70"
             >
               {status === "locating" ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -212,15 +205,7 @@ export function GymsView() {
                 : "Use my exact location"}
             </button>
           </div>
-        </div>
-        <Image
-          src="/illustrations/athletes-training.svg"
-          alt=""
-          width={160}
-          height={110}
-          className="self-end w-[34%] max-w-40 h-auto hidden min-[380px]:block"
-        />
-      </section>
+      </PhotoHero>
 
       {error && (
         <p
@@ -426,7 +411,7 @@ function CityPicker({
     <Sheet open={open} onClose={onClose} title="Choose location">
       <button
         onClick={onGps}
-        className="w-full h-12 rounded-2xl bg-fit-blue text-white font-medium flex items-center justify-center gap-2"
+        className="w-full h-12 rounded-2xl bg-fit-blue text-on-accent font-medium flex items-center justify-center gap-2"
       >
         <Crosshair size={18} /> Use my exact location
       </button>

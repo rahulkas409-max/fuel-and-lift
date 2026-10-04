@@ -155,7 +155,7 @@ export function MealsView() {
                   <button
                     key={k}
                     onClick={() => setOverride(k === trainingDay?.intensity ? null : k)}
-                    className={`h-10 px-3 rounded-full text-xs ${intensity === k ? "bg-fit-yellow text-white font-semibold" : "bg-card-2 text-ink-2"}`}
+                    className={`h-10 px-3 rounded-full text-xs ${intensity === k ? "bg-fit-yellow text-on-accent font-semibold" : "bg-card-2 text-ink-2"}`}
                   >
                     <Emoji e={INTENSITY_META[k].emoji} size={16} className="mr-1 align-middle" />{INTENSITY_META[k].label}
                   </button>
@@ -230,7 +230,7 @@ export function MealsView() {
                 }}
                 aria-pressed={on}
                 aria-label={`${i === 0 ? "Today" : dt.toLocaleDateString("en-IN", { weekday: "long" })} meals`}
-                className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 border ${on ? "bg-fit-blue text-white border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
+                className={`h-16 rounded-2xl flex flex-col items-center justify-center gap-0.5 border ${on ? "bg-fit-blue text-on-accent border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
               >
                 <span className="text-[11px] font-medium">{i === 0 ? "Today" : dt.toLocaleDateString("en-IN", { weekday: "short" })}</span>
                 <span className="text-lg font-medium leading-none tabular">{dt.getDate()}</span>
@@ -243,7 +243,7 @@ export function MealsView() {
 
       {/* Actions */}
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <motion.button whileTap={{ scale: 0.97 }} onClick={autoSync} className="h-14 rounded-2xl bg-fit-blue text-white font-semibold flex items-center justify-center gap-2 shadow-lift">
+        <motion.button whileTap={{ scale: 0.97 }} onClick={autoSync} className="h-14 rounded-2xl bg-fit-blue text-on-accent font-semibold flex items-center justify-center gap-2 shadow-lift">
           {variety > 0 ? <RefreshCw size={18} /> : <Zap size={18} />}
           {variety > 0 ? "Re-sync (another combo)" : "Auto-Sync meals to workout"}
         </motion.button>

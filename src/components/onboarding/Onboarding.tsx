@@ -13,6 +13,7 @@ import { play } from "@/lib/sound";
 import { useStore } from "@/lib/store";
 import { LogoMark, Wordmark } from "../brand/Logo";
 import { Emoji } from "../ui/Emoji";
+import { PhotoHero } from "../ui/PhotoHero";
 
 type Level = "light" | "heavy";
 
@@ -107,12 +108,10 @@ export function Onboarding() {
             className="flex-1 flex flex-col"
           >
             {s === "welcome" && (
-              <div className="flex-1 flex flex-col justify-center text-center">
-                <Image src="/illustrations/athletes-training.svg" alt="" width={420} height={260} priority className="mx-auto w-full max-w-sm h-auto" />
-                <h1 className="text-[32px] leading-tight font-medium text-ink mt-8">Train smarter. Eat better.</h1>
-                <p className="text-ink-2 mt-3 max-w-sm mx-auto">
-                  Answer 3 quick questions and we&apos;ll set up your workouts and Indian meal plan.
-                </p>
+              <div className="flex-1 flex flex-col justify-center">
+                <PhotoHero priority photo="welcome" eyebrow="Gym tracker · Indian meal planner" title={<>Train smarter.<br />Eat better.</>} className="min-h-[26rem]" position="center 30%">
+                  <p className="text-white/85 mt-3 max-w-sm">Answer 3 quick questions and we&apos;ll set up your workouts and Indian meal plan.</p>
+                </PhotoHero>
               </div>
             )}
 
@@ -228,12 +227,12 @@ export function Onboarding() {
             <button
               onClick={() => go(step + 1)}
               disabled={!canNext}
-              className="w-full h-14 rounded-full bg-fit-blue text-white font-medium text-base flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition"
+              className="w-full h-14 rounded-full bg-fit-blue text-on-accent font-medium text-base flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98] transition"
             >
               {step === 0 ? "Get started" : step === 3 ? "See my plan" : "Next"} <ArrowRight size={20} />
             </button>
           ) : (
-            <button onClick={open} className="w-full h-14 rounded-full bg-fit-blue text-white font-medium text-base flex items-center justify-center gap-2 active:scale-[0.98] transition shadow-lift">
+            <button onClick={open} className="w-full h-14 rounded-full bg-fit-blue text-on-accent font-medium text-base flex items-center justify-center gap-2 active:scale-[0.98] transition shadow-lift">
               Open my app <ArrowRight size={20} />
             </button>
           )}
@@ -272,7 +271,7 @@ function Choice({ on, onClick, emoji, title, sub, vertical }: { on: boolean; onC
         {sub && <span className="block text-sm text-ink-2 mt-0.5">{sub}</span>}
       </span>
       {on && (
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 right-3 size-6 rounded-full bg-fit-blue text-white grid place-items-center">
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-3 right-3 size-6 rounded-full bg-fit-blue text-on-accent grid place-items-center">
           <Check size={14} strokeWidth={3} />
         </motion.span>
       )}

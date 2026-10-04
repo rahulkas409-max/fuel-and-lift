@@ -80,7 +80,7 @@ export function GymCard({ gym, index }: { gym: Gym; index: number }) {
 
             <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2 mt-auto pt-1">
               {gym.phone ? (
-                <a href={`tel:${gym.phone.replace(/[^\d+]/g, "")}`} className="h-11 min-w-0 rounded-full bg-fit-blue text-white text-sm font-medium flex items-center justify-center gap-1.5 px-2">
+                <a href={`tel:${gym.phone.replace(/[^\d+]/g, "")}`} className="h-11 min-w-0 rounded-full bg-fit-blue text-on-accent text-sm font-medium flex items-center justify-center gap-1.5 px-2">
                   <Phone size={16} /> Call
                 </a>
               ) : (

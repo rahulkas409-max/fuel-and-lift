@@ -75,7 +75,7 @@ export function RazorpayButton({ onPaid }: { onPaid: () => void }) {
       <button
         onClick={pay}
         disabled={busy}
-        className="w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-70"
+        className="w-full h-14 rounded-2xl bg-fit-blue text-on-accent font-semibold text-base flex items-center justify-center gap-2 active:scale-[0.98] transition disabled:opacity-70"
       >
         {busy ? <Loader2 className="animate-spin" size={20} /> : SANDBOX ? <FlaskConical size={20} /> : <Sparkles size={20} />}
         {busy ? "Processing…" : SANDBOX ? "Simulate ₹9 Payment (Sandbox Mode)" : "Pay ₹9 with Razorpay"}

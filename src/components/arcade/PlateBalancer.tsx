@@ -114,7 +114,7 @@ export function PlateBalancer() {
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
             <p className="font-display text-2xl text-fit-blue">Plate balanced!</p>
             <p className="text-sm text-ink-2">{ch.kcalLimit - kcal} kcal to spare.</p>
-            <button onClick={() => reset(true)} className="mt-3 h-12 px-6 rounded-xl bg-fit-blue text-white font-semibold inline-flex items-center gap-2">
+            <button onClick={() => reset(true)} className="mt-3 h-12 px-6 rounded-xl bg-fit-blue text-on-accent font-semibold inline-flex items-center gap-2">
               Next challenge <ArrowRight size={16} />
             </button>
           </motion.div>

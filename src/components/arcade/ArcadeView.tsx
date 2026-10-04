@@ -2,12 +2,12 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { FormCheck } from "./FormCheck";
 import { MacroGuessr } from "./MacroGuessr";
 import { PlateBalancer } from "./PlateBalancer";
+import { PhotoHero } from "../ui/PhotoHero";
 import { Emoji } from "../ui/Emoji";
 
 const GAMES = [
@@ -35,14 +35,9 @@ export function ArcadeView() {
         </motion.div>
       ) : (
         <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -30 }} className="space-y-3">
-          <div className="mb-5 rounded-[28px] bg-fit-yellow-soft p-5 flex items-center gap-3 overflow-hidden">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-fit-yellow">Arcade</p>
-              <h2 className="text-2xl font-medium leading-tight mt-1 text-ink">Train your nutrition IQ</h2>
-              <p className="text-sm text-ink-2 mt-1">Three quick games. Beat your best.</p>
-            </div>
-            <Image src="/illustrations/winners.svg" alt="" width={150} height={110} className="w-[42%] max-w-40 h-auto shrink-0" />
-          </div>
+          <PhotoHero photo="women-partner" eyebrow="Arcade" title="Train your nutrition IQ" className="mb-5" position="center 30%">
+            <p className="text-sm text-white/80 mt-2">Three quick games. Beat your best.</p>
+          </PhotoHero>
           {GAMES.map((g, i) => (
             <motion.button
               key={g.id}

@@ -1,15 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="Fuel and Lift logo">
-  <defs>
-    <linearGradient id="fl-bg" x1="8" y1="58" x2="56" y2="6" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#1e8e3e"/>
-      <stop offset="0.55" stop-color="#1a73e8"/>
-      <stop offset="1" stop-color="#4285f4"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="15" fill="url(#fl-bg)"/>
-  <path fill="#fff" fill-rule="evenodd" d="M32 8.5C37.8 15.3 45 21.6 45 30.6 45 37.9 39.2 43 32 43S19 37.9 19 30.6c0-5.2 3.1-8.9 5.8-11.4.5 4.1 2.3 6.7 4.6 7.8C28.4 20.2 29.4 14.4 32 8.5ZM32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z"/>
-  <path fill="#fbbc04" d="M32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z"/>
-  <g fill="#fff">
+  <rect width="64" height="64" rx="15" fill="#0a0b0d"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="14.25" fill="none" stroke="#2a2e35" stroke-width="1.5"/>
+  <path fill="#d4ff3a" fill-rule="evenodd" d="M32 8.5C37.8 15.3 45 21.6 45 30.6 45 37.9 39.2 43 32 43S19 37.9 19 30.6c0-5.2 3.1-8.9 5.8-11.4.5 4.1 2.3 6.7 4.6 7.8C28.4 20.2 29.4 14.4 32 8.5ZM32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z"/>
+  <path fill="#0a0b0d" d="M32 21.5l-6.6 8h4.3V38h4.6v-8.5h4.3Z"/>
+  <g fill="#ffffff">
     <rect x="12" y="47.5" width="40" height="3" rx="1.5"/>
     <rect x="15" y="43" width="4.5" height="12" rx="2"/>
     <rect x="44.5" y="43" width="4.5" height="12" rx="2"/>

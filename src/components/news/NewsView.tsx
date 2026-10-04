@@ -2,9 +2,9 @@
 
 import { motion } from "framer-motion";
 import { ArrowUpRight, RefreshCw, Share2, X } from "lucide-react";
-import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { CREATORS, TOPICS, timeAgo, type NewsItem, type TopicId } from "@/lib/news";
+import { PhotoHero } from "../ui/PhotoHero";
 import { Emoji } from "../ui/Emoji";
 import { Sheet } from "../ui/Sheet";
 
@@ -77,14 +77,9 @@ export function NewsView() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <section className="relative overflow-hidden rounded-[28px] bg-fit-blue-soft p-5 flex gap-3">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-fit-blue">Fitness news · India</p>
-          <h2 className="text-2xl font-medium text-ink leading-tight mt-1">What&apos;s new in fitness</h2>
-          <p className="text-sm text-ink-2 mt-1.5">Competitions, creators, athletes and diet — the latest headlines in one place.</p>
-        </div>
-        <Image src="/illustrations/winners.svg" alt="" width={150} height={110} className="self-end w-[32%] max-w-36 h-auto hidden min-[380px]:block" />
-      </section>
+      <PhotoHero photo="ropes" eyebrow="Fitness news · India" title="What's new in fitness" position="center 30%">
+        <p className="text-sm text-white/80 mt-2">Competitions, creators, athletes and diet: the latest headlines in one place.</p>
+      </PhotoHero>
 
       {/* Topics */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4" role="tablist" aria-label="News topics">
@@ -99,7 +94,7 @@ export function NewsView() {
                 setCreator(null);
                 setTopic(t.id);
               }}
-              className={`shrink-0 h-10 pl-2.5 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
+              className={`shrink-0 h-10 pl-2.5 pr-4 rounded-full border text-sm inline-flex items-center gap-2 ${on ? "bg-fit-blue text-on-accent border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`}
             >
               <Emoji e={t.emoji} size={18} />
               {t.label}
@@ -212,7 +207,7 @@ export function NewsView() {
       </section>
 
       <p className="text-[11px] text-ink-3 leading-relaxed">
-        Headlines are collected from Google News and belong to their publishers. Tap a story to read it in full on the publisher&apos;s website.
+        Headlines are collected from Google News (or Bing News as a backup) and belong to their publishers. Tap a story to read it in full on the publisher&apos;s website.
       </p>
 
       <Reader item={open} related={items.filter((i) => i.id !== open?.id).slice(0, 3)} now={now} onClose={() => setOpen(null)} onOpen={setOpen} />
@@ -264,7 +259,7 @@ function Reader({
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="h-12 rounded-full bg-fit-blue text-white font-medium inline-flex items-center justify-center gap-2 px-4"
+              className="h-12 rounded-full bg-fit-blue text-on-accent font-medium inline-flex items-center justify-center gap-2 px-4"
             >
               <span className="truncate">Read full story on {item.source}</span>
               <ArrowUpRight size={18} className="shrink-0" />

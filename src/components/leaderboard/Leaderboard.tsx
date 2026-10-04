@@ -275,7 +275,7 @@ export function LeaderboardSheet({ open, onClose }: { open: boolean; onClose: ()
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
                   <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="Your name or nickname" aria-label="Name" className="h-12 rounded-2xl bg-card border border-line px-4 outline-none focus:border-fit-blue" />
                   <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={24} placeholder="Town (optional)" aria-label="Town" className="h-12 rounded-2xl bg-card border border-line px-4 outline-none focus:border-fit-blue" />
-                  <button onClick={submit} disabled={saving || name.trim().length < 2} className="h-12 px-6 rounded-full bg-fit-blue text-white font-medium disabled:opacity-50">
+                  <button onClick={submit} disabled={saving || name.trim().length < 2} className="h-12 px-6 rounded-full bg-fit-blue text-on-accent font-medium disabled:opacity-50">
                     {saving ? "Joining…" : "Join"}
                   </button>
                 </div>

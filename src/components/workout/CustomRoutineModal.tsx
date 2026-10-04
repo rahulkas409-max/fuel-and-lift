@@ -125,7 +125,7 @@ function Builder({ onDone }: { onDone: () => void }) {
         <button
           onClick={save}
           disabled={draft.days.length === 0}
-          className="w-full h-14 rounded-2xl bg-fit-blue text-white font-semibold active:scale-[0.98] transition disabled:opacity-40"
+          className="w-full h-14 rounded-2xl bg-fit-blue text-on-accent font-semibold active:scale-[0.98] transition disabled:opacity-40"
         >
           Save Custom Workout
         </button>
@@ -209,7 +209,7 @@ function DayEditor({
                   <button
                     key={k}
                     onClick={() => onPatch({ intensity: k })}
-                    className={`h-9 px-3 rounded-full text-xs transition ${day.intensity === k ? "bg-fit-yellow text-white font-semibold" : "bg-card text-ink-2"}`}
+                    className={`h-9 px-3 rounded-full text-xs transition ${day.intensity === k ? "bg-fit-yellow text-on-accent font-semibold" : "bg-card text-ink-2"}`}
                   >
                     <Emoji e={INTENSITY_META[k].emoji} size={16} className="mr-1 -mt-0.5 align-middle" />{INTENSITY_META[k].label}
                   </button>
@@ -296,7 +296,7 @@ function PartDaySheet({
     const ex = buildBodyPartDay(ps, { equipment, level, variant: v });
     return { id: `c-${uid()}`, name: partsLabel(ps), focus: ps.join(" · "), intensity: inferIntensity(ex), exercises: ex };
   };
-  const chip = (on: boolean) => `h-10 px-4 rounded-full text-sm border ${on ? "bg-fit-blue text-white border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`;
+  const chip = (on: boolean) => `h-10 px-4 rounded-full text-sm border ${on ? "bg-fit-blue text-on-accent border-fit-blue font-medium" : "bg-card border-line text-ink-2"}`;
 
   return (
     <Sheet open={open} onClose={onClose} title="Body-part day" wide>
@@ -355,7 +355,7 @@ function PartDaySheet({
       <button
         onClick={() => onAddDay(makeDay(parts, variant))}
         disabled={!parts.length}
-        className="mt-4 w-full h-12 rounded-full bg-fit-blue text-white font-medium disabled:opacity-40"
+        className="mt-4 w-full h-12 rounded-full bg-fit-blue text-on-accent font-medium disabled:opacity-40"
       >
         Add {parts.length ? partsLabel(parts) : ""} day
       </button>
@@ -365,7 +365,7 @@ function PartDaySheet({
         <p className="text-xs text-ink-3 mt-1">Replaces the days above with a classic split for the days you can train.</p>
         <div role="tablist" aria-label="Split for" className="mt-3 grid grid-cols-2 gap-1 p-1 rounded-xl bg-card">
           {[false, true].map((w) => (
-            <button key={String(w)} role="tab" aria-selected={forWomen === w} onClick={() => setForWomen(w)} className={`h-9 rounded-lg text-sm font-medium ${forWomen === w ? (w ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}>
+            <button key={String(w)} role="tab" aria-selected={forWomen === w} onClick={() => setForWomen(w)} className={`h-9 rounded-lg text-sm font-medium ${forWomen === w ? (w ? "bg-fit-red text-white" : "bg-fit-blue text-on-accent") : "text-ink-2"}`}>
               {w ? "Women's split" : "Men's split"}
             </button>
           ))}
@@ -410,7 +410,7 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
             </div>
             <div className="flex gap-2 overflow-x-auto no-scrollbar py-3">
               {[null, ...MUSCLES].map((m) => (
-                <button key={m ?? "all"} onClick={() => setMuscle(m)} className={`shrink-0 h-9 px-3 rounded-full text-xs ${muscle === m ? "bg-fit-blue text-white font-semibold" : "bg-card-2 text-ink-2"}`}>
+                <button key={m ?? "all"} onClick={() => setMuscle(m)} className={`shrink-0 h-9 px-3 rounded-full text-xs ${muscle === m ? "bg-fit-blue text-on-accent font-semibold" : "bg-card-2 text-ink-2"}`}>
                   {m ?? "All"}
                 </button>
               ))}

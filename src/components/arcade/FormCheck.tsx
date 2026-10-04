@@ -82,7 +82,7 @@ export function FormCheck() {
               <Emoji e={score === ROUND ? "🏆" : score >= 2 ? "💪" : "🎯"} size={72} className="mx-auto" />
               <p className="font-display text-4xl mt-2">{score}/{ROUND}</p>
               <p className="text-ink-2 text-sm mt-1">{score === ROUND ? "Form police approved." : "Brush up and try a new deck."}</p>
-              <button onClick={restart} className="mt-5 h-12 px-6 rounded-xl bg-fit-blue text-white font-semibold inline-flex items-center gap-2">
+              <button onClick={restart} className="mt-5 h-12 px-6 rounded-xl bg-fit-blue text-on-accent font-semibold inline-flex items-center gap-2">
                 <RotateCcw size={16} /> New deck
               </button>
             </div>

@@ -13,8 +13,8 @@ renderer.toneMapping = THREE.NeutralToneMapping;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#eef3fa");
-scene.fog = new THREE.Fog("#eef3fa", 700, 1300);
+scene.background = new THREE.Color("#17191d");
+scene.fog = new THREE.Fog("#17191d", 650, 1200);
 scene.add(new THREE.HemisphereLight(0xffffff, 0xcfd6e2, 1.5));
 const key = new THREE.DirectionalLight(0xffffff, 2.3);
 key.position.set(90, 220, 170);
@@ -24,6 +24,10 @@ Object.assign(key.shadow.camera, { left: -180, right: 180, top: 180, bottom: -18
 key.shadow.radius = 5;
 key.shadow.bias = -0.0005;
 scene.add(key);
+// Rim light from behind so the figure separates from the dark studio background.
+const rim = new THREE.DirectionalLight(0xe8f0ff, 1.6);
+rim.position.set(-60, 160, -260);
+scene.add(rim);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.7);
 fill.position.set(-160, 90, -80);
 scene.add(fill);
@@ -39,15 +43,15 @@ const M = {
   sole: mat("#4a5568", 0.6),
   hair: mat(FEMALE ? "#231613" : "#2b1f1a", 0.8),
   eye: mat("#1b1b1b", 0.4),
-  prop: mat("#cbd3df", 0.8),
+  prop: mat("#5a606a", 0.8),
   towel: mat("#f28b82", 0.9),
 };
 
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), mat("#e6ecf5", 0.95));
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), mat("#202328", 0.95));
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
-const yogaMat = new THREE.Mesh(new THREE.BoxGeometry(200, 1.2, 64), mat("#a8dcc0", 0.9));
+const yogaMat = new THREE.Mesh(new THREE.BoxGeometry(200, 1.2, 64), mat("#3b4a14", 0.9));
 yogaMat.position.y = 0.6;
 yogaMat.receiveShadow = true;
 scene.add(yogaMat);

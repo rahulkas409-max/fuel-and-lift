@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Log workouts, plan high-protein Indian meals and track nutrition. Free, no sign-up.",
     start_url: "/",
     display: "standalone",
-    background_color: "#f8fafd",
-    theme_color: "#f8fafd",
+    background_color: "#0a0b0d",
+    theme_color: "#0a0b0d",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

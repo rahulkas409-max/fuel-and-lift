@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import { Check, Pencil, Plus, Undo2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ALL_ROUTINES, INTENSITY_META, SCHEDULE_ADVICE, routinesFor, type Audience } from "@/data/workouts";
@@ -13,6 +14,7 @@ import { ExerciseCard } from "./ExerciseCard";
 import { Heatmap } from "./Heatmap";
 import { ProgramLibrary } from "./ProgramLibrary";
 import { Emoji } from "../ui/Emoji";
+import { PhotoHero, photoForCard, photoForDay } from "../ui/PhotoHero";
 
 export function WorkoutView() {
   const mode = useStore((s) => s.trainMode);
@@ -28,7 +30,7 @@ export function WorkoutView() {
         ).map(([id, label]) => {
           const on = mode === id;
           return (
-            <button key={id} role="tab" aria-selected={on} onClick={() => setMode(id)} className={`relative h-11 rounded-full text-sm font-medium ${on ? "text-white" : "text-ink-2"}`}>
+            <button key={id} role="tab" aria-selected={on} onClick={() => setMode(id)} className={`relative h-11 rounded-full text-sm font-medium ${on ? "text-on-accent" : "text-ink-2"}`}>
               {on && <motion.span layoutId="train-mode" className="absolute inset-0 rounded-full bg-fit-blue" transition={{ type: "spring", damping: 26, stiffness: 380 }} />}
               <span className="relative">{label}</span>
             </button>
@@ -88,20 +90,25 @@ function RoutineView() {
           {days ? ` for ${days} days a week` : ""} · swipe to see all
         </p>
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1 snap-x">
-          {routines.map((r) => {
+          {routines.map((r, ri) => {
             const on = r.id === routine.id;
             return (
               <motion.button
                 key={r.id}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => state.setRoutine(r.id)}
-                className={`snap-start shrink-0 w-[15.5rem] text-left rounded-3xl p-4 border transition-colors ${on ? "bg-fit-blue-soft border-fit-blue/50" : "glass"}`}
+                aria-pressed={on}
+                className={`relative snap-start shrink-0 w-[15.5rem] h-56 text-left rounded-3xl overflow-hidden flex flex-col justify-end p-4 ${on ? "ring-2 ring-fit-blue" : "ring-1 ring-line"}`}
               >
-                <p className={`text-[11px] font-medium ${on ? "text-fit-blue" : "text-ink-3"}`}>
-                  {r.days.length} days {r.id === state.customRoutine?.id && "· custom"}
-                </p>
-                <p className="font-display text-2xl leading-tight mt-1 text-ink">{r.name}</p>
-                <p className="text-xs text-ink-2 mt-1 line-clamp-2">{r.blurb}</p>
+                <Image src={`/photos/${photoForCard(ri, aud === "women")}.webp`} alt="" fill sizes="248px" className="object-cover" />
+                <span className="absolute inset-0 photo-shade" />
+                <span className="relative">
+                  <span className={`inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 ${on ? "bg-fit-blue text-on-accent" : "bg-black/50 text-white/90"}`}>
+                    {on && <Check size={12} />} {r.days.length} days {r.id === state.customRoutine?.id && "· custom"}
+                  </span>
+                  <span className="block headline text-[26px] mt-2 text-white">{r.name}</span>
+                  <span className="block text-xs text-white/75 mt-1 line-clamp-2">{r.blurb}</span>
+                </span>
               </motion.button>
             );
           })}
@@ -124,7 +131,7 @@ function RoutineView() {
             <button
               key={d.id}
               onClick={() => state.setDay(routine.id, d.id)}
-              className={`relative shrink-0 h-11 px-4 rounded-full text-sm font-medium transition-colors ${on ? "text-white" : "text-ink-2 bg-card-2"}`}
+              className={`relative shrink-0 h-11 px-4 rounded-full text-sm font-medium transition-colors ${on ? "text-on-accent" : "text-ink-2 bg-card-2"}`}
             >
               {on && <motion.span layoutId="day-chip" className="absolute inset-0 rounded-full bg-fit-blue" transition={{ type: "spring", damping: 25, stiffness: 350 }} />}
               <span className="relative">
@@ -138,15 +145,13 @@ function RoutineView() {
       {day && (
         <AnimatePresence mode="wait">
           <motion.section key={logKey} initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }} className="space-y-4">
-            {/* Session header */}
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-fit-yellow">{INTENSITY_META[day.intensity].label} day</p>
-                <h2 className="font-display text-3xl sm:text-4xl leading-none mt-1 text-ink">{day.name}</h2>
-                <p className="text-sm text-ink-2 mt-1.5">{day.focus}</p>
+            {/* Session header: real photo for the day's training */}
+            <PhotoHero photo={photoForDay(day, aud === "women")} eyebrow={`${INTENSITY_META[day.intensity].label} day`} title={day.name} className="min-h-56">
+              <div className="flex items-end justify-between gap-4 mt-1.5">
+                <p className="text-sm text-white/80 min-w-0">{day.focus}</p>
+                <ProgressRing pct={pct} label={`${doneSets}/${totalSets}`} />
               </div>
-              <ProgressRing pct={pct} label={`${doneSets}/${totalSets}`} />
-            </div>
+            </PhotoHero>
 
             {day.exercises.length === 0 ? (
               <div className="glass rounded-3xl p-8 text-center">
@@ -217,7 +222,7 @@ function ScheduleAdvice({
             role="tab"
             aria-selected={aud === a}
             onClick={() => setAud(a)}
-            className={`h-10 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-white") : "text-ink-2"}`}
+            className={`h-10 rounded-xl text-sm font-medium transition-colors ${aud === a ? (a === "women" ? "bg-fit-red text-white" : "bg-fit-blue text-on-accent") : "text-ink-2"}`}
           >
             {a === "men" ? "Men's plans" : "Women's plans"}
           </button>
@@ -230,7 +235,7 @@ function ScheduleAdvice({
             key={n}
             onClick={() => setDays(days === n ? null : n)}
             aria-pressed={days === n}
-            className={`h-11 rounded-xl text-sm font-medium border ${days === n ? "bg-fit-blue text-white border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
+            className={`h-11 rounded-xl text-sm font-medium border ${days === n ? "bg-fit-blue text-on-accent border-fit-blue" : "bg-card-2 border-line text-ink-2"}`}
           >
             {n} days
           </button>
@@ -269,13 +274,13 @@ function ProgressRing({ pct, label }: { pct: number; label: string }) {
   return (
     <div className="relative size-[68px] shrink-0">
       <svg viewBox="0 0 64 64" className="size-full -rotate-90">
-        <circle cx="32" cy="32" r={r} fill="none" stroke="var(--card-3)" strokeWidth="6" />
+        <circle cx="32" cy="32" r={r} fill="none" stroke="rgb(255 255 255 / 0.18)" strokeWidth="6" />
         <motion.circle
           cx="32" cy="32" r={r} fill="none" stroke={pct === 1 ? "var(--fit-green-bright)" : "var(--fit-blue)"} strokeWidth="6" strokeLinecap="round"
           strokeDasharray={c} animate={{ strokeDashoffset: c * (1 - pct) }} transition={{ type: "spring", damping: 20 }}
         />
       </svg>
-      <span className="absolute inset-0 grid place-items-center font-mono tabular text-xs text-ink">{label}</span>
+      <span className="absolute inset-0 grid place-items-center font-mono tabular text-xs text-white">{label}</span>
     </div>
   );
 }

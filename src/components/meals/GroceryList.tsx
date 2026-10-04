@@ -114,7 +114,7 @@ export function GroceryList() {
           aria-label="New grocery item"
           className="flex-1 min-w-0 h-12 rounded-xl bg-card-2 border border-line px-4 outline-none focus:border-fit-blue/60"
         />
-        <button className="size-12 rounded-xl bg-fit-blue text-white grid place-items-center" aria-label="Add item">
+        <button className="size-12 rounded-xl bg-fit-blue text-on-accent grid place-items-center" aria-label="Add item">
           <Plus />
         </button>
       </form>

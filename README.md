@@ -102,12 +102,12 @@ All data lives in the browser's localStorage.
 
 ## Design
 
-- Inspired by Google Fit and Material 3: a light theme with **Google Sans**, Google blue and green, the two progress rings, and a pill-style navigation bar.
-- Dark mode follows the device setting automatically.
+- **Gym-website look**, following the patterns of the best gym websites (real photography over stock art, a clear first action above the fold, bold contrast): near-black surfaces, one loud **volt-lime accent** with dark text on it, and big condensed uppercase headlines in **Oswald** (self-hosted via `@fontsource-variable/oswald`) over Google Sans body text.
+- **Real photos everywhere it matters.** Full-bleed banners with a dark gradient (`PhotoHero`) on the welcome screen, Home (a photo matched to today's workout: legs, push, pull, arms, shoulders, glutes or core), Train (the selected day and every plan card), the workout library (a women's photo in the women's library), Gyms, News and Arcade. Photos are public-domain gym photography from free-exercise-db, fetched by `node scripts/fetch-hero-photos.mjs` into `public/photos/`.
+- 3D exercise demos are rendered in a dark studio with a lime mat and a rim light, so they sit naturally in the dark UI.
 - Exercise photos and how-to steps come from [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain). Each exercise shows its start and end positions alternating like a GIF. Run `node scripts/fetch-exercise-media.mjs` to refresh them.
-- Illustrations come from [unDraw](https://undraw.co) via `undraw-svg` (MIT) and are recoloured to the brand blue.
-- Food and game icons are [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT), so they look the same on every device.
-- The logo lives in `public/logo.svg`. Run `node scripts/build-icons.mjs` to regenerate the favicon and the iOS/Android home-screen icons.
+- Food and game icons are [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (MIT), so they look the same on every device. A few empty-state illustrations come from [unDraw](https://undraw.co) (MIT).
+- The logo (volt flame on a black tile) lives in `public/logo.svg`; the favicon and home-screen icons are generated from it.
 
 ## Food data sources
 
