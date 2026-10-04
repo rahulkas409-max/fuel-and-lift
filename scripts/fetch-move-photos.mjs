@@ -1,6 +1,6 @@
 // Real start/finish photos for home & yoga moves, from free-exercise-db
 // (github.com/yuhonas/free-exercise-db, public domain / Unlicense). Every pair below was checked
-// by eye against the move's instructions; moves without a true match use the 3D demos instead.
+// by eye against the move's instructions; moves without a true match show a real YouTube demo instead.
 // Writes public/moves/<id>-0.webp, <id>-1.webp and src/data/move-photos.ts.
 // Run: node scripts/fetch-move-photos.mjs
 import fs from "node:fs";
@@ -11,24 +11,24 @@ const MAP = {
   // abs & waist
   crunch: "Crunches", "bicycle-crunch": "Air_Bike", "reverse-crunch": "Reverse_Crunch", "scissor-kicks": "Scissor_Kick",
   "russian-twist": "Russian_Twist", "heel-touch": "Alternate_Heel_Touchers", "mountain-climber": "Mountain_Climbers",
-  "dead-bug": "Dead_Bug", plank: "Plank", "side-plank": "Side_Bridge", "oblique-crunch": "Oblique_Crunches_-_On_The_Floor",
+  "dead-bug": "Dead_Bug", plank: "Plank", "side-plank": "Side_Bridge", "leg-raise": "Flat_Bench_Lying_Leg_Raise", "oblique-crunch": "Oblique_Crunches_-_On_The_Floor",
   jackknife: "Jackknife_Sit-Up",
   // glutes, thighs & legs
   "glute-bridge": "Butt_Lift_Bridge", "single-leg-bridge": "Single_Leg_Glute_Bridge", "donkey-kick": "Glute_Kickback",
   "side-leg-raise": "Side_Leg_Raises", "rear-leg-raise": "Rear_Leg_Raises", "fire-hydrant": "Hip_Circles_prone",
   "bw-squat": "Bodyweight_Squat", "jump-squat": "Freehand_Jump_Squat", "sumo-squat": "Sit_Squats",
-  "bw-lunge": "Bodyweight_Walking_Lunge", "curtsy-lunge": "Crossover_Reverse_Lunge",
+  "bw-lunge": "Bodyweight_Walking_Lunge", "step-up": "Step-up_with_Knee_Raise", "bw-calf-raise": "Calf_Raises_-_With_Bands", "curtsy-lunge": "Crossover_Reverse_Lunge",
   // upper body
   "incline-push-up": "Incline_Push-Up", "push-up": "Pushups", "wide-push-up": "Push-Up_Wide", "chair-dip": "Bench_Dips",
-  "arm-circles": "Arm_Circles", superman: "Superman",
+  "arm-circles": "Arm_Circles", superman: "Superman", "towel-tricep": "Triceps_Stretch",
   // cardio
-  "jumping-jacks": "Star_Jump", skipping: "Rope_Jumping", "tuck-jump": "Knee_Tuck_Jump", inchworm: "Inchworm",
+  "jumping-jacks": "Star_Jump", skipping: "Rope_Jumping", "tuck-jump": "Knee_Tuck_Jump", inchworm: "Inchworm", "high-knees": "Fast_Skipping",
   // neck
   "neck-side-stretch": "Side_Neck_Stretch", "neck-isometric": "Isometric_Neck_Exercise_-_Front_And_Back", "chin-to-chest": "Chin_To_Chest_Stretch",
   // yoga & stretching
   "childs-pose": "Childs_Pose", "cat-cow": "Cat_Stretch", "knees-to-chest": "Hug_Knees_To_Chest", "worlds-greatest": "Worlds_Greatest_Stretch",
   "forward-fold": "Standing_Toe_Touches", tadasana: "Upward_Stretch", "low-lunge": "Kneeling_Hip_Flexor", "bridge-pose": "Pelvic_Tilt_Into_Bridge",
-  cobra: "Lower_Back_Curl", "supine-twist": "Knee_Across_The_Body", "seated-forward-bend": "Upper_Back-Leg_Grab",
+  cobra: "Lower_Back_Curl", "plank-yoga": "Plank", "side-plank-yoga": "Side_Bridge", "leg-raise-yoga": "Flat_Bench_Lying_Leg_Raise", "supine-twist": "Knee_Across_The_Body", "seated-forward-bend": "Upper_Back-Leg_Grab",
 };
 
 fs.mkdirSync("public/moves", { recursive: true });

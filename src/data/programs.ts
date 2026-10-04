@@ -1,5 +1,5 @@
 // Body-part workout library: popular gym splits, no-equipment home workouts and yoga, for men and women.
-// Moves show real free-exercise-db photos or a 3D demo (male or female model, see scripts/moves3d).
+// Moves show real free-exercise-db photos, or a real YouTube demo video (src/data/move-videos.ts).
 import { MEDIA as EXERCISE_MEDIA } from "./media";
 import { buildBodyPartDay, type BodyPart, type PartOptions } from "@/lib/bodypart";
 import { exerciseById } from "./workouts";
@@ -9,9 +9,9 @@ export type Area = "face" | "neck" | "shoulders" | "arms" | "chest" | "back" | "
 export type ProgramKind = "gym" | "home" | "yoga";
 
 export const AREAS: { id: Area; label: string; figure: string }[] = [
-  { id: "face", label: "Double chin & jaw", figure: "kiss-ceiling" },
-  { id: "neck", label: "Neck", figure: "neck-roll" },
-  { id: "shoulders", label: "Shoulders", figure: "ytw-raise" },
+  { id: "face", label: "Double chin & jaw", figure: "chin-to-chest" },
+  { id: "neck", label: "Neck", figure: "neck-side-stretch" },
+  { id: "shoulders", label: "Shoulders", figure: "arm-circles" },
   { id: "arms", label: "Arms", figure: "chair-dip" },
   { id: "chest", label: "Chest", figure: "push-up" },
   { id: "back", label: "Back & posture", figure: "superman" },

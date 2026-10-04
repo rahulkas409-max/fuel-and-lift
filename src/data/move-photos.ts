@@ -41,6 +41,10 @@ export const MOVE_PHOTOS: Record<string, [string, string]> = {
     "/moves/side-plank-0.webp",
     "/moves/side-plank-1.webp"
   ],
+  "leg-raise": [
+    "/moves/leg-raise-0.webp",
+    "/moves/leg-raise-1.webp"
+  ],
   "oblique-crunch": [
     "/moves/oblique-crunch-0.webp",
     "/moves/oblique-crunch-1.webp"
@@ -89,6 +93,14 @@ export const MOVE_PHOTOS: Record<string, [string, string]> = {
     "/moves/bw-lunge-0.webp",
     "/moves/bw-lunge-1.webp"
   ],
+  "step-up": [
+    "/moves/step-up-0.webp",
+    "/moves/step-up-1.webp"
+  ],
+  "bw-calf-raise": [
+    "/moves/bw-calf-raise-0.webp",
+    "/moves/bw-calf-raise-1.webp"
+  ],
   "curtsy-lunge": [
     "/moves/curtsy-lunge-0.webp",
     "/moves/curtsy-lunge-1.webp"
@@ -117,6 +129,10 @@ export const MOVE_PHOTOS: Record<string, [string, string]> = {
     "/moves/superman-0.webp",
     "/moves/superman-1.webp"
   ],
+  "towel-tricep": [
+    "/moves/towel-tricep-0.webp",
+    "/moves/towel-tricep-1.webp"
+  ],
   "jumping-jacks": [
     "/moves/jumping-jacks-0.webp",
     "/moves/jumping-jacks-1.webp"
@@ -132,6 +148,10 @@ export const MOVE_PHOTOS: Record<string, [string, string]> = {
   "inchworm": [
     "/moves/inchworm-0.webp",
     "/moves/inchworm-1.webp"
+  ],
+  "high-knees": [
+    "/moves/high-knees-0.webp",
+    "/moves/high-knees-1.webp"
   ],
   "neck-side-stretch": [
     "/moves/neck-side-stretch-0.webp",
@@ -180,6 +200,18 @@ export const MOVE_PHOTOS: Record<string, [string, string]> = {
   "cobra": [
     "/moves/cobra-0.webp",
     "/moves/cobra-1.webp"
+  ],
+  "plank-yoga": [
+    "/moves/plank-yoga-0.webp",
+    "/moves/plank-yoga-1.webp"
+  ],
+  "side-plank-yoga": [
+    "/moves/side-plank-yoga-0.webp",
+    "/moves/side-plank-yoga-1.webp"
+  ],
+  "leg-raise-yoga": [
+    "/moves/leg-raise-yoga-0.webp",
+    "/moves/leg-raise-yoga-1.webp"
   ],
   "supine-twist": [
     "/moves/supine-twist-0.webp",
