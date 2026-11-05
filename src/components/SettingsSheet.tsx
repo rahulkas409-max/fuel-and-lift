@@ -86,7 +86,7 @@ export function SettingsSheet({ open, onClose }: { open: boolean; onClose: () =>
       <div className="flex items-center gap-3 pb-4">
         <LogoMark size={44} />
         <div>
-          <p className="font-medium text-ink">Fuel &amp; Lift</p>
+          <p className="font-medium text-ink">Forma</p>
           <p className="text-xs text-ink-3">Your data is saved on this device only. Nothing is uploaded.</p>
         </div>
       </div>

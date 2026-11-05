@@ -44,7 +44,7 @@ export function RazorpayButton({ onPaid }: { onPaid: () => void }) {
         order_id: order.orderId,
         amount: order.amount,
         currency: order.currency,
-        name: "Fuel & Lift",
+        name: "Forma",
         description: "Custom Pass · 7 days",
         theme: { color: "#1a73e8" },
         handler: async (resp: Record<string, string>) => {

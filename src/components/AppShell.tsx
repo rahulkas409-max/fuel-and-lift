@@ -1,7 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Dumbbell, House, MapPin, Newspaper, Settings, Timer, UtensilsCrossed, Volume2, VolumeX } from "lucide-react";
+import { Dumbbell, House, MapPin, Newspaper, Settings, Timer, UtensilsCrossed, Volume2, VolumeX, ChartNoAxesCombined, Ellipsis, Bell } from "lucide-react";
+import { ReminderEngine } from "./wellness/ReminderEngine";
+import { RemindersView } from "./wellness/RemindersView";
+import { ProgressView } from "./wellness/ProgressView";
+import { MoreView } from "./wellness/MoreView";
+import { ActivitySync } from "./wellness/SharingCard";
 import { useState } from "react";
 import { useHydrated, useSoundSync } from "@/lib/hooks";
 import { useStore, type Tab } from "@/lib/store";
@@ -22,11 +27,11 @@ import { RestTimer, useRestTimer } from "./workout/RestTimer";
 import { WorkoutView } from "./workout/WorkoutView";
 
 const TABS: { id: Tab; label: string; icon: typeof Dumbbell }[] = [
-  { id: "home", label: "Home", icon: House },
+  { id: "home", label: "Today", icon: House },
+  { id: "meals", label: "Food", icon: UtensilsCrossed },
   { id: "train", label: "Train", icon: Dumbbell },
-  { id: "meals", label: "Meals", icon: UtensilsCrossed },
-  { id: "gyms", label: "Gyms", icon: MapPin },
-  { id: "news", label: "News", icon: Newspaper },
+  { id: "progress", label: "Progress", icon: ChartNoAxesCombined },
+  { id: "more", label: "More", icon: Ellipsis },
 ];
 
 export function AppShell() {
@@ -51,12 +56,12 @@ export function AppShell() {
 
   return (
     <PaywallProvider>
-      <div className="mx-auto max-w-2xl min-h-dvh px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[calc(10rem+env(safe-area-inset-bottom))]">
-        <header className="flex items-center justify-between h-16 mb-2">
-          <button onClick={() => setTab("home")} className="flex items-center gap-2.5 -ml-1 rounded-full pr-2" aria-label="Fuel & Lift home">
+      <div className="mx-auto max-w-4xl min-h-dvh px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-8 pb-[calc(10rem+env(safe-area-inset-bottom))]">
+        <header className="flex items-center justify-between h-20 mb-6 border-b border-line">
+          <button onClick={() => setTab("home")} className="flex items-center gap-2.5 -ml-1 rounded-full pr-2" aria-label="Forma home">
             <LogoMark size={38} />
             <span className="leading-tight text-left">
-              <Wordmark className="block text-xl" />
+              <Wordmark className="block text-3xl" />
               <span className="block text-xs text-ink-3" suppressHydrationWarning>{dateLabel}</span>
             </span>
           </button>
@@ -66,6 +71,7 @@ export function AppShell() {
                 <Timer size={22} />
               </button>
             )}
+            <button onClick={() => setTab("rhythm")} className="size-11 rounded-full grid place-items-center text-ink-2 hover:bg-card-2" aria-label="Reminders and personal timer"><Bell size={21} /></button>
             <button onClick={toggleSound} className="size-11 rounded-full grid place-items-center text-ink-2 hover:bg-card-2" aria-label={sound ? "Mute sounds" : "Unmute sounds"} aria-pressed={sound}>
               {sound ? <Volume2 size={22} /> : <VolumeX size={22} />}
             </button>
@@ -91,11 +97,15 @@ export function AppShell() {
               {tab === "grocery" && <GroceryList />}
               {tab === "arcade" && <ArcadeView />}
               {tab === "news" && <NewsView />}
+              {tab === "progress" && <ProgressView />}
+              {tab === "rhythm" && <RemindersView />}
+              {tab === "more" && <MoreView />}
             </motion.main>
           </AnimatePresence>
         )}
       </div>
 
+      {hydrated && <><ReminderEngine /><ActivitySync /></>}
       {hydrated && tab === "train" && <RestTimer />}
       {hydrated && !fitsoOpen && <FitsoLauncher left={tab === "train"} onOpen={() => setFitsoOpen(true)} />}
       {hydrated && <FitsoChat open={fitsoOpen} onClose={() => setFitsoOpen(false)} />}
@@ -117,10 +127,10 @@ export function AppShell() {
 
       {/* Material 3 navigation bar */}
       <nav className="fixed bottom-0 inset-x-0 z-40 bg-card-2/95 backdrop-blur-xl border-t border-line pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto max-w-2xl grid grid-cols-5">
+        <div className="mx-auto max-w-4xl grid grid-cols-5">
           {TABS.map(({ id, label, icon: Icon }) => {
             // Grocery lives under Meals, Arcade under Home
-            const on = tab === id || (id === "meals" && tab === "grocery") || (id === "home" && tab === "arcade");
+            const on = tab === id || (id === "meals" && tab === "grocery") || (id === "more" && ["arcade", "news", "gyms", "rhythm"].includes(tab));
             return (
               <button
                 key={id}

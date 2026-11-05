@@ -2438,7 +2438,11 @@ export const LIBRARY_MEDIA: Record<string, ExerciseMedia> = {
       "/exercises/kb-swing-0.webp",
       "/exercises/kb-swing-1.webp"
     ],
-    "steps": [],
+    "steps": [
+      "Stand with feet about shoulder-width apart and hold the kettlebell with both hands. Hinge at the hips with a neutral back.",
+      "Hike the kettlebell between your legs, then drive through your feet and extend your hips to let it float to chest height. Do not lift it overhead or pull with your arms.",
+      "Let the bell fall, hinge again and repeat with control. Stop if you cannot maintain a neutral back."
+],
     "level": "intermediate"
   },
   "barbell-glute-bridge": {
@@ -2640,7 +2644,11 @@ export const LIBRARY_MEDIA: Record<string, ExerciseMedia> = {
       "/exercises/side-bridge-0.webp",
       "/exercises/side-bridge-1.webp"
     ],
-    "steps": [],
+    "steps": [
+      "Lie on your side with your elbow under your shoulder and your legs stacked. Bend your knees for an easier variation.",
+      "Brace your trunk and lift your hips until your body forms a straight line. Keep breathing and avoid rotating your chest.",
+      "Hold comfortably, lower with control and repeat on the other side. Split the prescribed hold evenly between both sides."
+],
     "level": "beginner"
   }
 };

@@ -23,7 +23,7 @@ export interface ChatMsg {
   query?: string;
 }
 
-export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news";
+export type Tab = "home" | "train" | "meals" | "gyms" | "grocery" | "arcade" | "news" | "progress" | "rhythm" | "more";
 
 export interface SetLog {
   weight: string;

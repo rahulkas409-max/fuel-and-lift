@@ -175,7 +175,7 @@ export function FoodExplorer({ open, onClose }: { open: boolean; onClose: () => 
                         )}
                         <p className="mt-8 text-[11px] leading-relaxed text-ink-3 flex gap-2">
                           <Database size={14} className="shrink-0 mt-0.5" />
-                          Sources: Indian Food Composition Tables 2017 (ICMR–NIN); USDA FoodData Central SR Legacy; food nutrition data from TempoLife (tempolife.app), CC-BY-4.0. Cooked Indian dish values are Fuel &amp; Lift estimates.
+                          Sources: Indian Food Composition Tables 2017 (ICMR–NIN); USDA FoodData Central SR Legacy; food nutrition data from TempoLife (tempolife.app), CC-BY-4.0. Cooked Indian dish values are Forma estimates.
                         </p>
                       </>
                     )}

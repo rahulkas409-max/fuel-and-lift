@@ -43,10 +43,24 @@ const P = (
 });
 
 const FACE_TIP =
-  "A double chin mostly shrinks as overall body fat drops. These moves strengthen the jaw and neck muscles and fix forward-head posture, which makes the jawline look sharper.";
+  "These gentle movements do not reliably reduce a double chin or change facial structure. Keep the range comfortable and stop with pain or dizziness.";
 const SPOT = "You can't burn fat from one spot. These moves build and firm the muscles underneath, and the area looks tighter as your overall body fat drops.";
 
 export const EXTRA_PROGRAMS: Program[] = [
+  // Forma additions: familiar movement patterns with existing real photo/video demonstrations.
+  P("forma-full-body-start", "First Steps · Full Body", "gym", null, "Beginner", ["full", "legs", "back", "chest"], "A simple introduction to gym training. Start with a light load and leave a few repetitions in reserve.", "goblet-squat 2x8-10,db-bench 2x8-10,seated-row 2x10-12,plank 2x20s", {rest:90}),
+  P("forma-upper-express", "Upper Body · Express", "gym", null, "Intermediate", ["chest", "back", "shoulders", "arms"], "Four movements for a focused upper-body session.", "db-bench 3x8-12,db-row 3x10_each_side,db-shoulder-press 2x8-12,hammer-curl 2x10-12", {rest:75}),
+  P("forma-lower-foundation", "Lower Body · Foundations", "gym", null, "Beginner", ["legs", "glutes", "thighs"], "Practise your squat, hinge and single-leg control at a comfortable pace.", "goblet-squat 2x10,rdl 2x8-10,walking-lunge 2x8_each_leg,calf-raise 2x12", {rest:90}),
+  P("forma-pull-focus", "Pull · Back & Biceps", "gym", null, "Intermediate", ["back", "arms"], "Controlled pulling movements with time to recover between sets.", "lat-pulldown 3x10,seated-row 3x10,face-pull 2x15,hammer-curl 2x12", {rest:75}),
+  P("forma-push-focus", "Push · Chest & Shoulders", "gym", null, "Intermediate", ["chest", "shoulders", "arms"], "A straightforward push day with familiar equipment.", "db-bench 3x8-12,db-shoulder-press 3x8-10,lateral-raise 2x12,tricep-pushdown 2x12", {rest:90}),
+  P("forma-core-control", "Core · Slow & Steady", "home", null, "Beginner", ["abs", "waist"], "Build trunk control with deliberate, unhurried movement.", "dead-bug 8_each_side,glute-bridge 12,plank 20s,side-plank 20s", {rounds:2,rest:30,tip:"For side planks, split the hold evenly between both sides. Stop if a movement causes pain."}),
+  P("forma-low-impact", "Quiet Cardio · No Jumping", "home", null, "Beginner", ["full", "legs"], "A short movement break with your feet close to the floor.", "bw-squat 8,elbow-to-knee 30s,side-leg-raise 8_each_side,glute-bridge 12", {rounds:2,rest:30}),
+  P("forma-desk-reset", "Desk Break · Move Again", "home", null, "Beginner", ["back", "shoulders", "full"], "Step away from the chair for a little easy movement.", "arm-circles 20s,cat-cow 30s,bw-squat 8,worlds-greatest 30s", {rounds:1,rest:15}),
+  P("forma-glute-foundation", "Glutes · Build Your Base", "home", null, "Beginner", ["glutes", "legs"], "A small circuit for hip strength and control, without equipment.", "glute-bridge 12,donkey-kick 10_each_side,fire-hydrant 10_each_side,bw-squat 10", {rounds:2,rest:30}),
+  P("forma-dumbbell-full", "Dumbbells · Full Body", "gym", null, "Intermediate", ["full", "legs", "back", "shoulders"], "A full-body workout using a pair of dumbbells.", "goblet-squat 3x10,db-row 3x10_each_side,db-bench 3x10,db-shoulder-press 2x10", {rest:90}),
+  P("forma-legs-strength", "Legs · Strength Session", "gym", null, "Advanced", ["legs", "glutes", "thighs"], "A longer lower-body session for people already comfortable with compound lifts.", "back-squat 4x5,rdl 3x8,leg-curl 3x10,calf-raise 3x12", {rest:120,tip:"Warm up with lighter sets before working sets. Use a load you can control; rest longer when needed."}),
+  P("forma-posterior", "Posterior Chain · Strength", "gym", null, "Intermediate", ["back", "glutes", "legs"], "Train your hinge and pulling patterns with steady form.", "rdl 3x8,hip-thrust 3x10,seated-row 3x10,face-pull 2x15", {rest:90}),
+
   // ───────── Double chin, jaw & neck ─────────
   P("face-daily-5", "5-Minute Daily Jawline", "home", null, "Beginner", ["face", "neck"], "A quick daily routine for your chin and jaw. Do it while the kettle boils.",
     "chin-tuck 10, kiss-ceiling 8_(5_sec_hold), jaw-jut 8_(5_sec_hold), neck-side-stretch 30s", { rounds: 2, rest: 10, tip: FACE_TIP }),

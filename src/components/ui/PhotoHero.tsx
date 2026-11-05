@@ -50,7 +50,7 @@ export function PhotoHero({
       <Image src={`/photos/${photo}.webp`} alt="" fill priority={priority} sizes="(min-width: 768px) 672px, 100vw" className="object-cover" style={{ objectPosition: position }} />
       <div className="absolute inset-0 photo-shade" />
       <div className="relative z-10 p-5 pt-16">
-        {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-fit-blue">{eyebrow}</p>}
+        {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#d7e8bc]">{eyebrow}</p>}
         <h2 className="headline text-white text-[38px] sm:text-5xl mt-1.5">{title}</h2>
         {children}
       </div>

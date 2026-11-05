@@ -2,31 +2,15 @@
 
 /* Gym look: near-black surfaces, real photography, one loud volt accent (dark text on it). */
 :root {
-  color-scheme: dark;
-  --page: #0a0b0d;
-  --card: #15171b;
-  --card-2: #1d2025;
-  --card-3: #272b31;
-  --line: #2a2e35;
-  --line-strong: #434851;
-  --ink: #f5f6f7;
-  --ink-2: #c5cad1;
-  --ink-3: #8e949d;
-  /* primary accent ("fit-blue" kept as the token name): volt lime, with near-black text on it */
-  --fit-blue: #d4ff3a;
-  --fit-blue-soft: #232b0f;
-  --on-accent: #0a0b0d;
-  --fit-green: #2fbf6b;
-  --fit-green-bright: #3ddc84;
-  --fit-green-soft: #11291c;
-  --fit-yellow: #ffb020;
-  --fit-yellow-bright: #ffc233;
-  --fit-yellow-soft: #2e2512;
-  --fit-red: #e5334f;
-  --fit-red-soft: #36161d;
-  --fig: #d4ff3a;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.5);
-  --shadow-lg: 0 10px 30px rgb(0 0 0 / 0.55);
+  color-scheme: light;
+  --page: #f5f4ef; --card: #fffefa; --card-2: #eeeee6; --card-3: #e0e4d9;
+  --line: #e1e3d9; --line-strong: #b7bfb1;
+  --ink: #202e25; --ink-2: #556157; --ink-3: #687467;
+  --fit-blue: #224f40; --fit-blue-soft: #e5eddf; --on-accent: #ffffff;
+  --fit-green: #326442; --fit-green-bright: #478258; --fit-green-soft: #e7efdf;
+  --fit-yellow: #856220; --fit-yellow-bright: #b48c37; --fit-yellow-soft: #f4eddc;
+  --fit-red: #a34340; --fit-red-soft: #f6e5e0; --fig: #224f40;
+  --shadow: 0 2px 12px rgb(32 46 37 / .025); --shadow-lg: 0 12px 40px rgb(32 46 37 / .10);
 }
 
 @theme inline {
@@ -51,7 +35,7 @@
   --color-fit-red-soft: var(--fit-red-soft);
   --color-on-accent: var(--on-accent);
   --font-sans: var(--font-google-sans), system-ui, sans-serif;
-  --font-display: "Oswald Variable", var(--font-google-sans), system-ui, sans-serif;
+  --font-display: var(--font-google-sans), system-ui, sans-serif;
   --font-mono: var(--font-google-sans), system-ui, sans-serif;
 }
 
@@ -81,10 +65,10 @@ body {
   /* Big, bold gym headline: condensed uppercase display type */
   .headline {
     font-family: var(--font-display);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-    line-height: 0.95;
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
   }
 
   /* Full-bleed photo with a dark gradient so white text always reads */
@@ -139,3 +123,26 @@ input[type="number"] {
     opacity: 0;
   }
 }
+
+@layer components {
+  .surface { background: var(--card); border: 1px solid var(--line); border-radius: 1.5rem; box-shadow: var(--shadow); }
+  .eyebrow { font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .page-title { font-size: clamp(1.9rem, 4.5vw, 2.65rem); line-height: 1.15; letter-spacing: -.045em; font-weight: 500; margin-top: .6rem; }
+  .section-title { font-size: 1.2rem; line-height: 1.35; letter-spacing: -.025em; font-weight: 500; }
+  .primary-button, .secondary-button { min-height: 2.8rem; border-radius: 100px; padding: .7rem 1.2rem; display: inline-flex; justify-content: center; align-items: center; gap: .5rem; font-weight: 500; transition: background .2s, transform .2s; }
+  .primary-button { background: var(--fit-blue); color: white; }
+  .primary-button:hover { background: #193e31; }
+  .secondary-button { background: var(--card-2); color: var(--ink); border: 1px solid var(--line); }
+  .icon-button { width: 2.75rem; height: 2.75rem; display: inline-grid; place-items: center; border-radius: 50%; background: var(--card-2); color: var(--ink-2); flex-shrink: 0; }
+  .field-label { display: flex; flex-direction: column; gap: .5rem; color: var(--ink-2); font-size: .8rem; }
+  .field { min-width: 0; background: var(--card); border: 1px solid var(--line-strong); border-radius: .8rem; padding: .65rem .8rem; color: var(--ink); min-height: 2.75rem; width: 100%; }
+  .badge { border-radius: 100px; padding: .4rem .75rem; font-size: .7rem; color: var(--fit-blue); background: var(--fit-blue-soft); white-space: nowrap; }
+  .segmented { display:flex; background: var(--card-2); padding: .3rem; gap: .25rem; border-radius: 100px; }
+  .segmented button { flex:1; padding: .6rem; border-radius: 100px; font-size: .85rem; }
+  .segmented .selected { background: var(--card); box-shadow: var(--shadow); color: var(--fit-blue); }
+  .nutrition-orbit { width: 100px; height: 100px; border: 10px solid var(--fit-blue-soft); border-top-color: var(--fit-blue); border-right-color: var(--fit-blue); border-radius: 50%; display:grid; place-items:center; transform:rotate(-25deg); margin-top:1rem; }
+  .nutrition-orbit span { transform:rotate(25deg); font-size: 2rem; letter-spacing: -.1em; color:var(--fit-blue); }
+}
+button { cursor: pointer; }
+button:disabled { opacity:.45; cursor:default; }
+@media(max-width:420px) { .nutrition-orbit { width:72px; height:72px; border-width:7px; } }

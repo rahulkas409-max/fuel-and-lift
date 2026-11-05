@@ -1,4 +1,42 @@
-# 🏋️ Fuel & Lift
+# Forma
+
+A minimal food, workout and daily habit tracker, formerly Fuel & Lift. Existing browser data is preserved.
+
+## Forma updates
+
+- Warm ivory and forest-green design, new Forma wordmark and app icons; responsive dashboard.
+- Navigation: Today, Food, Train, Progress and More.
+- Food diary counts **confirmed food only**. Meal plans stay separate; log a recipe after eating it. Portions respect the plan multiplier.
+- Personal water and protein goals, water quick logging, seven-day progress and JSON data export.
+- Editable meal, water and protein reminder schedules (off by default). In-app/browser nudges run while the app is open. Export recurring `.ics` events with alarms for phone calendar reminders when it is closed. Calendar permissions and import behaviour depend on the device. Re-export after changing schedules; remove old imported events when replacing them.
+- Timestamp-based stopwatch and adjustable rest timer, pause/resume, laps and saved sessions. The timer survives refresh. Sounds require the app to be open.
+- 12 additional inclusive gym/home workouts. Existing real photo/video demonstrations retained; missing swing and side-bridge instructions repaired. Exercise photos are from [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (Unlicense). Videos play in YouTube's embedded player and belong to their creators. New routines are app-authored combinations, not copied or professionally prescribed programmes.
+- `/admin` has server-verified authorization, memory-only login, same-origin mutation checks and login throttling. The owner-selected default password is stored only as a digest in server code.
+- Optional member sharing under More: name, workout day count, and today's water/protein totals only. Summaries expire after 30 days and can be removed. Nothing is sent until consent. Browser logs remain local.
+
+## Admin deployment on Vercel
+
+The owner-requested simple admin login works without environment setup. Password verification runs server-side. The browser keeps the authorization value only in React memory (no localStorage or cookies); refresh or sign out clears it. The repository stores a password digest rather than plaintext. Optional `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables override the defaults without code changes.
+
+For voluntary member summaries, connect Upstash Redis using `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (or the existing `KV_REST_API_URL` / `KV_REST_API_TOKEN`). Without storage, the dashboard explicitly shows it as disconnected. No member summary is uploaded until consent. Login throttling uses Redis when connected and a bounded per-instance fallback otherwise.
+
+Keep the existing Vercel project connected to this GitHub repository. Reminders require no backend or paid scheduler. There is no background Web Push service; closed-app alerts are delivered by a calendar after the user's import.
+
+## Validation
+
+```sh
+npm install
+node --test tests/core.cjs
+npm run build
+```
+
+The tests cover programme moves/media/doses, bundled asset existence, routine references, planned vs eaten calorie accounting, refresh-safe timer arithmetic and recurring calendar alarms. `next build --webpack` is also supported on hosts where Turbopack cannot open its local compiler port.
+
+---
+
+## Original feature documentation
+
+### Fuel & Lift legacy features
 
 A mobile-first gym tracker, meal planner and macro mini-game arcade. **It's 100% free, with no sign-up.**
 All data lives in the browser's localStorage.

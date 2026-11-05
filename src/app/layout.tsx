@@ -1,26 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Google_Sans } from "next/font/google";
-import "@fontsource-variable/oswald";
 import "./globals.css";
 
-const googleSans = Google_Sans({ variable: "--font-google-sans", subsets: ["latin", "devanagari"], weight: "variable", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Fuel & Lift — gym tracker & meal planner",
-  description: "Log your lifts, plan high-protein Indian meals, search 7,000+ foods and play macro mini-games. Free, no sign-up.",
-  appleWebApp: { capable: true, title: "Fuel & Lift", statusBarStyle: "black-translucent" },
+  title: "Forma — food, movement & daily rhythm",
+  description: "A calmer way to track food, workouts, water and protein. Personal reminders, real exercise demos and your own daily rhythm.",
+  appleWebApp: { capable: true, title: "Forma", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0b0d",
+  themeColor: "#f5f4ef",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${googleSans.variable} h-full antialiased`}>
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full font-sans">{children}</body>
     </html>
   );

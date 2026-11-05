@@ -10,6 +10,7 @@ import { dayTargets, freshMealsFor, lastWeekMealIds, sameDayLastWeek, planCost, 
 import { useAutoMealPlan, useDateIntensity, weekDates, weekIntensities } from "@/lib/meal-week";
 import { play } from "@/lib/sound";
 import { currentRoutine, useStore } from "@/lib/store";
+import { useWellness } from "@/lib/wellness";
 import { useToast } from "@/lib/toast";
 import { usePaywall } from "../paywall/PaywallProvider";
 import { MacroBar, MacroPills } from "../ui/MacroPills";
@@ -40,7 +41,9 @@ export function MealsView() {
   const isToday = date === today;
   const dateIntensity = useDateIntensity(date, today);
   const intensity = override ?? (isToday ? (trainingDay?.intensity ?? "moderate") : dateIntensity);
-  const targets = dayTargets(s.profile, intensity);
+  const estimated = dayTargets(s.profile, intensity);
+  const proteinGoal = useWellness(w => w.proteinGoal);
+  const targets = { ...estimated, protein: proteinGoal || estimated.protein };
   useAutoMealPlan(date, intensity);
   const dayLabel = isToday ? "Today" : new Date(`${date}T12:00:00`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
@@ -53,7 +56,7 @@ export function MealsView() {
   const eatenThisWeek = weekMealIds(s.plans, date);
   const t = logged.reduce(
     (acc, f) => ({ kcal: acc.kcal + f.kcal, protein: Math.round(acc.protein + f.protein), carbs: Math.round(acc.carbs + f.carbs), fat: Math.round(acc.fat + f.fat) }),
-    planned,
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
   const [explorerOpen, setExplorerOpen] = useState(false);
 
@@ -100,11 +103,12 @@ export function MealsView() {
 
   return (
     <div className="space-y-6">
+      <div><p className="eyebrow">Eat well, feel good</p><h1 className="page-title">Your daily fuel.</h1><p className="text-ink-2 mt-2">Log what you eat. Plan what comes next.</p></div>
       {/* Targets */}
       <section className="glass rounded-3xl p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-ink-2">{isToday ? "Today's fuel" : `${dayLabel} · planned`}</p>
+            <p className="text-xs font-medium text-ink-2">{isToday ? "Actually eaten today" : `${dayLabel} · planned`}</p>
             <p className="font-display text-4xl leading-none mt-1 tabular whitespace-nowrap">
               {t.kcal}
               <span className="text-xl text-ink-3"> / {targets.kcal} kcal</span>
@@ -180,19 +184,19 @@ export function MealsView() {
         className="w-full h-14 rounded-2xl bg-card-2 border border-line flex items-center gap-3 px-4 text-left text-ink-2"
       >
         <Search size={20} className="text-fit-blue" />
-        <span className="flex-1 truncate">Search 7,000+ foods</span>
+        <span className="flex-1 truncate">Log food · search 7,000+ foods</span>
         <span className="text-[11px] rounded-full bg-fit-blue-soft text-fit-blue px-2 py-0.5">Log</span>
       </motion.button>
 
       {logged.length > 0 && (
         <section className="glass rounded-3xl p-4">
-          <p className="text-[11px] font-medium text-ink-3 mb-2">Also eaten today</p>
+          <p className="text-[11px] font-medium text-ink-3 mb-2">Food diary · eaten</p>
           <ul className="divide-y divide-line">
             {logged.map((f) => (
               <li key={f.uid} className="flex items-center gap-3 py-2">
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm text-ink truncate">{f.name}</span>
-                  <span className="block text-[11px] text-ink-3 font-mono">{f.grams} g · {Math.round(f.protein)} g P</span>
+                  <span className="block text-[11px] text-ink-3 font-mono">{f.grams > 0 ? `${f.grams} g · ` : ""} {Math.round(f.protein)} g P</span>
                 </span>
                 <span className="font-mono text-sm text-fit-yellow tabular">{f.kcal}</span>
                 <button onClick={() => s.removeLoggedFood(today, f.uid)} className="size-10 grid place-items-center text-ink-3 hover:text-fit-red" aria-label={`Remove ${f.name}`}>
@@ -252,6 +256,16 @@ export function MealsView() {
         </motion.button>
       </div>
 
+      <section className="rounded-2xl border border-line bg-card-2 p-4 text-sm text-ink-2">
+        Planned: {planned.kcal} kcal · {planned.protein} g protein. Plans only count after you log a meal.
+        <button className="block text-fit-blue mt-2 font-medium" onClick={() => {
+          const yesterday = new Date(`${date}T12:00:00`); yesterday.setDate(yesterday.getDate() - 1);
+          const key = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,"0")}-${String(yesterday.getDate()).padStart(2,"0")}`;
+          const previous = s.plans[key];
+          if (!previous || !Object.keys(previous).length) { toast("No meal plan saved for yesterday"); return; }
+          s.setPlan(date, previous, s.scales[key] ?? 1); toast("Yesterday's plan copied. Log meals after you eat them.");
+        }}>Repeat yesterday’s plan</button>
+      </section>
       {/* Daily deck */}
       <div className="flex items-center justify-between pt-1">
         <p className="font-medium text-ink">
@@ -284,7 +298,7 @@ export function MealsView() {
         {SLOTS.map((slot, i) => {
           const m = meals[i];
           return (
-            <motion.div key={slot.id} layout className="glass rounded-3xl p-4 flex items-center gap-4">
+            <motion.div key={slot.id} layout className="glass rounded-3xl p-4 flex flex-wrap sm:flex-nowrap items-center gap-4">
               <AnimatePresence mode="popLayout">
                 <motion.button
                   key={m?.id ?? "empty"}
@@ -309,6 +323,10 @@ export function MealsView() {
                   </div>
                 )}
               </button>
+              {m && isToday && <button className="secondary-button text-xs shrink-0 order-last w-full sm:order-none sm:w-auto" aria-label={`Log ${m.name} as eaten`} onClick={() => {
+                s.logFood(today, { foodId: -1, name: `${m.name} (${scale} serving${scale !== 1 ? "s" : ""})`, grams: 0, ...scaleMacros(m, scale) });
+                toast(`${m.name} added to your food diary`);
+              }}>Log meal</button>}
               <motion.button whileTap={{ rotate: 180, scale: 0.9 }} onClick={() => setSpinSlot(slot.id)} className="size-12 shrink-0 rounded-full bg-fit-yellow-soft text-fit-yellow grid place-items-center" aria-label={`Spin ${slot.label}`}>
                 <Sparkles size={18} />
               </motion.button>
